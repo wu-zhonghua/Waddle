@@ -302,7 +302,7 @@ const ChangeConnectionBlockModal = React.memo(
     }) => {
         const [connSelected, setConnSelected] = React.useState("");
         const changeConnModalOpen = jotai.useAtomValue(changeConnModalAtom);
-        const [blockData] = WOS.useWaveObjectValue<Block>(WOS.makeORef("block", blockId));
+        const [blockData] = WOS.useWaddleObjectValue<Block>(WOS.makeORef("block", blockId));
         const isNodeFocused = jotai.useAtomValue(nodeModel.isFocused);
         const connection = blockData?.meta?.connection;
         const connStatusAtom = getConnStatusAtom(connection);
@@ -430,7 +430,7 @@ const ChangeConnectionBlockModal = React.memo(
         });
 
         const handleTypeAheadKeyDown = React.useCallback(
-            (waveEvent: WaveKeyboardEvent): boolean => {
+            (waveEvent: WaddleKeyboardEvent): boolean => {
                 if (keyutil.checkKeyPressed(waveEvent, "Enter")) {
                     const rowItem = selectionList[rowIndex];
                     if ("onSelect" in rowItem && rowItem.onSelect) {

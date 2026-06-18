@@ -4,7 +4,7 @@
 package aiusechat
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
 )
 
 // CombineConsecutiveSameRoleMessages combines consecutive UIMessages with the same role
@@ -62,7 +62,6 @@ func CombineConsecutiveSameRoleMessages(uiChat *uctypes.UIChat) *uctypes.UIChat 
 		Messages:   combined,
 	}
 }
-
 
 // ConvertAIChatToUIChat converts an AIChat to a UIChat by routing to the appropriate
 // provider-specific converter based on APIType, then combining consecutive same-role messages.

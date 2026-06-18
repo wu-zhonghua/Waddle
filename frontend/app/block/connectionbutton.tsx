@@ -3,7 +3,7 @@
 
 import { computeConnColorNum } from "@/app/block/blockutil";
 import { recordTEvent } from "@/app/store/global";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { IconButton } from "@/element/iconbutton";
 import * as util from "@/util/util";
 import * as jotai from "jotai";
@@ -20,7 +20,7 @@ interface ConnectionButtonProps {
 export const ConnectionButton = React.memo(
     React.forwardRef<HTMLDivElement, ConnectionButtonProps>(
         ({ connection, changeConnModalAtom, isTerminalBlock }: ConnectionButtonProps, ref) => {
-            const waveEnv = useWaveEnv<BlockEnv>();
+            const waveEnv = useWaddleEnv<BlockEnv>();
             const [_connModalOpen, setConnModalOpen] = jotai.useAtom(changeConnModalAtom);
             const isLocal = util.isLocalConnName(connection);
             const connStatus = jotai.useAtomValue(waveEnv.getConnStatusAtom(connection));

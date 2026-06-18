@@ -4,8 +4,8 @@
 import { Button } from "@/app/element/button";
 import {
     MetaKeyAtomFnType,
-    WaveEnv,
-    WaveEnvSubset,
+    WaddleEnv,
+    WaddleEnvSubset,
 } from "@/app/waveenv/waveenv";
 import { IconButton, ToggleIconButton } from "@/element/iconbutton";
 import { MagnifyIcon } from "@/element/magnify";
@@ -15,9 +15,9 @@ import clsx from "clsx";
 import * as jotai from "jotai";
 import * as React from "react";
 
-export type TabBackgroundEnv = WaveEnvSubset<{
+export type TabBackgroundEnv = WaddleEnvSubset<{
     getTabMetaKeyAtom: MetaKeyAtomFnType<"bg:activebordercolor" | "bg:bordercolor" | "tab:background">;
-    getConfigBackgroundAtom: WaveEnv["getConfigBackgroundAtom"];
+    getConfigBackgroundAtom: WaddleEnv["getConfigBackgroundAtom"];
 }>;
 
 export const colorRegex = /^((#[0-9a-f]{6,8})|([a-z]+))$/;
@@ -62,7 +62,7 @@ export function blockViewToName(view: string): string {
         return "Web";
     }
     if (view == "waveai") {
-        return "WaveAI";
+        return "WaddleAI";
     }
     if (view == "help") {
         return "Help";

@@ -85,7 +85,7 @@ const InitPage = ({
                 <div className={`${isCompact ? "" : "mb-2.5"} flex justify-center`}>
                     <Logo />
                 </div>
-                <div className="text-center text-[25px] font-normal text-foreground">Welcome to Wave Terminal</div>
+                <div className="text-center text-[25px] font-normal text-foreground">Welcome to Waddle</div>
             </header>
             <OverlayScrollbarsComponent
                 className="flex-1 overflow-y-auto min-h-0"
@@ -96,7 +96,7 @@ const InitPage = ({
                         <div>
                             <a
                                 target="_blank"
-                                href="https://github.com/wavetermdev/waveterm?ref=install"
+                                href="https://github.com/waddledev/waddle?ref=install"
                                 rel="noopener"
                                 className="text-accent"
                                 onClick={handleStarClick}
@@ -111,12 +111,12 @@ const InitPage = ({
                                 for individual users. Please show your support by giving us a star on{" "}
                                 <a
                                     target="_blank"
-                                    href="https://github.com/wavetermdev/waveterm?ref=install"
+                                    href="https://github.com/waddledev/waddle?ref=install"
                                     rel="noopener"
                                     className="text-accent"
                                     onClick={handleStarClick}
                                 >
-                                    Github&nbsp;(wavetermdev/waveterm)
+                                    Github&nbsp;(waddledev/waddle)
                                 </a>
                             </div>
                         </div>
@@ -144,7 +144,7 @@ const InitPage = ({
                                     rel="noopener"
                                     className="text-accent"
                                 >
-                                    Join the Wave&nbsp;Discord&nbsp;Channel
+                                    Join the Waddle&nbsp;Discord&nbsp;Channel
                                 </a>
                             </div>
                         </div>
@@ -160,7 +160,7 @@ const InitPage = ({
                                 <a
                                     className="text-secondary! hover:underline!"
                                     target="_blank"
-                                    href="https://waveterm.dev/privacy"
+                                    href="https://waddle.dev/privacy"
                                     rel="noopener"
                                 >
                                     Privacy Policy
@@ -207,7 +207,7 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
             oref: WOS.makeORef("client", clientId),
             meta: { "onboarding:githubstar": true },
         });
-        window.open("https://github.com/wavetermdev/waveterm?ref=not", "_blank");
+        window.open("https://github.com/waddledev/waddle?ref=not", "_blank");
         setPageName("features");
     };
 
@@ -244,7 +244,7 @@ const NoTelemetryStarPage = ({ isCompact }: { isCompact: boolean }) => {
                     <div className="text-center text-secondary leading-relaxed max-w-md">
                         <p className="mb-4">No problem, we respect your privacy.</p>
                         <p className="mb-4">
-                            But, without usage data, we're flying blind. A GitHub star helps us know Wave is useful and
+                            But, without usage data, we're flying blind. A GitHub star helps us know Waddle is useful and
                             worth maintaining.
                         </p>
                     </div>

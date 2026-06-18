@@ -9,11 +9,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 var tabIndicatorCmd = &cobra.Command{
@@ -34,7 +34,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(tabIndicatorCmd)
-	tabIndicatorCmd.Flags().StringVar(&tabIndicatorTabId, "tabid", "", "tab id (defaults to WAVETERM_TABID)")
+	tabIndicatorCmd.Flags().StringVar(&tabIndicatorTabId, "tabid", "", "tab id (defaults to WADDLE_TABID)")
 	tabIndicatorCmd.Flags().StringVar(&tabIndicatorColor, "color", "", "indicator color")
 	tabIndicatorCmd.Flags().Float64Var(&tabIndicatorPriority, "priority", 10, "indicator priority")
 	tabIndicatorCmd.Flags().BoolVar(&tabIndicatorClear, "clear", false, "clear the indicator")
@@ -50,10 +50,10 @@ func tabIndicatorRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := tabIndicatorTabId
 	if tabId == "" {
-		tabId = os.Getenv("WAVETERM_TABID")
+		tabId = os.Getenv("WADDLE_TABID")
 	}
 	if tabId == "" {
-		return fmt.Errorf("no tab id specified (use --tabid or set WAVETERM_TABID)")
+		return fmt.Errorf("no tab id specified (use --tabid or set WADDLE_TABID)")
 	}
 
 	oref := waveobj.MakeORef(waveobj.OType_Tab, tabId)
@@ -80,7 +80,7 @@ func tabIndicatorRun(cmd *cobra.Command, args []string) (rtnErr error) {
 		}
 	}
 
-	event := wps.WaveEvent{
+	event := wps.WaddleEvent{
 		Event:  wps.Event_Badge,
 		Scopes: []string{oref.String()},
 		Data:   eventData,

@@ -8,11 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/filebackup"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/filebackup"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
 const MaxEditFileSize = 100 * 1024 // 100KB

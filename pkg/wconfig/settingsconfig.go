@@ -16,11 +16,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig/defaultconfig"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig/defaultconfig"
 )
 
 const SettingsFile = "settings.json"
@@ -70,7 +70,7 @@ type SettingsType struct {
 	AppFocusFollowsCursor         string `json:"app:focusfollowscursor,omitempty" jsonschema:"enum=off,enum=on,enum=term"`
 	AppTabBar                     string `json:"app:tabbar,omitempty" jsonschema:"enum=top,enum=left"`
 
-	FeatureWaveAppBuilder bool `json:"feature:waveappbuilder,omitempty"`
+	FeatureWaddleAppBuilder bool `json:"feature:waveappbuilder,omitempty"`
 
 	AiClear         bool    `json:"ai:*,omitempty"`
 	AiPreset        string  `json:"ai:preset,omitempty"`
@@ -87,31 +87,31 @@ type SettingsType struct {
 	AiFontSize      float64 `json:"ai:fontsize,omitempty"`
 	AiFixedFontSize float64 `json:"ai:fixedfontsize,omitempty"`
 
-	WaveAiShowCloudModes bool   `json:"waveai:showcloudmodes,omitempty"`
-	WaveAiDefaultMode    string `json:"waveai:defaultmode,omitempty"`
+	WaddleAiShowCloudModes bool   `json:"waveai:showcloudmodes,omitempty"`
+	WaddleAiDefaultMode    string `json:"waveai:defaultmode,omitempty"`
 
-	TermClear               bool     `json:"term:*,omitempty"`
-	TermFontSize            float64  `json:"term:fontsize,omitempty"`
-	TermFontFamily          string   `json:"term:fontfamily,omitempty"`
-	TermTheme               string   `json:"term:theme,omitempty"`
-	TermDisableWebGl        bool     `json:"term:disablewebgl,omitempty"`
-	TermLocalShellPath      string   `json:"term:localshellpath,omitempty"`
-	TermLocalShellOpts      []string `json:"term:localshellopts,omitempty"`
-	TermGitBashPath         string   `json:"term:gitbashpath,omitempty"`
-	TermScrollback          *int64   `json:"term:scrollback,omitempty"`
-	TermCopyOnSelect        *bool    `json:"term:copyonselect,omitempty"`
-	TermTransparency        *float64 `json:"term:transparency,omitempty"`
-	TermAllowBracketedPaste *bool    `json:"term:allowbracketedpaste,omitempty"`
-	TermShiftEnterNewline   *bool    `json:"term:shiftenternewline,omitempty"`
-	TermMacOptionIsMeta     *bool    `json:"term:macoptionismeta,omitempty"`
-	TermCursor              string   `json:"term:cursor,omitempty"`
-	TermCursorBlink         *bool    `json:"term:cursorblink,omitempty"`
-	TermBellSound           *bool    `json:"term:bellsound,omitempty"`
-	TermBellIndicator       *bool    `json:"term:bellindicator,omitempty"`
-	TermOsc52               string   `json:"term:osc52,omitempty" jsonschema:"enum=focus,enum=always"`
-	TermDurable                    *bool    `json:"term:durable,omitempty"`
-	TermShowSplitButtons           bool     `json:"term:showsplitbuttons,omitempty"`
-	TermTrimTrailingWhitespace     *bool    `json:"term:trimtrailingwhitespace,omitempty"`
+	TermClear                  bool     `json:"term:*,omitempty"`
+	TermFontSize               float64  `json:"term:fontsize,omitempty"`
+	TermFontFamily             string   `json:"term:fontfamily,omitempty"`
+	TermTheme                  string   `json:"term:theme,omitempty"`
+	TermDisableWebGl           bool     `json:"term:disablewebgl,omitempty"`
+	TermLocalShellPath         string   `json:"term:localshellpath,omitempty"`
+	TermLocalShellOpts         []string `json:"term:localshellopts,omitempty"`
+	TermGitBashPath            string   `json:"term:gitbashpath,omitempty"`
+	TermScrollback             *int64   `json:"term:scrollback,omitempty"`
+	TermCopyOnSelect           *bool    `json:"term:copyonselect,omitempty"`
+	TermTransparency           *float64 `json:"term:transparency,omitempty"`
+	TermAllowBracketedPaste    *bool    `json:"term:allowbracketedpaste,omitempty"`
+	TermShiftEnterNewline      *bool    `json:"term:shiftenternewline,omitempty"`
+	TermMacOptionIsMeta        *bool    `json:"term:macoptionismeta,omitempty"`
+	TermCursor                 string   `json:"term:cursor,omitempty"`
+	TermCursorBlink            *bool    `json:"term:cursorblink,omitempty"`
+	TermBellSound              *bool    `json:"term:bellsound,omitempty"`
+	TermBellIndicator          *bool    `json:"term:bellindicator,omitempty"`
+	TermOsc52                  string   `json:"term:osc52,omitempty" jsonschema:"enum=focus,enum=always"`
+	TermDurable                *bool    `json:"term:durable,omitempty"`
+	TermShowSplitButtons       bool     `json:"term:showsplitbuttons,omitempty"`
+	TermTrimTrailingWhitespace *bool    `json:"term:trimtrailingwhitespace,omitempty"`
 
 	EditorMinimapEnabled      bool    `json:"editor:minimapenabled,omitempty"`
 	EditorStickyScrollEnabled bool    `json:"editor:stickyscrollenabled,omitempty"`
@@ -133,8 +133,9 @@ type SettingsType struct {
 	MarkdownFontSize      float64 `json:"markdown:fontsize,omitempty"`
 	MarkdownFixedFontSize float64 `json:"markdown:fixedfontsize,omitempty"`
 
-	PreviewShowHiddenFiles *bool  `json:"preview:showhiddenfiles,omitempty"`
-	PreviewDefaultSort     string `json:"preview:defaultsort,omitempty" jsonschema:"enum=name,enum=modtime"`
+	PreviewShowHiddenFiles   *bool  `json:"preview:showhiddenfiles,omitempty"`
+	PreviewDefaultSort       string `json:"preview:defaultsort,omitempty" jsonschema:"enum=name,enum=modtime"`
+	PreviewDirectoryViewMode string `json:"preview:directoryviewmode,omitempty" jsonschema:"enum=folder,enum=tree"`
 
 	TabPreset       string `json:"tab:preset,omitempty"`
 	TabConfirmClose bool   `json:"tab:confirmclose,omitempty"`
@@ -283,7 +284,7 @@ type WebBookmark struct {
 	DisplayOrder float64 `json:"display:order,omitempty"`
 }
 
-// Wave AI panel mode configuration (NEW)
+// Waddle AI panel mode configuration (NEW)
 type AIModeConfigType struct {
 	DisplayName        string   `json:"display:name"`
 	DisplayOrder       float64  `json:"display:order,omitempty"`
@@ -303,8 +304,8 @@ type AIModeConfigType struct {
 	AzureDeployment    string   `json:"ai:azuredeployment,omitempty"`
 	Capabilities       []string `json:"ai:capabilities,omitempty" jsonschema:"enum=pdfs,enum=images,enum=tools"`
 	SwitchCompat       []string `json:"ai:switchcompat,omitempty"`
-	WaveAICloud        bool     `json:"waveai:cloud,omitempty"`
-	WaveAIPremium      bool     `json:"waveai:premium,omitempty"`
+	WaddleAICloud      bool     `json:"waveai:cloud,omitempty"`
+	WaddleAIPremium    bool     `json:"waveai:premium,omitempty"`
 }
 
 type AIModeConfigUpdate struct {
@@ -375,7 +376,7 @@ type FullConfigType struct {
 	TermThemes     map[string]TermThemeType        `json:"termthemes"`
 	Connections    map[string]ConnKeywords         `json:"connections"`
 	Bookmarks      map[string]WebBookmark          `json:"bookmarks"`
-	WaveAIModes    map[string]AIModeConfigType     `json:"waveai"`
+	WaddleAIModes  map[string]AIModeConfigType     `json:"waveai"`
 	ConfigErrors   []ConfigError                   `json:"configerrors" configfile:"-"`
 	Version        string                          `json:"version" configfile:"-"`
 	BuildTime      string                          `json:"buildtime" configfile:"-"`
@@ -564,17 +565,17 @@ func ReadDefaultsConfigFile(fileName string) (waveobj.MetaMapType, []ConfigError
 	return readConfigFileFS(defaultconfig.ConfigFS, "defaults:", fileName)
 }
 
-func ReadWaveHomeConfigFile(fileName string) (waveobj.MetaMapType, []ConfigError) {
-	configDirAbsPath := wavebase.GetWaveConfigDir()
+func ReadWaddleHomeConfigFile(fileName string) (waveobj.MetaMapType, []ConfigError) {
+	configDirAbsPath := wavebase.GetWaddleConfigDir()
 	configDirFsys := os.DirFS(configDirAbsPath)
 	return readConfigFileFS(configDirFsys, "", fileName)
 }
 
-func WriteWaveHomeConfigFile(fileName string, m waveobj.MetaMapType) error {
+func WriteWaddleHomeConfigFile(fileName string, m waveobj.MetaMapType) error {
 	configWriteLock.Lock()
 	defer configWriteLock.Unlock()
 
-	configDirAbsPath := wavebase.GetWaveConfigDir()
+	configDirAbsPath := wavebase.GetWaddleConfigDir()
 	fullFileName := filepath.Join(configDirAbsPath, fileName)
 	barr, err := jsonMarshalConfigInOrder(m)
 	if err != nil {
@@ -659,7 +660,7 @@ func readConfigPartForFS(fsys fs.FS, logPrefix string, partName string, simpleMe
 
 // Combine files from the defaults and home directory for the specified config part name
 func readConfigPart(partName string, simpleMerge bool) (waveobj.MetaMapType, []ConfigError) {
-	configDirAbsPath := wavebase.GetWaveConfigDir()
+	configDirAbsPath := wavebase.GetWaddleConfigDir()
 	configDirFsys := os.DirFS(configDirAbsPath)
 	defaultConfigs, cerrs := readConfigPartForFS(defaultconfig.ConfigFS, "defaults:", partName, simpleMerge)
 	homeConfigs, cerrs1 := readConfigPartForFS(configDirFsys, "", partName, simpleMerge)
@@ -699,7 +700,7 @@ func ReadFullConfig() FullConfigType {
 			utilfn.ReUnmarshal(fieldPtr, configPart)
 		}
 	}
-	fullConfig.Version = wavebase.WaveVersion
+	fullConfig.Version = wavebase.WaddleVersion
 	fullConfig.BuildTime = wavebase.BuildTime
 	return fullConfig
 }
@@ -708,7 +709,7 @@ func GetConfigSubdirs() []string {
 	var fullConfig FullConfigType
 	configRType := reflect.TypeOf(fullConfig)
 	var retVal []string
-	configDirAbsPath := wavebase.GetWaveConfigDir()
+	configDirAbsPath := wavebase.GetWaddleConfigDir()
 	for fieldIdx := 0; fieldIdx < configRType.NumField(); fieldIdx++ {
 		field := configRType.Field(fieldIdx)
 		if field.PkgPath != "" {
@@ -843,7 +844,7 @@ func convertJsonNumber(num json.Number, ctype reflect.Type) (interface{}, error)
 }
 
 func SetBaseConfigValue(toMerge waveobj.MetaMapType) error {
-	m, cerrs := ReadWaveHomeConfigFile(SettingsFile)
+	m, cerrs := ReadWaddleHomeConfigFile(SettingsFile)
 	if len(cerrs) > 0 {
 		return fmt.Errorf("error reading config file: %v", cerrs[0])
 	}
@@ -877,11 +878,11 @@ func SetBaseConfigValue(toMerge waveobj.MetaMapType) error {
 			m[configKey] = val
 		}
 	}
-	return WriteWaveHomeConfigFile(SettingsFile, m)
+	return WriteWaddleHomeConfigFile(SettingsFile, m)
 }
 
 func SetConnectionsConfigValue(connName string, toMerge waveobj.MetaMapType) error {
-	m, cerrs := ReadWaveHomeConfigFile(ConnectionsFile)
+	m, cerrs := ReadWaddleHomeConfigFile(ConnectionsFile)
 	if len(cerrs) > 0 {
 		return fmt.Errorf("error reading config file: %v", cerrs[0])
 	}
@@ -896,11 +897,11 @@ func SetConnectionsConfigValue(connName string, toMerge waveobj.MetaMapType) err
 		connData[configKey] = val
 	}
 	m[connName] = connData
-	return WriteWaveHomeConfigFile(ConnectionsFile, m)
+	return WriteWaddleHomeConfigFile(ConnectionsFile, m)
 }
 
 func MigratePresetsBackgrounds() {
-	configDirAbsPath := wavebase.GetWaveConfigDir()
+	configDirAbsPath := wavebase.GetWaddleConfigDir()
 	backgroundsFile := filepath.Join(configDirAbsPath, "backgrounds.json")
 	if _, err := os.Stat(backgroundsFile); err == nil {
 		return
@@ -970,7 +971,7 @@ func (fc *FullConfigType) CountCustomAIPresets() int {
 // Custom AI modes are identified as modes that don't start with "waveai@".
 func (fc *FullConfigType) CountCustomAIModes() int {
 	count := 0
-	for modeID := range fc.WaveAIModes {
+	for modeID := range fc.WaddleAIModes {
 		if !strings.HasPrefix(modeID, "waveai@") {
 			count++
 		}
@@ -982,7 +983,7 @@ func (fc *FullConfigType) CountCustomAIModes() int {
 // This excludes telemetry:enabled and autoupdate:channel which don't count as customizations.
 func CountCustomSettings() int {
 	// Load user settings
-	userSettings, _ := ReadWaveHomeConfigFile("settings.json")
+	userSettings, _ := ReadWaddleHomeConfigFile("settings.json")
 	if userSettings == nil {
 		return 0
 	}

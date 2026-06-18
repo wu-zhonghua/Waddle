@@ -5,9 +5,9 @@ import { Tooltip } from "@/app/element/tooltip";
 import { globalStore } from "@/app/store/jotaiStore";
 import { tryReinjectKey } from "@/app/store/keymodel";
 import { CodeEditor } from "@/app/view/codeeditor/codeeditor";
-import type { ConfigFile, WaveConfigViewModel } from "@/app/view/waveconfig/waveconfig-model";
-import type { WaveConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import type { ConfigFile, WaddleConfigViewModel } from "@/app/view/waveconfig/waveconfig-model";
+import type { WaddleConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { adaptFromReactOrNativeKeyEvent, checkKeyPressed, keydownWrapper } from "@/util/keyutil";
 import { cn } from "@/util/util";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -15,7 +15,7 @@ import type * as MonacoTypes from "monaco-editor";
 import { memo, useCallback, useEffect } from "react";
 
 interface ConfigSidebarProps {
-    model: WaveConfigViewModel;
+    model: WaddleConfigViewModel;
 }
 
 const ConfigSidebar = memo(({ model }: ConfigSidebarProps) => {
@@ -99,8 +99,8 @@ const ConfigSidebar = memo(({ model }: ConfigSidebarProps) => {
 
 ConfigSidebar.displayName = "ConfigSidebar";
 
-const WaveConfigView = memo(({ blockId, model }: ViewComponentProps<WaveConfigViewModel>) => {
-    const env = useWaveEnv<WaveConfigEnv>();
+const WaddleConfigView = memo(({ blockId, model }: ViewComponentProps<WaddleConfigViewModel>) => {
+    const env = useWaddleEnv<WaddleConfigEnv>();
     const selectedFile = useAtomValue(model.selectedFileAtom);
     const [fileContent, setFileContent] = useAtom(model.fileContentAtom);
     const isLoading = useAtomValue(model.isLoadingAtom);
@@ -147,7 +147,7 @@ const WaveConfigView = memo(({ blockId, model }: ViewComponentProps<WaveConfigVi
     );
 
     useEffect(() => {
-        const handleKeyDown = keydownWrapper((e: WaveKeyboardEvent) => {
+        const handleKeyDown = keydownWrapper((e: WaddleKeyboardEvent) => {
             if (checkKeyPressed(e, "Cmd:s")) {
                 if (hasChanges && !isSaving) {
                     model.saveFile();
@@ -324,6 +324,6 @@ const WaveConfigView = memo(({ blockId, model }: ViewComponentProps<WaveConfigVi
     );
 });
 
-WaveConfigView.displayName = "WaveConfigView";
+WaddleConfigView.displayName = "WaddleConfigView";
 
-export { WaveConfigView };
+export { WaddleConfigView };

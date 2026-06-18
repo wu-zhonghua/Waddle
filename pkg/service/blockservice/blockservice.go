@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/blockcontroller"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/tsgen/tsgenmeta"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 type BlockService struct{}

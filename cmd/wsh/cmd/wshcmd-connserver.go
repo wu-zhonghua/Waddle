@@ -16,18 +16,18 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/fileshare/wshfs"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/packetparser"
-	"github.com/wavetermdev/waveterm/pkg/util/sigutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshremote"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote/fileshare/wshfs"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/packetparser"
+	"github.com/waddledev/waddle/pkg/util/sigutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshremote"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 var serverCmd = &cobra.Command{
@@ -116,7 +116,7 @@ func startJobLogCleanup() {
 
 func getRemoteDomainSocketName() string {
 	homeDir := wavebase.GetHomeDir()
-	return filepath.Join(homeDir, wavebase.RemoteWaveHomeDirName, wavebase.RemoteDomainSocketBaseName)
+	return filepath.Join(homeDir, wavebase.RemoteWaddleHomeDirName, wavebase.RemoteDomainSocketBaseName)
 }
 
 func MakeRemoteUnixListener() (net.Listener, error) {
@@ -418,7 +418,7 @@ func serverRunNormal(jwtToken string) error {
 
 func askForJwtToken() (string, error) {
 	// if it already exists in the environment, great, use it
-	jwtToken := os.Getenv(wavebase.WaveJwtTokenVarName)
+	jwtToken := os.Getenv(wavebase.WaddleJwtTokenVarName)
 	if jwtToken != "" {
 		fmt.Printf("HAVE-JWT\n")
 		return jwtToken, nil
@@ -442,7 +442,7 @@ func serverRun(cmd *cobra.Command, args []string) error {
 	var logFile *os.File
 	if connServerDev {
 		var err error
-		logFilePath := fmt.Sprintf("/tmp/waveterm-connserver-%d.log", os.Getuid())
+		logFilePath := fmt.Sprintf("/tmp/waddle-connserver-%d.log", os.Getuid())
 		logFile, err = os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to open log file: %v\n", err)

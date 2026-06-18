@@ -2,7 +2,7 @@
 
 ## Overview
 
-WPS (Wave PubSub) is Wave Terminal's publish-subscribe event system that enables different parts of the application to communicate asynchronously. The system uses a broker pattern to route events from publishers to subscribers based on event types and scopes.
+WPS (Waddle PubSub) is Waddle's publish-subscribe event system that enables different parts of the application to communicate asynchronously. The system uses a broker pattern to route events from publishers to subscribers based on event types and scopes.
 
 ## Key Files
 
@@ -15,7 +15,7 @@ WPS (Wave PubSub) is Wave Terminal's publish-subscribe event system that enables
 Events in WPS have the following structure:
 
 ```go
-type WaveEvent struct {
+type WaddleEvent struct {
     Event   string   `json:"event"`      // Event type constant
     Scopes  []string `json:"scopes,omitempty"` // Optional scopes for targeted delivery
     Sender  string   `json:"sender,omitempty"` // Optional sender identifier
@@ -85,9 +85,9 @@ This will update [`frontend/types/gotypes.d.ts`](../frontend/types/gotypes.d.ts)
 To publish an event, use the global broker:
 
 ```go
-import "github.com/wavetermdev/waveterm/pkg/wps"
+import "github.com/waddledev/waddle/pkg/wps"
 
-wps.Broker.Publish(wps.WaveEvent{
+wps.Broker.Publish(wps.WaddleEvent{
     Event: wps.Event_YourNewEvent,
     Data:  yourData,
 })
@@ -98,8 +98,8 @@ wps.Broker.Publish(wps.WaveEvent{
 Scopes allow targeted event delivery. Subscribers can filter events by scope:
 
 ```go
-wps.Broker.Publish(wps.WaveEvent{
-    Event:  wps.Event_WaveObjUpdate,
+wps.Broker.Publish(wps.WaddleEvent{
+    Event:  wps.Event_WaddleObjUpdate,
     Scopes: []string{oref.String()},  // Target specific object
     Data:   updateData,
 })
@@ -111,7 +111,7 @@ To avoid blocking the caller, publish events asynchronously:
 
 ```go
 go func() {
-    wps.Broker.Publish(wps.WaveEvent{
+    wps.Broker.Publish(wps.WaddleEvent{
         Event: wps.Event_YourNewEvent,
         Data:  data,
     })
@@ -129,7 +129,7 @@ go func() {
 Events can be persisted in memory for late subscribers:
 
 ```go
-wps.Broker.Publish(wps.WaveEvent{
+wps.Broker.Publish(wps.WaddleEvent{
     Event:   wps.Event_YourNewEvent,
     Persist: 100,  // Keep last 100 events
     Data:    data,
@@ -147,7 +147,7 @@ In [`pkg/wps/wpstypes.go`](../pkg/wps/wpstypes.go:19):
 ```go
 const (
     // ... other events ...
-    Event_WaveAIRateLimit  = "waveai:ratelimit"
+    Event_WaddleAIRateLimit  = "waveai:ratelimit"
 )
 ```
 
@@ -156,7 +156,7 @@ const (
 In [`pkg/aiusechat/usechat.go`](../pkg/aiusechat/usechat.go:94-108):
 
 ```go
-import "github.com/wavetermdev/waveterm/pkg/wps"
+import "github.com/waddledev/waddle/pkg/wps"
 
 func updateRateLimit(info *uctypes.RateLimitInfo) {
     if info == nil {
@@ -168,8 +168,8 @@ func updateRateLimit(info *uctypes.RateLimitInfo) {
 
     // Publish event in goroutine to avoid blocking
     go func() {
-        wps.Broker.Publish(wps.WaveEvent{
-            Event: wps.Event_WaveAIRateLimit,
+        wps.Broker.Publish(wps.WaddleEvent{
+            Event: wps.Event_WaddleAIRateLimit,
             Data:  info,  // RateLimitInfo struct
         })
     }()
@@ -201,7 +201,7 @@ wps.Broker.Subscribe(routeId, wps.SubscriptionRequest{
 
 // Subscribe to specific scopes
 wps.Broker.Subscribe(routeId, wps.SubscriptionRequest{
-    Event:  wps.Event_WaveObjUpdate,
+    Event:  wps.Event_WaddleObjUpdate,
     Scopes: []string{"workspace:123"},
 })
 
@@ -219,7 +219,7 @@ Scopes support wildcard matching:
 ```go
 // Subscribe to all workspace events
 wps.Broker.Subscribe(routeId, wps.SubscriptionRequest{
-    Event:  wps.Event_WaveObjUpdate,
+    Event:  wps.Event_WaddleObjUpdate,
     Scopes: []string{"workspace:*"},
 })
 ```
@@ -243,7 +243,7 @@ wps.Broker.Subscribe(routeId, wps.SubscriptionRequest{
 ### Status Updates
 
 ```go
-wps.Broker.Publish(wps.WaveEvent{
+wps.Broker.Publish(wps.WaddleEvent{
     Event:   wps.Event_ControllerStatus,
     Scopes:  []string{blockId},
     Persist: 1,  // Keep only latest status
@@ -254,10 +254,10 @@ wps.Broker.Publish(wps.WaveEvent{
 ### Object Updates
 
 ```go
-wps.Broker.Publish(wps.WaveEvent{
-    Event:  wps.Event_WaveObjUpdate,
+wps.Broker.Publish(wps.WaddleEvent{
+    Event:  wps.Event_WaddleObjUpdate,
     Scopes: []string{oref.String()},
-    Data: waveobj.WaveObjUpdate{
+    Data: waveobj.WaddleObjUpdate{
         UpdateType: waveobj.UpdateType_Update,
         OType:      obj.GetOType(),
         OID:        waveobj.GetOID(obj),
@@ -272,8 +272,8 @@ wps.Broker.Publish(wps.WaveEvent{
 // Helper function for multiple updates
 func (b *BrokerType) SendUpdateEvents(updates waveobj.UpdatesRtnType) {
     for _, update := range updates {
-        b.Publish(WaveEvent{
-            Event:  Event_WaveObjUpdate,
+        b.Publish(WaddleEvent{
+            Event:  Event_WaddleObjUpdate,
             Scopes: []string{waveobj.MakeORef(update.OType, update.OID).String()},
             Data:   update,
         })
@@ -293,4 +293,4 @@ To debug event flow:
 ## Related Documentation
 
 - [Configuration System](config-system.md) - Uses WPS events for config updates
-- [Wave AI Architecture](waveai-architecture.md) - AI-related events
+- [Waddle AI Architecture](waveai-architecture.md) - AI-related events

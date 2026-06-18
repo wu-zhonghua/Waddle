@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { WaddleAIModel } from "@/app/aipanel/waveai-model";
 import { BlockNodeModel } from "@/app/block/blocktypes";
 import { appHandleKeyDown } from "@/app/store/keymodel";
 import { modalsModel } from "@/app/store/modalmodel";
@@ -92,7 +92,7 @@ export class TermViewModel implements ViewModel {
         this.termWshClient = new TermWshClient(blockId, this);
         DefaultRouter.registerRoute(makeFeBlockRouteId(blockId), this.termWshClient);
         this.nodeModel = nodeModel;
-        this.blockAtom = WOS.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = WOS.getWaddleObjectAtom<Block>(`block:${blockId}`);
         this.vdomBlockId = jotai.atom((get) => {
             const blockData = get(this.blockAtom);
             return blockData?.meta?.["term:vdomblockid"];
@@ -118,7 +118,7 @@ export class TermViewModel implements ViewModel {
             const blockData = get(this.blockAtom);
             const termMode = get(this.termMode);
             if (termMode == "vdom") {
-                return "Wave App";
+                return "Waddle App";
             }
             if (blockData?.meta?.controller == "cmd") {
                 return "";
@@ -145,7 +145,7 @@ export class TermViewModel implements ViewModel {
                 rtn.push({
                     elemtype: "iconbutton",
                     icon: "bolt",
-                    title: "Switch to Wave App",
+                    title: "Switch to Waddle App",
                     click: () => {
                         this.setTermMode("vdom");
                     },
@@ -411,7 +411,7 @@ export class TermViewModel implements ViewModel {
                 elemtype: "iconbutton",
                 icon,
                 className: "text-muted",
-                title: "No shell integration — Wave AI unable to run commands.",
+                title: "No shell integration — Waddle AI unable to run commands.",
                 noAction: true,
             };
         }
@@ -420,21 +420,21 @@ export class TermViewModel implements ViewModel {
                 elemtype: "iconbutton",
                 icon,
                 className: "text-accent",
-                title: "Shell ready — Wave AI can run commands in this terminal.",
+                title: "Shell ready — Waddle AI can run commands in this terminal.",
                 noAction: true,
             };
         }
         if (shellIntegrationStatus === "running-command") {
             let title = claudeCodeActive
                 ? "Claude Code Detected"
-                : "Shell busy — Wave AI unable to run commands while another command is running.";
+                : "Shell busy — Waddle AI unable to run commands while another command is running.";
 
             if (this.termRef.current) {
                 const inAltBuffer = this.termRef.current.terminal?.buffer?.active?.type === "alternate";
                 const lastCommand = get(this.termRef.current.lastCommandAtom);
                 const blockingCmd = getBlockingCommand(lastCommand, inAltBuffer);
                 if (blockingCmd) {
-                    title = `Wave AI integration disabled while you're inside ${blockingCmd}.`;
+                    title = `Waddle AI integration disabled while you're inside ${blockingCmd}.`;
                 }
             }
 
@@ -613,7 +613,7 @@ export class TermViewModel implements ViewModel {
         return false;
     }
 
-    keyDownHandler(waveEvent: WaveKeyboardEvent): boolean {
+    keyDownHandler(waveEvent: WaddleKeyboardEvent): boolean {
         if (keyutil.checkKeyPressed(waveEvent, "Ctrl:r")) {
             const shellIntegrationStatus = readAtom(this.termRef?.current?.shellIntegrationStatusAtom);
             if (shellIntegrationStatus === "ready") {
@@ -623,7 +623,7 @@ export class TermViewModel implements ViewModel {
             return false;
         }
         if (keyutil.checkKeyPressed(waveEvent, "Cmd:Escape")) {
-            const blockAtom = WOS.getWaveObjectAtom<Block>(`block:${this.blockId}`);
+            const blockAtom = WOS.getWaddleObjectAtom<Block>(`block:${this.blockId}`);
             const blockData = globalStore.get(blockAtom);
             const newTermMode = blockData?.meta?.["term:mode"] == "vdom" ? null : "vdom";
             const vdomBlockId = globalStore.get(this.vdomBlockId);
@@ -842,10 +842,10 @@ export class TermViewModel implements ViewModel {
             });
             menu.push({ type: "separator" });
             menu.push({
-                label: "Send to Wave AI",
+                label: "Send to Waddle AI",
                 click: () => {
                     if (selection) {
-                        const aiModel = WaveAIModel.getInstance();
+                        const aiModel = WaddleAIModel.getInstance();
                         aiModel.appendText(selection, true, { scrollToBottom: true });
                         const layoutModel = WorkspaceLayoutModel.getInstance();
                         if (!layoutModel.getAIPanelVisible()) {

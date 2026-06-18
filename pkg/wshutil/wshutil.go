@@ -18,23 +18,23 @@ import (
 	"sync/atomic"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/util/packetparser"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/util/packetparser"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
 // these should both be 5 characters
-const WaveOSC = "23198"
-const WaveServerOSC = "23199"
-const WaveOSCPrefixLen = 5 + 3 // \x1b] + WaveOSC + ; + \x07
+const WaddleOSC = "23198"
+const WaddleServerOSC = "23199"
+const WaddleOSCPrefixLen = 5 + 3 // \x1b] + WaddleOSC + ; + \x07
 
-const WaveOSCPrefix = "\x1b]" + WaveOSC + ";"
-const WaveServerOSCPrefix = "\x1b]" + WaveServerOSC + ";"
+const WaddleOSCPrefix = "\x1b]" + WaddleOSC + ";"
+const WaddleServerOSCPrefix = "\x1b]" + WaddleServerOSC + ";"
 
 const HexChars = "0123456789ABCDEF"
 const BEL = 0x07
@@ -44,7 +44,7 @@ const ESC = 0x1b
 const DefaultOutputChSize = 32
 const DefaultInputChSize = 32
 
-const WaveJwtTokenVarName = wavebase.WaveJwtTokenVarName
+const WaddleJwtTokenVarName = wavebase.WaddleJwtTokenVarName
 
 // OSC escape types
 // OSC 23198 ; (JSON | base64-JSON) ST
@@ -71,7 +71,7 @@ func makeOscPrefix(oscNum string) []byte {
 	return output
 }
 
-func EncodeWaveOSCBytes(oscNum string, barr []byte) ([]byte, error) {
+func EncodeWaddleOSCBytes(oscNum string, barr []byte) ([]byte, error) {
 	if len(oscNum) != 5 {
 		return nil, fmt.Errorf("oscNum must be 5 characters")
 	}
@@ -88,7 +88,7 @@ func EncodeWaveOSCBytes(oscNum string, barr []byte) ([]byte, error) {
 	}
 	if !hasControlChars {
 		// If no control characters, directly construct the output
-		// \x1b] (2) + WaveOSC + ; (1) + message + \x07 (1)
+		// \x1b] (2) + WaddleOSC + ; (1) + message + \x07 (1)
 		output := make([]byte, oscPrefixLen(oscNum)+len(barr)+1)
 		copyOscPrefix(output, oscNum)
 		copy(output[oscPrefixLen(oscNum):], barr)
@@ -112,7 +112,7 @@ func EncodeWaveOSCBytes(oscNum string, barr []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func EncodeWaveOSCMessageEx(oscNum string, msg *RpcMessage) ([]byte, error) {
+func EncodeWaddleOSCMessageEx(oscNum string, msg *RpcMessage) ([]byte, error) {
 	if msg == nil {
 		return nil, fmt.Errorf("nil message")
 	}
@@ -120,7 +120,7 @@ func EncodeWaveOSCMessageEx(oscNum string, msg *RpcMessage) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling message to json: %w", err)
 	}
-	return EncodeWaveOSCBytes(oscNum, barr)
+	return EncodeWaddleOSCBytes(oscNum, barr)
 }
 
 var shutdownOnce sync.Once
@@ -225,7 +225,7 @@ func MakeClientJWTToken(rpcCtx wshrpc.RpcContext) (string, error) {
 			panic("Invalid RpcCtx, no routeid")
 		}
 	}
-	claims := &wavejwt.WaveJwtClaims{
+	claims := &wavejwt.WaddleJwtClaims{
 		Sock:      rpcCtx.SockName,
 		RouteId:   rpcCtx.RouteId,
 		ProcRoute: rpcCtx.ProcRoute,
@@ -236,7 +236,7 @@ func MakeClientJWTToken(rpcCtx wshrpc.RpcContext) (string, error) {
 	return wavejwt.Sign(claims)
 }
 
-func claimsToRpcCtx(claims *wavejwt.WaveJwtClaims) *wshrpc.RpcContext {
+func claimsToRpcCtx(claims *wavejwt.WaddleJwtClaims) *wshrpc.RpcContext {
 	return &wshrpc.RpcContext{
 		SockName:  claims.Sock,
 		RouteId:   claims.RouteId,
@@ -358,11 +358,11 @@ func handleDomainSocketClient(conn net.Conn, readCallback func()) {
 
 // only for use on client
 func ExtractUnverifiedRpcContext(tokenStr string) (*wshrpc.RpcContext, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &wavejwt.WaveJwtClaims{})
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &wavejwt.WaddleJwtClaims{})
 	if err != nil {
 		return nil, fmt.Errorf("error parsing token: %w", err)
 	}
-	claims, ok := token.Claims.(*wavejwt.WaveJwtClaims)
+	claims, ok := token.Claims.(*wavejwt.WaddleJwtClaims)
 	if !ok {
 		return nil, fmt.Errorf("error getting claims from token")
 	}
@@ -371,11 +371,11 @@ func ExtractUnverifiedRpcContext(tokenStr string) (*wshrpc.RpcContext, error) {
 
 // only for use on client
 func ExtractUnverifiedSocketName(tokenStr string) (string, error) {
-	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &wavejwt.WaveJwtClaims{})
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, &wavejwt.WaddleJwtClaims{})
 	if err != nil {
 		return "", fmt.Errorf("error parsing token: %w", err)
 	}
-	claims, ok := token.Claims.(*wavejwt.WaveJwtClaims)
+	claims, ok := token.Claims.(*wavejwt.WaddleJwtClaims)
 	if !ok {
 		return "", fmt.Errorf("error getting claims from token")
 	}
@@ -402,7 +402,7 @@ func GetInfo() wshrpc.RemoteInfo {
 	return wshrpc.RemoteInfo{
 		ClientArch:    runtime.GOARCH,
 		ClientOs:      runtime.GOOS,
-		ClientVersion: wavebase.WaveVersion,
+		ClientVersion: wavebase.WaddleVersion,
 		Shell:         getShell(),
 		HomeDir:       wavebase.GetHomeDir(),
 	}
@@ -410,7 +410,7 @@ func GetInfo() wshrpc.RemoteInfo {
 
 func InstallRcFiles() error {
 	home := wavebase.GetHomeDir()
-	waveDir := filepath.Join(home, wavebase.RemoteWaveHomeDirName)
+	waveDir := filepath.Join(home, wavebase.RemoteWaddleHomeDirName)
 	wshBinDir := filepath.Join(waveDir, wavebase.RemoteWshBinDirName)
 	return shellutil.InitRcFiles(waveDir, wshBinDir)
 }

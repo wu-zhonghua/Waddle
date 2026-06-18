@@ -1,7 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-export function findWaveAIPanel(element: HTMLElement): HTMLElement | null {
+export function findWaddleAIPanel(element: HTMLElement): HTMLElement | null {
     let current: HTMLElement = element;
     while (current) {
         if (current.hasAttribute("data-waveai-panel")) {
@@ -15,14 +15,14 @@ export function findWaveAIPanel(element: HTMLElement): HTMLElement | null {
 export function waveAIHasFocusWithin(focusTarget?: Element | null): boolean {
     if (focusTarget !== undefined) {
         if (focusTarget instanceof HTMLElement) {
-            return findWaveAIPanel(focusTarget) != null;
+            return findWaddleAIPanel(focusTarget) != null;
         }
         return false;
     }
 
     const focused = document.activeElement;
     if (focused instanceof HTMLElement) {
-        const waveAIPanel = findWaveAIPanel(focused);
+        const waveAIPanel = findWaddleAIPanel(focused);
         if (waveAIPanel) return true;
     }
 
@@ -33,7 +33,7 @@ export function waveAIHasFocusWithin(focusTarget?: Element | null): boolean {
             anchor = anchor.parentElement;
         }
         if (anchor instanceof HTMLElement) {
-            const waveAIPanel = findWaveAIPanel(anchor);
+            const waveAIPanel = findWaddleAIPanel(anchor);
             if (waveAIPanel) return true;
         }
     }
@@ -52,7 +52,7 @@ export function waveAIHasSelection(): boolean {
         anchor = anchor.parentElement;
     }
     if (anchor instanceof HTMLElement) {
-        return findWaveAIPanel(anchor) != null;
+        return findWaddleAIPanel(anchor) != null;
     }
 
     return false;

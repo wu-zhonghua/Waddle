@@ -10,9 +10,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 var jobDebugCmd = &cobra.Command{
@@ -362,13 +362,13 @@ func jobDebugGetOutputRun(cmd *cobra.Command, args []string) error {
 	reader, streamMeta := broker.CreateStreamReader(readerRouteId, writerRouteId, 64*1024)
 	defer reader.Close()
 
-	data := wshrpc.CommandWaveFileReadStreamData{
+	data := wshrpc.CommandWaddleFileReadStreamData{
 		ZoneId:     jobIdFlag,
 		Name:       "term",
 		StreamMeta: *streamMeta,
 	}
 
-	_, err = wshclient.WaveFileReadStreamCommand(RpcClient, data, nil)
+	_, err = wshclient.WaddleFileReadStreamCommand(RpcClient, data, nil)
 	if err != nil {
 		return fmt.Errorf("starting stream read: %w", err)
 	}

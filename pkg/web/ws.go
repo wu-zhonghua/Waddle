@@ -15,12 +15,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/wavetermdev/waveterm/pkg/authkey"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/eventbus"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/web/webcmd"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/authkey"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/eventbus"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/web/webcmd"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 const wsReadWaitTimeout = 15 * time.Second

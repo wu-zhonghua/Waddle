@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 var connCmd = &cobra.Command{
 	Use:   "conn",
-	Short: "manage Wave Terminal connections",
-	Long:  "Commands to manage Wave Terminal SSH and WSL connections",
+	Short: "manage Waddle connections",
+	Long:  "Commands to manage Waddle SSH and WSL connections",
 }
 
 var connStatusCmd = &cobra.Command{

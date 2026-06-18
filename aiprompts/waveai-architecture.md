@@ -1,8 +1,8 @@
-# Wave AI Architecture Documentation
+# Waddle AI Architecture Documentation
 
 ## Overview
 
-Wave AI is a chat-based AI assistant feature integrated into Wave Terminal. It provides a conversational interface for interacting with various AI providers (OpenAI, Anthropic, Perplexity, Google, and Wave's cloud proxy) through a unified streaming architecture. The feature is implemented as a block view within Wave Terminal's modular system.
+Waddle AI is a chat-based AI assistant feature integrated into Waddle. It provides a conversational interface for interacting with various AI providers (OpenAI, Anthropic, Perplexity, Google, and Waddle's cloud proxy) through a unified streaming architecture. The feature is implemented as a block view within Waddle's modular system.
 
 ## Architecture Components
 
@@ -10,7 +10,7 @@ Wave AI is a chat-based AI assistant feature integrated into Wave Terminal. It p
 
 #### Core Components
 
-**1. WaveAiModel Class**
+**1. WaddleAiModel Class**
 - **Purpose**: Main view model implementing the `ViewModel` interface
 - **Responsibilities**:
   - State management using Jotai atoms
@@ -27,7 +27,7 @@ Wave AI is a chat-based AI assistant feature integrated into Wave Terminal. It p
   - Route messages to the model's `sendMessage` method
 
 **3. React Components**
-- **WaveAi**: Main container component
+- **WaddleAi**: Main container component
 - **ChatWindow**: Scrollable message display with auto-scroll behavior
 - **ChatItem**: Individual message renderer with role-based styling
 - **ChatInput**: Auto-resizing textarea with keyboard navigation
@@ -49,7 +49,7 @@ removeLastMessageAtom: WritableAtom<unknown, [], void>
 presetKey: Atom<string>           // Current AI preset selection
 presetMap: Atom<{[k: string]: MetaType}>  // Available AI presets
 mergedPresets: Atom<MetaType>     // Merged configuration hierarchy
-aiOpts: Atom<WaveAIOptsType>      // Final AI options for requests
+aiOpts: Atom<WaddleAIOptsType>      // Final AI options for requests
 ```
 
 **UI State**:
@@ -75,8 +75,8 @@ Configuration is merged using `mergeMeta()` utility, allowing fine-grained overr
 ```
 User Input → sendMessage() → 
 ├── Add user message to UI
-├── Create WaveAIStreamRequest
-├── Call RpcApi.StreamWaveAiCommand()
+├── Create WaddleAIStreamRequest
+├── Call RpcApi.StreamWaddleAiCommand()
 ├── Add typing indicator
 └── Stream response handling:
     ├── Update message incrementally
@@ -93,8 +93,8 @@ User Input → sendMessage() →
 type AIBackend interface {
     StreamCompletion(
         ctx context.Context,
-        request wshrpc.WaveAIStreamRequest,
-    ) chan wshrpc.RespOrErrorUnion[wshrpc.WaveAIPacketType]
+        request wshrpc.WaddleAIStreamRequest,
+    ) chan wshrpc.RespOrErrorUnion[wshrpc.WaddleAIPacketType]
 }
 ```
 
@@ -116,9 +116,9 @@ type AIBackend interface {
   - Usage token tracking
 - **Events**: `message_start`, `content_block_delta`, `message_stop`, etc.
 
-**3. WaveAICloudBackend** (`cloudbackend.go`)
-- **Provider**: Wave's cloud proxy service
-- **Transport**: WebSocket connection to Wave cloud
+**3. WaddleAICloudBackend** (`cloudbackend.go`)
+- **Provider**: Waddle's cloud proxy service
+- **Transport**: WebSocket connection to Waddle cloud
 - **Features**: 
   - Fallback when no API token/baseURL provided
   - Built-in rate limiting and abuse protection
@@ -134,7 +134,7 @@ type AIBackend interface {
 #### Backend Routing Logic
 
 ```go
-func RunAICommand(ctx context.Context, request wshrpc.WaveAIStreamRequest) chan wshrpc.RespOrErrorUnion[wshrpc.WaveAIPacketType] {
+func RunAICommand(ctx context.Context, request wshrpc.WaddleAIStreamRequest) chan wshrpc.RespOrErrorUnion[wshrpc.WaddleAIPacketType] {
     // Route based on request.Opts.APIType:
     switch request.Opts.APIType {
     case "anthropic":
@@ -145,7 +145,7 @@ func RunAICommand(ctx context.Context, request wshrpc.WaveAIStreamRequest) chan 
         backend = GoogleBackend{}
     default:
         if IsCloudAIRequest(request.Opts) {
-            backend = WaveAICloudBackend{}
+            backend = WaddleAICloudBackend{}
         } else {
             backend = OpenAIBackend{}
         }
@@ -161,23 +161,23 @@ func RunAICommand(ctx context.Context, request wshrpc.WaveAIStreamRequest) chan 
 **Command**: `streamwaveai`
 **Type**: Response Stream (one request, multiple responses)
 
-**Request Type** (`WaveAIStreamRequest`):
+**Request Type** (`WaddleAIStreamRequest`):
 ```go
-type WaveAIStreamRequest struct {
+type WaddleAIStreamRequest struct {
     ClientId string                    `json:"clientid,omitempty"`
-    Opts     *WaveAIOptsType           `json:"opts"`
-    Prompt   []WaveAIPromptMessageType `json:"prompt"`
+    Opts     *WaddleAIOptsType           `json:"opts"`
+    Prompt   []WaddleAIPromptMessageType `json:"prompt"`
 }
 ```
 
-**Response Type** (`WaveAIPacketType`):
+**Response Type** (`WaddleAIPacketType`):
 ```go
-type WaveAIPacketType struct {
+type WaddleAIPacketType struct {
     Type         string           `json:"type"`
     Model        string           `json:"model,omitempty"`
     Created      int64            `json:"created,omitempty"`
     FinishReason string           `json:"finish_reason,omitempty"`
-    Usage        *WaveAIUsageType `json:"usage,omitempty"`
+    Usage        *WaddleAIUsageType `json:"usage,omitempty"`
     Index        int              `json:"index,omitempty"`
     Text         string           `json:"text,omitempty"`
     Error        string           `json:"error,omitempty"`
@@ -186,9 +186,9 @@ type WaveAIPacketType struct {
 
 #### Configuration Types
 
-**AI Options** (`WaveAIOptsType`):
+**AI Options** (`WaddleAIOptsType`):
 ```go
-type WaveAIOptsType struct {
+type WaddleAIOptsType struct {
     Model      string `json:"model"`
     APIType    string `json:"apitype,omitempty"`
     APIToken   string `json:"apitoken"`
@@ -207,12 +207,12 @@ type WaveAIOptsType struct {
 #### Chat History Storage
 
 **Frontend**:
-- **Method**: `fetchWaveFile(blockId, "aidata")`
-- **Format**: JSON array of `WaveAIPromptMessageType`
+- **Method**: `fetchWaddleFile(blockId, "aidata")`
+- **Format**: JSON array of `WaddleAIPromptMessageType`
 - **Sliding Window**: Last 30 messages (`slidingWindowSize = 30`)
 
 **Backend**:
-- **Service**: `BlockService.SaveWaveAiData(blockId, history)`
+- **Service**: `BlockService.SaveWaddleAiData(blockId, history)`
 - **Storage**: Block-associated file storage
 - **Persistence**: Automatic save after each complete exchange
 
@@ -228,9 +228,9 @@ interface ChatMessageType {
 }
 ```
 
-**Stored Messages** (`WaveAIPromptMessageType`):
+**Stored Messages** (`WaddleAIPromptMessageType`):
 ```go
-type WaveAIPromptMessageType struct {
+type WaddleAIPromptMessageType struct {
     Role    string `json:"role"`     // "user" | "assistant" | "system" | "error"
     Content string `json:"content"`
     Name    string `json:"name,omitempty"`
@@ -313,7 +313,7 @@ type WaveAIPromptMessageType struct {
 
 The UI automatically detects and displays the active provider:
 
-- **Cloud**: Wave's proxy (no token/baseURL)
+- **Cloud**: Waddle's proxy (no token/baseURL)
 - **Local**: localhost/127.0.0.1 endpoints
 - **Remote**: External API endpoints
 - **Provider-specific**: Anthropic, Perplexity with custom icons

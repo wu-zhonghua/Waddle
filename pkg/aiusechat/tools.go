@@ -10,13 +10,13 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/aiutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/blockcontroller"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 func makeTerminalBlockDesc(block *waveobj.Block) string {
@@ -114,9 +114,9 @@ func MakeBlockShortDesc(block *waveobj.Block) string {
 		}
 		return "cpu graph"
 	case "tips":
-		return "Wave quick tips widget"
+		return "Waddle quick tips widget"
 	case "help":
-		return "Wave documentation widget"
+		return "Waddle documentation widget"
 	case "launcher":
 		return "placeholder widget used to launch other widgets"
 	case "tsunami":
@@ -133,7 +133,7 @@ func MakeBlockShortDesc(block *waveobj.Block) string {
 	}
 }
 
-func GenerateTabStateAndTools(ctx context.Context, tabid string, widgetAccess bool, chatOpts *uctypes.WaveChatOpts) (string, []uctypes.ToolDefinition, error) {
+func GenerateTabStateAndTools(ctx context.Context, tabid string, widgetAccess bool, chatOpts *uctypes.WaddleChatOpts) (string, []uctypes.ToolDefinition, error) {
 	if tabid == "" {
 		return "", nil, nil
 	}
@@ -165,7 +165,7 @@ func GenerateTabStateAndTools(ctx context.Context, tabid string, widgetAccess bo
 		// - openai-responses API type
 		// - google-gemini API type with Gemini 3+ models
 		if chatOpts.Config.APIType == uctypes.APIType_OpenAIResponses ||
-		   (chatOpts.Config.APIType == uctypes.APIType_GoogleGemini && aiutil.GeminiSupportsImageToolResults(chatOpts.Config.Model)) {
+			(chatOpts.Config.APIType == uctypes.APIType_GoogleGemini && aiutil.GeminiSupportsImageToolResults(chatOpts.Config.Model)) {
 			tools = append(tools, GetCaptureScreenshotToolDefinition(tabid))
 		}
 		tools = append(tools, GetReadTextFileToolDefinition())

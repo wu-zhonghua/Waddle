@@ -10,13 +10,13 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/vdom"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
 )
 
 type RespOrErrorUnion[T any] struct {
@@ -61,11 +61,11 @@ type WshRpcInterface interface {
 	DeleteSubBlockCommand(ctx context.Context, data CommandDeleteBlockData) error
 	WaitForRouteCommand(ctx context.Context, data CommandWaitForRouteData) (bool, error)
 
-	EventPublishCommand(ctx context.Context, data wps.WaveEvent) error
+	EventPublishCommand(ctx context.Context, data wps.WaddleEvent) error
 	EventSubCommand(ctx context.Context, data wps.SubscriptionRequest) error
 	EventUnsubCommand(ctx context.Context, data string) error
 	EventUnsubAllCommand(ctx context.Context) error
-	EventReadHistoryCommand(ctx context.Context, data CommandEventReadHistoryData) ([]*wps.WaveEvent, error)
+	EventReadHistoryCommand(ctx context.Context, data CommandEventReadHistoryData) ([]*wps.WaddleEvent, error)
 
 	FileRestoreBackupCommand(ctx context.Context, data CommandFileRestoreBackupData) error
 	GetTempDirCommand(ctx context.Context, data CommandGetTempDirData) (string, error)
@@ -77,11 +77,11 @@ type WshRpcInterface interface {
 	SetConfigCommand(ctx context.Context, data MetaSettingsType) error
 	SetConnectionsConfigCommand(ctx context.Context, data ConnConfigRequest) error
 	GetFullConfigCommand(ctx context.Context) (wconfig.FullConfigType, error)
-	GetWaveAIModeConfigCommand(ctx context.Context) (wconfig.AIModeConfigUpdate, error)
+	GetWaddleAIModeConfigCommand(ctx context.Context) (wconfig.AIModeConfigUpdate, error)
 	BlockInfoCommand(ctx context.Context, blockId string) (*BlockInfoData, error)
 	DebugTermCommand(ctx context.Context, data CommandDebugTermData) (*CommandDebugTermRtnData, error)
 	BlocksListCommand(ctx context.Context, data BlocksListRequest) ([]BlocksListEntry, error)
-	WaveInfoCommand(ctx context.Context) (*WaveInfoData, error)
+	WaddleInfoCommand(ctx context.Context) (*WaddleInfoData, error)
 	MacOSVersionCommand(ctx context.Context) (string, error)
 	WshActivityCommand(ct context.Context, data map[string]int) error
 	ActivityCommand(ctx context.Context, data ActivityUpdate) error
@@ -115,7 +115,7 @@ type WshRpcInterface interface {
 	NotifySystemResumeCommand(ctx context.Context) error
 
 	// eventrecv is special, it's handled internally by WshRpc with EventListener
-	EventRecvCommand(ctx context.Context, data wps.WaveEvent) error
+	EventRecvCommand(ctx context.Context, data wps.WaddleEvent) error
 
 	// remotes
 	WshRpcRemoteFileInterface
@@ -132,7 +132,7 @@ type WshRpcInterface interface {
 
 	// emain
 	WebSelectorCommand(ctx context.Context, data CommandWebSelectorData) ([]string, error)
-	NotifyCommand(ctx context.Context, notificationOptions WaveNotificationOptions) error
+	NotifyCommand(ctx context.Context, notificationOptions WaddleNotificationOptions) error
 	FocusWindowCommand(ctx context.Context, windowId string) error
 	ElectronEncryptCommand(ctx context.Context, data CommandElectronEncryptData) (*CommandElectronEncryptRtnData, error)
 	ElectronDecryptCommand(ctx context.Context, data CommandElectronDecryptData) (*CommandElectronDecryptRtnData, error)
@@ -154,12 +154,12 @@ type WshRpcInterface interface {
 
 	// ai
 	AiSendMessageCommand(ctx context.Context, data AiMessageData) error
-	WaveAIEnableTelemetryCommand(ctx context.Context) error
-	GetWaveAIChatCommand(ctx context.Context, data CommandGetWaveAIChatData) (*uctypes.UIChat, error)
-	GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error)
-	WaveAIToolApproveCommand(ctx context.Context, data CommandWaveAIToolApproveData) error
-	WaveAIAddContextCommand(ctx context.Context, data CommandWaveAIAddContextData) error
-	WaveAIGetToolDiffCommand(ctx context.Context, data CommandWaveAIGetToolDiffData) (*CommandWaveAIGetToolDiffRtnData, error)
+	WaddleAIEnableTelemetryCommand(ctx context.Context) error
+	GetWaddleAIChatCommand(ctx context.Context, data CommandGetWaddleAIChatData) (*uctypes.UIChat, error)
+	GetWaddleAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error)
+	WaddleAIToolApproveCommand(ctx context.Context, data CommandWaddleAIToolApproveData) error
+	WaddleAIAddContextCommand(ctx context.Context, data CommandWaddleAIAddContextData) error
+	WaddleAIGetToolDiffCommand(ctx context.Context, data CommandWaddleAIGetToolDiffData) (*CommandWaddleAIGetToolDiffRtnData, error)
 
 	// screenshot
 	CaptureBlockScreenshotCommand(ctx context.Context, data CommandCaptureBlockScreenshotData) (string, error)
@@ -177,7 +177,7 @@ type WshRpcInterface interface {
 
 	// file
 	WshRpcFileInterface
-	WaveFileReadStreamCommand(ctx context.Context, data CommandWaveFileReadStreamData) (*WaveFileInfo, error)
+	WaddleFileReadStreamCommand(ctx context.Context, data CommandWaddleFileReadStreamData) (*WaddleFileInfo, error)
 
 	// builder
 	WshRpcBuilderInterface
@@ -341,7 +341,6 @@ type CommandEventReadHistoryData struct {
 	MaxItems int    `json:"maxitems"`
 }
 
-
 type CpuDataRequest struct {
 	Id    string `json:"id"`
 	Count int    `json:"count"`
@@ -443,14 +442,14 @@ type CommandWebSelectorData struct {
 }
 
 type BlockInfoData struct {
-	BlockId     string          `json:"blockid"`
-	TabId       string          `json:"tabid"`
-	WorkspaceId string          `json:"workspaceid"`
-	Block       *waveobj.Block  `json:"block"`
-	Files       []*WaveFileInfo `json:"files"`
+	BlockId     string            `json:"blockid"`
+	TabId       string            `json:"tabid"`
+	WorkspaceId string            `json:"workspaceid"`
+	Block       *waveobj.Block    `json:"block"`
+	Files       []*WaddleFileInfo `json:"files"`
 }
 
-type WaveNotificationOptions struct {
+type WaddleNotificationOptions struct {
 	Title  string `json:"title,omitempty"`
 	Body   string `json:"body,omitempty"`
 	Silent bool   `json:"silent,omitempty"`
@@ -469,7 +468,7 @@ type VDomUrlRequestResponse struct {
 	Body       []byte            `json:"body,omitempty"`
 }
 
-type WaveInfoData struct {
+type WaddleInfoData struct {
 	Version   string `json:"version"`
 	ClientId  string `json:"clientid"`
 	BuildTime string `json:"buildtime"`
@@ -499,11 +498,11 @@ type AiMessageData struct {
 	Message string `json:"message,omitempty"`
 }
 
-type CommandGetWaveAIChatData struct {
+type CommandGetWaddleAIChatData struct {
 	ChatId string `json:"chatid"`
 }
 
-type CommandWaveAIToolApproveData struct {
+type CommandWaddleAIToolApproveData struct {
 	ToolCallId string `json:"toolcallid"`
 	Approval   string `json:"approval,omitempty"`
 }
@@ -515,19 +514,19 @@ type AIAttachedFile struct {
 	Data64 string `json:"data64"`
 }
 
-type CommandWaveAIAddContextData struct {
+type CommandWaddleAIAddContextData struct {
 	Files   []AIAttachedFile `json:"files,omitempty"`
 	Text    string           `json:"text,omitempty"`
 	Submit  bool             `json:"submit,omitempty"`
 	NewChat bool             `json:"newchat,omitempty"`
 }
 
-type CommandWaveAIGetToolDiffData struct {
+type CommandWaddleAIGetToolDiffData struct {
 	ChatId     string `json:"chatid"`
 	ToolCallId string `json:"toolcallid"`
 }
 
-type CommandWaveAIGetToolDiffRtnData struct {
+type CommandWaddleAIGetToolDiffRtnData struct {
 	OriginalContents64 string `json:"originalcontents64"`
 	ModifiedContents64 string `json:"modifiedcontents64"`
 }
@@ -575,32 +574,32 @@ type ActivityDisplayType struct {
 }
 
 type ActivityUpdate struct {
-	FgMinutes           int                   `json:"fgminutes,omitempty"`
-	ActiveMinutes       int                   `json:"activeminutes,omitempty"`
-	OpenMinutes         int                   `json:"openminutes,omitempty"`
-	WaveAIFgMinutes     int                   `json:"waveaifgminutes,omitempty"`
-	WaveAIActiveMinutes int                   `json:"waveaiactiveminutes,omitempty"`
-	NumTabs             int                   `json:"numtabs,omitempty"`
-	NewTab              int                   `json:"newtab,omitempty"`
-	NumBlocks           int                   `json:"numblocks,omitempty"`
-	NumWindows          int                   `json:"numwindows,omitempty"`
-	NumWS               int                   `json:"numws,omitempty"`
-	NumWSNamed          int                   `json:"numwsnamed,omitempty"`
-	NumSSHConn          int                   `json:"numsshconn,omitempty"`
-	NumWSLConn          int                   `json:"numwslconn,omitempty"`
-	NumMagnify          int                   `json:"nummagnify,omitempty"`
-	TermCommandsRun     int                   `json:"termcommandsrun,omitempty"`
-	NumPanics           int                   `json:"numpanics,omitempty"`
-	NumAIReqs           int                   `json:"numaireqs,omitempty"`
-	Startup             int                   `json:"startup,omitempty"`
-	Shutdown            int                   `json:"shutdown,omitempty"`
-	SetTabTheme         int                   `json:"settabtheme,omitempty"`
-	BuildTime           string                `json:"buildtime,omitempty"`
-	Displays            []ActivityDisplayType `json:"displays,omitempty"`
-	Renderers           map[string]int        `json:"renderers,omitempty"`
-	Blocks              map[string]int        `json:"blocks,omitempty"`
-	WshCmds             map[string]int        `json:"wshcmds,omitempty"`
-	Conn                map[string]int        `json:"conn,omitempty"`
+	FgMinutes             int                   `json:"fgminutes,omitempty"`
+	ActiveMinutes         int                   `json:"activeminutes,omitempty"`
+	OpenMinutes           int                   `json:"openminutes,omitempty"`
+	WaddleAIFgMinutes     int                   `json:"waveaifgminutes,omitempty"`
+	WaddleAIActiveMinutes int                   `json:"waveaiactiveminutes,omitempty"`
+	NumTabs               int                   `json:"numtabs,omitempty"`
+	NewTab                int                   `json:"newtab,omitempty"`
+	NumBlocks             int                   `json:"numblocks,omitempty"`
+	NumWindows            int                   `json:"numwindows,omitempty"`
+	NumWS                 int                   `json:"numws,omitempty"`
+	NumWSNamed            int                   `json:"numwsnamed,omitempty"`
+	NumSSHConn            int                   `json:"numsshconn,omitempty"`
+	NumWSLConn            int                   `json:"numwslconn,omitempty"`
+	NumMagnify            int                   `json:"nummagnify,omitempty"`
+	TermCommandsRun       int                   `json:"termcommandsrun,omitempty"`
+	NumPanics             int                   `json:"numpanics,omitempty"`
+	NumAIReqs             int                   `json:"numaireqs,omitempty"`
+	Startup               int                   `json:"startup,omitempty"`
+	Shutdown              int                   `json:"shutdown,omitempty"`
+	SetTabTheme           int                   `json:"settabtheme,omitempty"`
+	BuildTime             string                `json:"buildtime,omitempty"`
+	Displays              []ActivityDisplayType `json:"displays,omitempty"`
+	Renderers             map[string]int        `json:"renderers,omitempty"`
+	Blocks                map[string]int        `json:"blocks,omitempty"`
+	WshCmds               map[string]int        `json:"wshcmds,omitempty"`
+	Conn                  map[string]int        `json:"conn,omitempty"`
 }
 
 type ConnExtData struct {
@@ -822,14 +821,14 @@ type JobManagerStatusUpdate struct {
 	JobManagerStatus string `json:"jobmanagerstatus"`
 }
 
-type CommandWaveFileReadStreamData struct {
+type CommandWaddleFileReadStreamData struct {
 	ZoneId     string     `json:"zoneid"`
 	Name       string     `json:"name"`
 	StreamMeta StreamMeta `json:"streammeta"`
 }
 
-// see blockstore.go (WaveFile)
-type WaveFileInfo struct {
+// see blockstore.go (WaddleFile)
+type WaddleFileInfo struct {
 	ZoneId    string   `json:"zoneid"`
 	Name      string   `json:"name"`
 	Opts      FileOpts `json:"opts"`

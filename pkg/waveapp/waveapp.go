@@ -19,12 +19,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/vdom"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 type AppOpts struct {
@@ -44,7 +44,7 @@ type Client struct {
 	RootElem           *vdom.VDomElem
 	RpcClient          *wshutil.WshRpc
 	RpcContext         *wshrpc.RpcContext
-	ServerImpl         *WaveAppServerImpl
+	ServerImpl         *WaddleAppServerImpl
 	IsDone             bool
 	RouteId            string
 	VDomContextBlockId string
@@ -159,22 +159,22 @@ func (client *Client) RunMain() {
 }
 
 func (client *Client) Connect() error {
-	jwtToken := os.Getenv(wshutil.WaveJwtTokenVarName)
+	jwtToken := os.Getenv(wshutil.WaddleJwtTokenVarName)
 	if jwtToken == "" {
-		return fmt.Errorf("no %s env var set", wshutil.WaveJwtTokenVarName)
+		return fmt.Errorf("no %s env var set", wshutil.WaddleJwtTokenVarName)
 	}
 	rpcCtx, err := wshutil.ExtractUnverifiedRpcContext(jwtToken)
 	if err != nil {
-		return fmt.Errorf("error extracting rpc context from %s: %v", wshutil.WaveJwtTokenVarName, err)
+		return fmt.Errorf("error extracting rpc context from %s: %v", wshutil.WaddleJwtTokenVarName, err)
 	}
 	client.RpcContext = rpcCtx
 	if client.RpcContext == nil || client.RpcContext.BlockId == "" {
 		return fmt.Errorf("no block id in rpc context")
 	}
-	client.ServerImpl = &WaveAppServerImpl{BlockId: client.RpcContext.BlockId, Client: client}
+	client.ServerImpl = &WaddleAppServerImpl{BlockId: client.RpcContext.BlockId, Client: client}
 	sockName, err := wshutil.ExtractUnverifiedSocketName(jwtToken)
 	if err != nil {
-		return fmt.Errorf("error extracting socket name from %s: %v", wshutil.WaveJwtTokenVarName, err)
+		return fmt.Errorf("error extracting socket name from %s: %v", wshutil.WaddleJwtTokenVarName, err)
 	}
 	rpcClient, err := wshutil.SetupDomainSocketRpcClient(sockName, client.ServerImpl, "vdomclient")
 	if err != nil {
@@ -220,7 +220,7 @@ func (c *Client) CreateVDomContext(target *vdom.VDomTarget) error {
 	wshclient.EventSubCommand(c.RpcClient, wps.SubscriptionRequest{Event: wps.Event_BlockClose, Scopes: []string{
 		blockORef.String(),
 	}}, nil)
-	c.RpcClient.EventListener.On("blockclose", func(event *wps.WaveEvent) {
+	c.RpcClient.EventListener.On("blockclose", func(event *wps.WaddleEvent) {
 		c.doShutdown("got blockclose event")
 	})
 	return nil
@@ -255,7 +255,7 @@ func (c *Client) GetAtomVal(name string) any {
 }
 
 func makeNullVDom() *vdom.VDomElem {
-	return &vdom.VDomElem{WaveId: uuid.New().String(), Tag: vdom.WaveNullTag}
+	return &vdom.VDomElem{WaddleId: uuid.New().String(), Tag: vdom.WaddleNullTag}
 }
 
 func DefineComponent[P any](client *Client, name string, renderFn func(ctx context.Context, props P) any) vdom.Component[P] {

@@ -5,7 +5,7 @@ import { Tooltip } from "@/app/element/tooltip";
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { MetaKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { MetaKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import * as keyutil from "@/util/keyutil";
 import { isMacOS } from "@/util/platformutil";
 import { isBlank, makeConnRoute } from "@/util/util";
@@ -20,12 +20,12 @@ type ActionStatus = {
     isError: boolean;
 };
 
-type ProcessViewerEnv = WaveEnvSubset<{
+type ProcessViewerEnv = WaddleEnvSubset<{
     rpc: {
-        RemoteProcessListCommand: WaveEnv["rpc"]["RemoteProcessListCommand"];
-        RemoteProcessSignalCommand: WaveEnv["rpc"]["RemoteProcessSignalCommand"];
+        RemoteProcessListCommand: WaddleEnv["rpc"]["RemoteProcessListCommand"];
+        RemoteProcessSignalCommand: WaddleEnv["rpc"]["RemoteProcessSignalCommand"];
     };
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
+    getConnStatusAtom: WaddleEnv["getConnStatusAtom"];
     getBlockMetaKeyAtom: MetaKeyAtomFnType<"connection">;
 }>;
 
@@ -338,7 +338,7 @@ export class ProcessViewerViewModel implements ViewModel {
         this.triggerRefresh();
     }
 
-    keyDownHandler(waveEvent: WaveKeyboardEvent): boolean {
+    keyDownHandler(waveEvent: WaddleKeyboardEvent): boolean {
         if (keyutil.checkKeyPressed(waveEvent, "Cmd:f")) {
             this.openSearch();
             return true;

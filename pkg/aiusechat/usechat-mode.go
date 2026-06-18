@@ -9,10 +9,10 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
+	"github.com/waddledev/waddle/pkg/aiusechat/aiutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
 )
 
 var AzureResourceNameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
@@ -46,7 +46,7 @@ func resolveAIMode(requestedMode string, premium bool) (string, *wconfig.AIModeC
 		return "", nil, err
 	}
 
-	if config.WaveAICloud && !premium {
+	if config.WaddleAICloud && !premium {
 		mode = uctypes.AIModeQuick
 		config, err = getAIModeConfig(mode)
 		if err != nil {
@@ -58,12 +58,12 @@ func resolveAIMode(requestedMode string, premium bool) (string, *wconfig.AIModeC
 }
 
 func applyProviderDefaults(config *wconfig.AIModeConfigType) {
-	if config.Provider == uctypes.AIProvider_Wave {
-		config.WaveAICloud = true
+	if config.Provider == uctypes.AIProvider_Waddle {
+		config.WaddleAICloud = true
 		if config.Endpoint == "" {
 			config.Endpoint = uctypes.DefaultAIEndpoint
-			if os.Getenv(uctypes.WaveAIEndpointEnvName) != "" {
-				config.Endpoint = os.Getenv(uctypes.WaveAIEndpointEnvName)
+			if os.Getenv(uctypes.WaddleAIEndpointEnvName) != "" {
+				config.Endpoint = os.Getenv(uctypes.WaddleAIEndpointEnvName)
 			}
 		}
 	}
@@ -253,13 +253,13 @@ var builderModeConfigs = map[string]wconfig.AIModeConfigType{
 		DisplayOrder:       -2,
 		DisplayIcon:        "sparkles",
 		DisplayDescription: "Good mix of speed and accuracy\n(gpt-5.4 with minimal thinking)",
-		Provider:           uctypes.AIProvider_Wave,
+		Provider:           uctypes.AIProvider_Waddle,
 		APIType:            uctypes.APIType_OpenAIResponses,
 		Model:              "gpt-5.4",
 		ThinkingLevel:      uctypes.ThinkingLevelLow,
 		Verbosity:          uctypes.VerbosityLevelLow,
 		Capabilities:       []string{uctypes.AICapabilityTools, uctypes.AICapabilityImages, uctypes.AICapabilityPdfs},
-		WaveAIPremium:      true,
+		WaddleAIPremium:    true,
 		SwitchCompat:       []string{"wavecloud"},
 	},
 	uctypes.AIModeBuilderDeep: {
@@ -267,13 +267,13 @@ var builderModeConfigs = map[string]wconfig.AIModeConfigType{
 		DisplayOrder:       -1,
 		DisplayIcon:        "lightbulb",
 		DisplayDescription: "Slower but most capable\n(gpt-5.4 with full reasoning)",
-		Provider:           uctypes.AIProvider_Wave,
+		Provider:           uctypes.AIProvider_Waddle,
 		APIType:            uctypes.APIType_OpenAIResponses,
 		Model:              "gpt-5.4",
 		ThinkingLevel:      uctypes.ThinkingLevelMedium,
 		Verbosity:          uctypes.VerbosityLevelLow,
 		Capabilities:       []string{uctypes.AICapabilityTools, uctypes.AICapabilityImages, uctypes.AICapabilityPdfs},
-		WaveAIPremium:      true,
+		WaddleAIPremium:    true,
 		SwitchCompat:       []string{"wavecloud"},
 	},
 }
@@ -286,7 +286,7 @@ func getAIModeConfig(aiMode string) (*wconfig.AIModeConfigType, error) {
 	}
 
 	fullConfig := wconfig.GetWatcher().GetFullConfig()
-	config, ok := fullConfig.WaveAIModes[aiMode]
+	config, ok := fullConfig.WaddleAIModes[aiMode]
 	if !ok {
 		return nil, fmt.Errorf("invalid AI mode: %s", aiMode)
 	}
@@ -309,7 +309,7 @@ func handleConfigUpdate(fullConfig wconfig.FullConfigType) {
 func ComputeResolvedAIModeConfigs(fullConfig wconfig.FullConfigType) map[string]wconfig.AIModeConfigType {
 	resolvedConfigs := make(map[string]wconfig.AIModeConfigType)
 
-	for modeName, modeConfig := range fullConfig.WaveAIModes {
+	for modeName, modeConfig := range fullConfig.WaddleAIModes {
 		resolved := modeConfig
 		applyProviderDefaults(&resolved)
 		resolvedConfigs[modeName] = resolved
@@ -323,7 +323,7 @@ func broadcastAIModeConfigs(configs map[string]wconfig.AIModeConfigType) {
 		Configs: configs,
 	}
 
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_AIModeConfig,
 		Data:  update,
 	})

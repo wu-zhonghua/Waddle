@@ -13,11 +13,11 @@ type ChildKey struct {
 }
 
 type ComponentImpl struct {
-	WaveId  string
-	Tag     string
-	Key     string
-	Elem    *VDomElem
-	Mounted bool
+	WaddleId string
+	Tag      string
+	Key      string
+	Elem     *VDomElem
+	Mounted  bool
 
 	// hooks
 	Hooks []*Hook

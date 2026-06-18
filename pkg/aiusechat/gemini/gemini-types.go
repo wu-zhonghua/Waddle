@@ -4,7 +4,7 @@
 package gemini
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
 )
 
 const (
@@ -80,14 +80,14 @@ func (p *GeminiMessagePart) Clean() *GeminiMessagePart {
 // GeminiInlineData represents inline binary data
 type GeminiInlineData struct {
 	MimeType    string `json:"mimeType"`
-	Data        string `json:"data"` // base64 encoded
+	Data        string `json:"data"`                  // base64 encoded
 	DisplayName string `json:"displayName,omitempty"` // for multimodal function responses
 }
 
 // GeminiFileData represents uploaded file reference
 type GeminiFileData struct {
 	MimeType    string `json:"mimeType"`
-	FileUri     string `json:"fileUri"` // gs:// URI from file upload
+	FileUri     string `json:"fileUri"`               // gs:// URI from file upload
 	DisplayName string `json:"displayName,omitempty"` // for multimodal function responses
 }
 

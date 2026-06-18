@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 type WebNavigateToolInput struct {
@@ -101,7 +101,7 @@ func GetWebNavigateToolDefinition(tabId string) uctypes.ToolDefinition {
 				return nil, fmt.Errorf("failed to update web block URL: %w", err)
 			}
 
-			wcore.SendWaveObjUpdate(blockORef)
+			wcore.SendWaddleObjUpdate(blockORef)
 			return true, nil
 		},
 	}

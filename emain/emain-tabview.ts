@@ -5,7 +5,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import { adaptFromElectronKeyEvent, checkKeyPressed } from "@/util/keyutil";
 import { CHORD_TIMEOUT } from "@/util/sharedconst";
 import { Rectangle, shell, WebContentsView } from "electron";
-import { createNewWaveWindow, getWaveWindowById } from "emain/emain-window";
+import { createNewWaddleWindow, getWaddleWindowById } from "emain/emain-window";
 import path from "path";
 import { configureAuthKeyRequestInjection } from "./authkey";
 import { setWasActive } from "./emain-activity";
@@ -22,14 +22,14 @@ import {
 import { ElectronWshClient } from "./emain-wsh";
 
 function handleWindowsMenuAccelerators(
-    waveEvent: WaveKeyboardEvent,
-    tabView: WaveTabView,
+    waveEvent: WaddleKeyboardEvent,
+    tabView: WaddleTabView,
     fullConfig: FullConfigType
 ): boolean {
-    const waveWindow = getWaveWindowById(tabView.waveWindowId);
+    const waveWindow = getWaddleWindowById(tabView.waveWindowId);
 
     if (checkKeyPressed(waveEvent, "Ctrl:Shift:n")) {
-        createNewWaveWindow();
+        createNewWaddleWindow();
         return true;
     }
 
@@ -106,29 +106,29 @@ function computeBgColor(fullConfig: FullConfigType): string {
     }
 }
 
-const wcIdToWaveTabMap = new Map<number, WaveTabView>();
+const wcIdToWaddleTabMap = new Map<number, WaddleTabView>();
 
-export function getWaveTabViewByWebContentsId(webContentsId: number): WaveTabView {
+export function getWaddleTabViewByWebContentsId(webContentsId: number): WaddleTabView {
     if (webContentsId == null) {
         return null;
     }
-    return wcIdToWaveTabMap.get(webContentsId);
+    return wcIdToWaddleTabMap.get(webContentsId);
 }
 
-export class WaveTabView extends WebContentsView {
+export class WaddleTabView extends WebContentsView {
     waveWindowId: string; // this will be set for any tabviews that are initialized. (unset for the hot spare)
     isActiveTab: boolean;
-    isWaveAIOpen: boolean;
-    private _waveTabId: string; // always set, WaveTabViews are unique per tab
+    isWaddleAIOpen: boolean;
+    private _waveTabId: string; // always set, WaddleTabViews are unique per tab
     lastUsedTs: number; // ts milliseconds
     createdTs: number; // ts milliseconds
     initPromise: Promise<void>;
     initResolve: () => void;
-    savedInitOpts: WaveInitOpts;
+    savedInitOpts: WaddleInitOpts;
     waveReadyPromise: Promise<void>;
     waveReadyResolve: () => void;
     isInitialized: boolean = false;
-    isWaveReady: boolean = false;
+    isWaddleReady: boolean = false;
     isDestroyed: boolean = false;
     keyboardChordMode: boolean = false;
     resetChordModeTimeout: NodeJS.Timeout = null;
@@ -142,7 +142,7 @@ export class WaveTabView extends WebContentsView {
             },
         });
         this.createdTs = Date.now();
-        this.isWaveAIOpen = false;
+        this.isWaddleAIOpen = false;
         this.savedInitOpts = null;
         this.initPromise = new Promise((resolve, _) => {
             this.initResolve = resolve;
@@ -155,18 +155,18 @@ export class WaveTabView extends WebContentsView {
             this.waveReadyResolve = resolve;
         });
         this.waveReadyPromise.then(() => {
-            this.isWaveReady = true;
+            this.isWaddleReady = true;
         });
         const wcId = this.webContents.id;
-        wcIdToWaveTabMap.set(wcId, this);
+        wcIdToWaddleTabMap.set(wcId, this);
         if (isDevVite) {
             this.webContents.loadURL(`${process.env.ELECTRON_RENDERER_URL}/index.html`);
         } else {
             this.webContents.loadFile(path.join(getElectronAppBasePath(), "frontend", "index.html"));
         }
         this.webContents.on("destroyed", () => {
-            wcIdToWaveTabMap.delete(wcId);
-            removeWaveTabView(this.waveTabId);
+            wcIdToWaddleTabMap.delete(wcId);
+            removeWaddleTabView(this.waveTabId);
             this.isDestroyed = true;
         });
         this.setBackgroundColor(computeBgColor(fullConfig));
@@ -226,7 +226,7 @@ export class WaveTabView extends WebContentsView {
 
     destroy() {
         console.log("destroy tab", this.waveTabId);
-        removeWaveTabView(this.waveTabId);
+        removeWaddleTabView(this.waveTabId);
         if (!this.isDestroyed) {
             this.webContents?.close();
         }
@@ -235,14 +235,14 @@ export class WaveTabView extends WebContentsView {
 }
 
 let MaxCacheSize = 10;
-const wcvCache = new Map<string, WaveTabView>();
+const wcvCache = new Map<string, WaddleTabView>();
 
 export function setMaxTabCacheSize(size: number) {
     console.log("setMaxTabCacheSize", size);
     MaxCacheSize = size;
 }
 
-export function getWaveTabView(waveTabId: string): WaveTabView | undefined {
+export function getWaddleTabView(waveTabId: string): WaddleTabView | undefined {
     const rtn = wcvCache.get(waveTabId);
     if (rtn) {
         rtn.lastUsedTs = Date.now();
@@ -262,10 +262,10 @@ function tryEvictEntry(waveTabId: string): boolean {
     if (lastUsedDiff < 1000) {
         return false;
     }
-    const ww = getWaveWindowById(tabView.waveWindowId);
+    const ww = getWaddleWindowById(tabView.waveWindowId);
     if (!ww) {
         // this shouldn't happen, but if it does, just destroy the tabview
-        console.log("[error] WaveWindow not found for WaveTabView", tabView.waveTabId);
+        console.log("[error] WaddleWindow not found for WaddleTabView", tabView.waveTabId);
         tabView.destroy();
         return true;
     } else {
@@ -301,8 +301,8 @@ export function clearTabCache() {
 }
 
 // returns [tabview, initialized]
-export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: string): Promise<[WaveTabView, boolean]> {
-    let tabView = getWaveTabView(tabId);
+export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: string): Promise<[WaddleTabView, boolean]> {
+    let tabView = getWaddleTabView(tabId);
     if (tabView) {
         return [tabView, true];
     }
@@ -310,7 +310,7 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
     tabView = getSpareTab(fullConfig);
     tabView.waveWindowId = waveWindowId;
     tabView.lastUsedTs = Date.now();
-    setWaveTabView(tabId, tabView);
+    setWaddleTabView(tabId, tabView);
     tabView.waveTabId = tabId;
     tabView.webContents.on("will-navigate", shNavHandler);
     tabView.webContents.on("will-frame-navigate", shFrameNavHandler);
@@ -357,7 +357,7 @@ export async function getOrCreateWebViewForTab(waveWindowId: string, tabId: stri
     return [tabView, false];
 }
 
-export function setWaveTabView(waveTabId: string, wcv: WaveTabView): void {
+export function setWaddleTabView(waveTabId: string, wcv: WaddleTabView): void {
     if (waveTabId == null) {
         return;
     }
@@ -365,23 +365,23 @@ export function setWaveTabView(waveTabId: string, wcv: WaveTabView): void {
     checkAndEvictCache();
 }
 
-function removeWaveTabView(waveTabId: string): void {
+function removeWaddleTabView(waveTabId: string): void {
     if (waveTabId == null) {
         return;
     }
     wcvCache.delete(waveTabId);
 }
 
-let HotSpareTab: WaveTabView = null;
+let HotSpareTab: WaddleTabView = null;
 
 export function ensureHotSpareTab(fullConfig: FullConfigType) {
     console.log("ensureHotSpareTab");
     if (HotSpareTab == null) {
-        HotSpareTab = new WaveTabView(fullConfig);
+        HotSpareTab = new WaddleTabView(fullConfig);
     }
 }
 
-export function getSpareTab(fullConfig: FullConfigType): WaveTabView {
+export function getSpareTab(fullConfig: FullConfigType): WaddleTabView {
     setTimeout(() => ensureHotSpareTab(fullConfig), 500);
     if (HotSpareTab != null) {
         const rtn = HotSpareTab;
@@ -390,6 +390,6 @@ export function getSpareTab(fullConfig: FullConfigType): WaveTabView {
         return rtn;
     } else {
         console.log("getSpareTab: creating new tab");
-        return new WaveTabView(fullConfig);
+        return new WaddleTabView(fullConfig);
     }
 }

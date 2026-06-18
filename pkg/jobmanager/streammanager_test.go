@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
 type testWriter struct {

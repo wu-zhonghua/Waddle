@@ -1,15 +1,15 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 
 const UpgradeOnboardingModal_v0_14_0_Content = () => {
-    const waveEnv = useWaveEnv();
+    const waveEnv = useWaddleEnv();
     return (
         <div className="flex flex-col items-start w-full mb-2 unselectable">
             <div className="text-secondary leading-relaxed mb-4">
                 <p className="mb-0">
-                    Wave v0.14 introduces Durable Sessions. Enable them to keep your remote sessions alive through
+                    Waddle v0.14 introduces Durable Sessions. Enable them to keep your remote sessions alive through
                     network interruptions, computer sleep, and restarts — they'll automatically reconnect when your
                     connection is restored.
                 </p>
@@ -23,7 +23,7 @@ const UpgradeOnboardingModal_v0_14_0_Content = () => {
                     <div className="text-foreground text-base font-semibold leading-[18px]">
                         Durable SSH Sessions{" "}
                         <button
-                            onClick={() => waveEnv.electron.openExternal("https://docs.waveterm.dev/durable-sessions")}
+                            onClick={() => waveEnv.electron.openExternal("https://docs.waddle.dev/durable-sessions")}
                             className="text-accent text-sm font-normal cursor-pointer hover:underline"
                         >
                             [see docs]
@@ -72,7 +72,7 @@ const UpgradeOnboardingModal_v0_14_0_Content = () => {
                     <i className="text-[24px] text-accent fa-solid fa-sparkles"></i>
                 </div>
                 <div className="flex flex-col items-start gap-2 flex-1">
-                    <div className="text-foreground text-base font-semibold leading-[18px]">Wave AI Updates</div>
+                    <div className="text-foreground text-base font-semibold leading-[18px]">Waddle AI Updates</div>
                     <div className="text-secondary leading-5">
                         <ul className="list-disc list-outside space-y-1 pl-5">
                             <li>

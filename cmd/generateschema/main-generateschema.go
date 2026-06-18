@@ -11,17 +11,17 @@ import (
 	"reflect"
 
 	"github.com/invopop/jsonschema"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
 )
 
-const WaveSchemaSettingsFileName = "schema/settings.json"
-const WaveSchemaConnectionsFileName = "schema/connections.json"
-const WaveSchemaAiPresetsFileName = "schema/aipresets.json"
-const WaveSchemaWidgetsFileName = "schema/widgets.json"
-const WaveSchemaBackgroundsFileName = "schema/backgrounds.json"
-const WaveSchemaWaveAIFileName = "schema/waveai.json"
+const WaddleSchemaSettingsFileName = "schema/settings.json"
+const WaddleSchemaConnectionsFileName = "schema/connections.json"
+const WaddleSchemaAiPresetsFileName = "schema/aipresets.json"
+const WaddleSchemaWidgetsFileName = "schema/widgets.json"
+const WaddleSchemaBackgroundsFileName = "schema/backgrounds.json"
+const WaddleSchemaWaddleAIFileName = "schema/waveai.json"
 
 // ViewNameType is a string type whose JSON Schema offers enum suggestions for the most
 // common widget view names while still accepting any arbitrary string value.
@@ -182,36 +182,36 @@ func generateWidgetsSchema(dir string) error {
 }
 
 func main() {
-	err := generateSchema(&wconfig.SettingsType{}, WaveSchemaSettingsFileName, false)
+	err := generateSchema(&wconfig.SettingsType{}, WaddleSchemaSettingsFileName, false)
 	if err != nil {
 		log.Fatalf("settings schema error: %v", err)
 	}
 
 	connectionTemplate := make(map[string]wconfig.ConnKeywords)
-	err = generateSchema(&connectionTemplate, WaveSchemaConnectionsFileName, false)
+	err = generateSchema(&connectionTemplate, WaddleSchemaConnectionsFileName, false)
 	if err != nil {
 		log.Fatalf("connections schema error: %v", err)
 	}
 
 	aiPresetsTemplate := make(map[string]wconfig.AiSettingsType)
-	err = generateSchema(&aiPresetsTemplate, WaveSchemaAiPresetsFileName, false)
+	err = generateSchema(&aiPresetsTemplate, WaddleSchemaAiPresetsFileName, false)
 	if err != nil {
 		log.Fatalf("ai presets schema error: %v", err)
 	}
 
-	err = generateWidgetsSchema(WaveSchemaWidgetsFileName)
+	err = generateWidgetsSchema(WaddleSchemaWidgetsFileName)
 	if err != nil {
 		log.Fatalf("widgets schema error: %v", err)
 	}
 
 	backgroundsTemplate := make(map[string]wconfig.BackgroundConfigType)
-	err = generateSchema(&backgroundsTemplate, WaveSchemaBackgroundsFileName, true)
+	err = generateSchema(&backgroundsTemplate, WaddleSchemaBackgroundsFileName, true)
 	if err != nil {
 		log.Fatalf("backgrounds schema error: %v", err)
 	}
 
 	waveAITemplate := make(map[string]wconfig.AIModeConfigType)
-	err = generateSchema(&waveAITemplate, WaveSchemaWaveAIFileName, false)
+	err = generateSchema(&waveAITemplate, WaddleSchemaWaddleAIFileName, false)
 	if err != nil {
 		log.Fatalf("waveai schema error: %v", err)
 	}

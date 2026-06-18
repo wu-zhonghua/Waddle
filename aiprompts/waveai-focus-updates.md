@@ -1,18 +1,18 @@
-# Wave Terminal Focus System - Wave AI Integration
+# Waddle Focus System - Waddle AI Integration
 
 ## Problem
 
-Wave AI focus handling is fragile compared to blocks:
+Waddle AI focus handling is fragile compared to blocks:
 
 1. Only watches textarea focus/blur, missing the multi-phase handling that blocks have
 2. Selection handling breaks - selecting text causes blur → focus reverts to layout
-3. Focus ring flashing - clicking Wave AI briefly shows focus ring on layout
-4. Window blur sensitivity - `window.blur()` incorrectly assumes user wants to leave Wave AI
+3. Focus ring flashing - clicking Waddle AI briefly shows focus ring on layout
+4. Window blur sensitivity - `window.blur()` incorrectly assumes user wants to leave Waddle AI
 5. No capture phase - missing the immediate visual feedback that blocks get
 
 ## Solution Overview
 
-Extend the block focus system pattern to Wave AI:
+Extend the block focus system pattern to Waddle AI:
 
 - Multi-phase handling (capture + click)
 - Selection protection
@@ -26,17 +26,17 @@ graph TB
     User[User Interaction]
     FM[Focus Manager]
     Layout[Layout System]
-    WaveAI[Wave AI Panel]
+    WaddleAI[Waddle AI Panel]
 
     User -->|click/key| FM
     FM -->|node focus| Layout
-    FM -->|waveai focus| WaveAI
+    FM -->|waveai focus| WaddleAI
     Layout -->|request focus back| FM
-    WaveAI -->|request focus back| FM
+    WaddleAI -->|request focus back| FM
 
     FM -->|focusType atom| State[Global State]
     Layout -.->|checks| State
-    WaveAI -.->|checks| State
+    WaddleAI -.->|checks| State
 ```
 
 ## Focus Manager Enhancements
@@ -56,8 +56,8 @@ class FocusManager {
   nodeFocusWithin(): boolean;
 
   // NEW: Focus transitions (INTENTIONALLY not defensive)
-  requestNodeFocus(): void; // from Wave AI → node (BREAKS selections - that's the point!)
-  requestWaveAIFocus(): void; // from node → Wave AI
+  requestNodeFocus(): void; // from Waddle AI → node (BREAKS selections - that's the point!)
+  requestWaddleAIFocus(): void; // from node → Waddle AI
 
   // NEW: Get current focus type
   getFocusType(): FocusStrType;
@@ -69,21 +69,21 @@ class FocusManager {
 
 **Critical Design Decision: `requestNodeFocus()` is NOT defensive**
 
-When `requestNodeFocus()` is called (e.g., Cmd+n, explicit focus change), it MUST take focus even if there's a selection in Wave AI. This is intentional - the user explicitly requested a focus change. Losing the selection is the correct behavior.
+When `requestNodeFocus()` is called (e.g., Cmd+n, explicit focus change), it MUST take focus even if there's a selection in Waddle AI. This is intentional - the user explicitly requested a focus change. Losing the selection is the correct behavior.
 
 **Focus Manager as Source of Truth**
 
 The `focusType` atom is the single source of truth. The old `waveAIFocusedAtom` will be kept in sync during migration but should eventually be removed. All components should read `focusManager.focusType` directly (via `useAtomValue`) to determine focus ring state - this ensures synchronized, reactive focus ring updates.
 
-## Wave AI Focus Utilities
+## Waddle AI Focus Utilities
 
 **New File**: [`frontend/app/aipanel/waveai-focus-utils.ts`](frontend/app/aipanel/waveai-focus-utils.ts)
 
-Similar to [`focusutil.ts`](frontend/util/focusutil.ts) but for Wave AI:
+Similar to [`focusutil.ts`](frontend/util/focusutil.ts) but for Waddle AI:
 
 ```typescript
-// Find if element is within Wave AI panel
-export function findWaveAIPanel(element: HTMLElement): HTMLElement | null {
+// Find if element is within Waddle AI panel
+export function findWaddleAIPanel(element: HTMLElement): HTMLElement | null {
   let current: HTMLElement = element;
   while (current) {
     if (current.hasAttribute("data-waveai-panel")) {
@@ -94,16 +94,16 @@ export function findWaveAIPanel(element: HTMLElement): HTMLElement | null {
   return null;
 }
 
-// Check if Wave AI panel has focus or selection (like focusedBlockId())
+// Check if Waddle AI panel has focus or selection (like focusedBlockId())
 export function waveAIHasFocusWithin(): boolean {
-  // Check if activeElement is within Wave AI panel
+  // Check if activeElement is within Waddle AI panel
   const focused = document.activeElement;
   if (focused instanceof HTMLElement) {
-    const waveAIPanel = findWaveAIPanel(focused);
+    const waveAIPanel = findWaddleAIPanel(focused);
     if (waveAIPanel) return true;
   }
 
-  // Check if selection is within Wave AI panel
+  // Check if selection is within Waddle AI panel
   const sel = document.getSelection();
   if (sel && sel.anchorNode && sel.rangeCount > 0 && !sel.isCollapsed) {
     let anchor = sel.anchorNode;
@@ -111,7 +111,7 @@ export function waveAIHasFocusWithin(): boolean {
       anchor = anchor.parentElement;
     }
     if (anchor instanceof HTMLElement) {
-      const waveAIPanel = findWaveAIPanel(anchor);
+      const waveAIPanel = findWaddleAIPanel(anchor);
       if (waveAIPanel) return true;
     }
   }
@@ -119,7 +119,7 @@ export function waveAIHasFocusWithin(): boolean {
   return false;
 }
 
-// Check if there's an active selection in Wave AI
+// Check if there's an active selection in Waddle AI
 export function waveAIHasSelection(): boolean {
   const sel = document.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
@@ -131,14 +131,14 @@ export function waveAIHasSelection(): boolean {
     anchor = anchor.parentElement;
   }
   if (anchor instanceof HTMLElement) {
-    return findWaveAIPanel(anchor) != null;
+    return findWaddleAIPanel(anchor) != null;
   }
 
   return false;
 }
 ```
 
-## Wave AI Panel Integration
+## Waddle AI Panel Integration
 
 **File**: [`frontend/app/aipanel/aipanel.tsx`](frontend/app/aipanel/aipanel.tsx)
 
@@ -147,8 +147,8 @@ Add capture phase and selection protection:
 ```typescript
 // ADD: Capture phase handler (like blocks)
 const handleFocusCapture = useCallback((event: React.FocusEvent) => {
-    console.log("Wave AI focus capture", getElemAsStr(event.target));
-    focusManager.requestWaveAIFocus();  // Sets visual state immediately
+    console.log("Waddle AI focus capture", getElemAsStr(event.target));
+    focusManager.requestWaddleAIFocus();  // Sets visual state immediately
 }, []);
 
 // MODIFY: Click handler with selection protection
@@ -164,7 +164,7 @@ const handleClick = (e: React.MouseEvent) => {
     const hasSelection = waveAIHasSelection();
     if (hasSelection) {
         // Just update visual focus, don't move DOM focus
-        focusManager.requestWaveAIFocus();
+        focusManager.requestWaddleAIFocus();
         return;
     }
 
@@ -186,7 +186,7 @@ const handleClick = (e: React.MouseEvent) => {
 >
 ```
 
-## Wave AI Input Focus Handling
+## Waddle AI Input Focus Handling
 
 **File**: [`frontend/app/aipanel/aipanelinput.tsx`](frontend/app/aipanel/aipanelinput.tsx)
 
@@ -195,7 +195,7 @@ Smart blur handling:
 ```typescript
 // MODIFY: handleFocus - advisory only
 const handleFocus = useCallback(() => {
-  focusManager.requestWaveAIFocus();
+  focusManager.requestWaddleAIFocus();
 }, []);
 
 // MODIFY: handleBlur - simplified with waveAIHasFocusWithin()
@@ -205,20 +205,20 @@ const handleBlur = useCallback((e: React.FocusEvent) => {
     return;
   }
 
-  // Still within Wave AI (focus or selection) - don't revert
+  // Still within Waddle AI (focus or selection) - don't revert
   if (waveAIHasFocusWithin()) {
     return;
   }
 
-  // Focus truly leaving Wave AI, revert to node focus
+  // Focus truly leaving Waddle AI, revert to node focus
   focusManager.requestNodeFocus();
 }, []);
 ```
 
 **Note:** `waveAIHasFocusWithin()` checks both:
 
-1. If `relatedTarget` is within Wave AI panel (handles context menus, buttons)
-2. If there's an active selection in Wave AI (handles text selection clicks)
+1. If `relatedTarget` is within Waddle AI panel (handles context menus, buttons)
+2. If there's an active selection in Waddle AI (handles text selection clicks)
 
 This combines both checks from the original implementation into a single utility call.
 
@@ -256,7 +256,7 @@ The focus manager update happens automatically in the treeReducer for all focus-
 
 **File**: [`frontend/layout/lib/layoutModel.ts`](frontend/layout/lib/layoutModel.ts)
 
-The `isFocused` atom already checks Wave AI state:
+The `isFocused` atom already checks Waddle AI state:
 
 ```typescript
 isFocused: atom((get) => {
@@ -284,7 +284,7 @@ This single change coordinates the entire system:
 - The reactive chain runs normally
 - But `isFocused` returns `false` if focus manager says "waveai"
 - Block's two-step effect doesn't run
-- Physical DOM focus stays with Wave AI
+- Physical DOM focus stays with Waddle AI
 
 ## Layout Focus Coordination
 
@@ -298,7 +298,7 @@ treeReducer(action: LayoutTreeAction, setState = true): boolean {
   switch (action.type) {
     case LayoutTreeActionType.InsertNode:
       insertNode(this.treeState, action);
-      // If inserting with focus, claim focus from Wave AI
+      // If inserting with focus, claim focus from Waddle AI
       if ((action as LayoutTreeInsertNodeAction).focused) {
         focusManager.requestNodeFocus();
       }
@@ -381,12 +381,12 @@ function switchBlockInDirection(tabId: string, direction: NavigateDirection) {
       return;
     }
     if (numBlocks === 1) {
-      focusManager.requestWaveAIFocus();
+      focusManager.requestWaddleAIFocus();
       return;
     }
   }
 
-  // For right navigation, switch from Wave AI to blocks
+  // For right navigation, switch from Waddle AI to blocks
   if (direction === NavigateDirection.Right && focusType === "waveai") {
     focusManager.requestNodeFocus();
     return;
@@ -443,10 +443,10 @@ Physical DOM focus granted ✓
 - `relatedTarget` is null → detected as window blur
 - Focus state preserved
 
-### 2. Selection in Wave AI
+### 2. Selection in Waddle AI
 
 - User selects text
-- Clicks elsewhere in Wave AI
+- Clicks elsewhere in Waddle AI
 - `waveAIHasSelection()` returns true
 - Only visual focus updates, no DOM focus change
 - Selection preserved
@@ -454,7 +454,7 @@ Physical DOM focus granted ✓
 ### 3. Copy/Paste Context Menu
 
 - Right-click causes blur
-- `relatedTarget` within Wave AI panel
+- `relatedTarget` within Waddle AI panel
 - `handleBlur` detects this, doesn't revert focus
 
 ### 4. Modal Dialogs
@@ -469,11 +469,11 @@ Physical DOM focus granted ✓
 
 - Implement enhanced `focusManager.ts` with new methods
 - Create `waveai-focus-utils.ts` with selection utilities
-- Add data attributes to Wave AI panel
+- Add data attributes to Waddle AI panel
 
-### 2. Wave AI Integration
+### 2. Waddle AI Integration
 
-- Add `onFocusCapture` to Wave AI panel
+- Add `onFocusCapture` to Waddle AI panel
 - Update `handleBlur` with simplified `waveAIHasFocusWithin()` check
 - Update `handleClick` with selection awareness
 - Components read `focusManager.focusType` directly via `useAtomValue` for focus ring display
@@ -495,7 +495,7 @@ Physical DOM focus granted ✓
 
 ### New Files
 
-- `frontend/app/aipanel/waveai-focus-utils.ts` - Focus utilities for Wave AI
+- `frontend/app/aipanel/waveai-focus-utils.ts` - Focus utilities for Waddle AI
 
 ### Modified Files
 
@@ -507,18 +507,18 @@ Physical DOM focus granted ✓
 
 ## Testing Checklist
 
-- [ ] Select text in Wave AI, click elsewhere in Wave AI → selection preserved
-- [ ] Click Wave AI panel (not input) → focus moves to Wave AI
-- [ ] Click block while in Wave AI (no selection) → focus moves to block
-- [ ] Press Left arrow in single block → Wave AI focused
-- [ ] Press Right arrow in Wave AI → block focused
+- [ ] Select text in Waddle AI, click elsewhere in Waddle AI → selection preserved
+- [ ] Click Waddle AI panel (not input) → focus moves to Waddle AI
+- [ ] Click block while in Waddle AI (no selection) → focus moves to block
+- [ ] Press Left arrow in single block → Waddle AI focused
+- [ ] Press Right arrow in Waddle AI → block focused
 - [ ] Window blur (⌘+Tab) → focus state preserved
-- [ ] Open context menu in Wave AI → doesn't lose focus
+- [ ] Open context menu in Waddle AI → doesn't lose focus
 - [ ] Modal opens/closes → focus restores correctly
 
 ## Benefits
 
-1. **Selection protection** - Wave AI selections preserved like blocks
+1. **Selection protection** - Waddle AI selections preserved like blocks
 2. **No focus flash** - Capture phase provides immediate visual feedback
 3. **Robust blur handling** - Smart detection of where focus is going
 4. **Unified model** - Single source of truth simplifies reasoning
@@ -537,7 +537,7 @@ The changes can be broken into safe, independently testable phases. Each phase c
 // In focusManager.ts - ADD these methods
 class FocusManager {
   // NEW methods that ALSO update the old waveAIFocusedAtom during migration
-  requestWaveAIFocus(): void {
+  requestWaddleAIFocus(): void {
     globalStore.set(this.focusType, "waveai");
     globalStore.set(atoms.waveAIFocusedAtom, true); // ← Keep old atom in sync during migration!
   }
@@ -579,38 +579,38 @@ class FocusManager {
 
 ---
 
-### Phase 2: Wave AI Improvements (Testable in Isolation)
+### Phase 2: Waddle AI Improvements (Testable in Isolation)
 
-**Add utilities and improve Wave AI focus handling**
+**Add utilities and improve Waddle AI focus handling**
 
 1. Create `waveai-focus-utils.ts` with selection checking utilities
 2. Update `aipanel.tsx`:
    - Add `data-waveai-panel` attribute
    - Add `onFocusCapture` handler
    - Improve click handler with selection protection
-   - Call `focusManager.requestWaveAIFocus()` instead of setting atom directly
+   - Call `focusManager.requestWaddleAIFocus()` instead of setting atom directly
 3. Update `aipanelinput.tsx`:
    - Smart blur handling with selection checks
    - Call `focusManager.requestNodeFocus()` instead of setting atom directly
 
 **Why this is safe:**
 
-- Wave AI now uses focus manager, but focus manager keeps old atom in sync
+- Waddle AI now uses focus manager, but focus manager keeps old atom in sync
 - Blocks still read `waveAIFocusedAtom` directly - still works!
-- Can test Wave AI selection protection independently
-- If there's a bug, only Wave AI is affected
+- Can test Waddle AI selection protection independently
+- If there's a bug, only Waddle AI is affected
 - Blocks remain completely unchanged
 
 **Testing:**
 
-- Wave AI selection preservation when clicking within panel
-- Wave AI blur handling (window blur, context menus, etc.)
+- Waddle AI selection preservation when clicking within panel
+- Waddle AI blur handling (window blur, context menus, etc.)
 - Verify blocks still work normally (unchanged)
-- Test transitions between Wave AI and blocks
+- Test transitions between Waddle AI and blocks
 
 **User-visible improvements:**
 
-- Wave AI text selections no longer lost when clicking in panel
+- Waddle AI text selections no longer lost when clicking in panel
 - No focus ring flashing
 - Better window blur handling
 
@@ -633,7 +633,7 @@ isFocused: atom((get) => {
 **Why this is safe:**
 
 - Focus manager already keeps `waveAIFocusedAtom` in sync (Phase 1)
-- Wave AI already uses focus manager (Phase 2)
+- Waddle AI already uses focus manager (Phase 2)
 - Blocks read the new `focusType` but it's always consistent with old atom
 - Should be completely transparent
 - Single file change - easy to revert if issues
@@ -641,8 +641,8 @@ isFocused: atom((get) => {
 **Testing:**
 
 - Focus transitions between blocks still work
-- Wave AI → block transitions work
-- Block → Wave AI transitions work
+- Waddle AI → block transitions work
+- Block → Waddle AI transitions work
 - Keyboard navigation still works
 - All existing functionality preserved
 
@@ -676,7 +676,7 @@ case LayoutTreeActionType.MagnifyNodeToggle:
 
 **Why this is safe:**
 
-- Just makes explicit what was already happening via Wave AI's blur handler
+- Just makes explicit what was already happening via Waddle AI's blur handler
 - Ensures focus manager is updated even when layout programmatically changes focus
 - Makes the system more robust
 - Small, focused changes in one file
@@ -712,7 +712,7 @@ case LayoutTreeActionType.MagnifyNodeToggle:
 **Testing:**
 
 - Keyboard navigation between blocks
-- Left/Right arrow to/from Wave AI
+- Left/Right arrow to/from Waddle AI
 - All keyboard shortcuts still work
 
 ---
@@ -734,7 +734,7 @@ This dual-sync approach eliminates the "all or nothing" problem. You can stop at
 After each phase, you can ship and test:
 
 - **Phase 1** → No user-visible changes, foundation in place
-- **Phase 2** → Wave AI improvements only, blocks unchanged
+- **Phase 2** → Waddle AI improvements only, blocks unchanged
 - **Phase 3** → Complete system working with new architecture
 - **Phase 4** → More robust edge case handling
 - **Phase 5** → Code cleanup and optimization

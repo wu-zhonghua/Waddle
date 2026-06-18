@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/tsunami/build"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/tsunami/build"
 )
 
 const DefaultTsunamiSdkVersion = "v0.12.4"
@@ -22,7 +22,7 @@ func GetTsunamiScaffoldPath() string {
 	settings := wconfig.GetWatcher().GetFullConfig().Settings
 	scaffoldPath := settings.TsunamiScaffoldPath
 	if scaffoldPath == "" {
-		scaffoldPath = filepath.Join(wavebase.GetWaveAppResourcesPath(), "tsunamiscaffold")
+		scaffoldPath = filepath.Join(wavebase.GetWaddleAppResourcesPath(), "tsunamiscaffold")
 	}
 	return scaffoldPath
 }

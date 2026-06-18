@@ -18,12 +18,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
 )
 
 var (
@@ -46,7 +46,7 @@ var (
 	BashStartup_Preexec string
 
 	//go:embed shellintegration/fish_wavefish.sh
-	FishStartup_Wavefish string
+	FishStartup_Waddlefish string
 
 	//go:embed shellintegration/pwsh_wavepwsh.sh
 	PwshStartup_wavepwsh string
@@ -80,7 +80,7 @@ const (
 	BashIntegrationDir = "shell/bash"
 	PwshIntegrationDir = "shell/pwsh"
 	FishIntegrationDir = "shell/fish"
-	WaveHomeBinDir     = "bin"
+	WaddleHomeBinDir   = "bin"
 	ZshHistoryFileName = ".zsh_history"
 )
 
@@ -215,19 +215,19 @@ func DefaultTermSize() waveobj.TermSize {
 	return waveobj.TermSize{Rows: DefaultTermRows, Cols: DefaultTermCols}
 }
 
-func WaveshellLocalEnvVars(termType string) map[string]string {
+func WaddleshellLocalEnvVars(termType string) map[string]string {
 	rtn := make(map[string]string)
 	if termType != "" {
 		rtn["TERM"] = termType
 	}
 	// these are not necessary since they should be set with the swap token, but no harm in setting them here
-	rtn["TERM_PROGRAM"] = "waveterm"
+	rtn["TERM_PROGRAM"] = "waddle"
 	if os.Getenv("COLORTERM") == "" {
 		rtn["COLORTERM"] = "truecolor"
 	}
-	rtn["WAVETERM"], _ = os.Executable()
-	rtn["WAVETERM_VERSION"] = wavebase.WaveVersion
-	rtn["WAVETERM_WSHBINDIR"] = filepath.Join(wavebase.GetWaveDataDir(), WaveHomeBinDir)
+	rtn["WADDLE"], _ = os.Executable()
+	rtn["WADDLE_VERSION"] = wavebase.WaddleVersion
+	rtn["WADDLE_WSHBINDIR"] = filepath.Join(wavebase.GetWaddleDataDir(), WaddleHomeBinDir)
 	return rtn
 }
 
@@ -279,22 +279,22 @@ func InitCustomShellStartupFiles() error {
 }
 
 func GetLocalBashRcFileOverride() string {
-	return filepath.Join(wavebase.GetWaveDataDir(), BashIntegrationDir, ".bashrc")
+	return filepath.Join(wavebase.GetWaddleDataDir(), BashIntegrationDir, ".bashrc")
 }
 
-func GetLocalWaveFishFilePath() string {
-	return filepath.Join(wavebase.GetWaveDataDir(), FishIntegrationDir, "wave.fish")
+func GetLocalWaddleFishFilePath() string {
+	return filepath.Join(wavebase.GetWaddleDataDir(), FishIntegrationDir, "wave.fish")
 }
 
-func GetLocalWavePowershellEnv() string {
-	return filepath.Join(wavebase.GetWaveDataDir(), PwshIntegrationDir, "wavepwsh.ps1")
+func GetLocalWaddlePowershellEnv() string {
+	return filepath.Join(wavebase.GetWaddleDataDir(), PwshIntegrationDir, "wavepwsh.ps1")
 }
 
 func GetLocalZshZDotDir() string {
-	return filepath.Join(wavebase.GetWaveDataDir(), ZshIntegrationDir)
+	return filepath.Join(wavebase.GetWaddleDataDir(), ZshIntegrationDir)
 }
 
-func HasWaveZshHistory() (bool, int64) {
+func HasWaddleZshHistory() (bool, int64) {
 	zshDir := GetLocalZshZDotDir()
 	historyFile := filepath.Join(zshDir, ZshHistoryFileName)
 	fileInfo, err := os.Stat(historyFile)
@@ -349,7 +349,7 @@ func GetLocalWshBinaryPath(version string, goos string, goarch string) (string, 
 		return "", fmt.Errorf("unsupported wsh platform: %s-%s", goos, goarch)
 	}
 	baseName := fmt.Sprintf("wsh-%s-%s.%s%s", version, goos, goarch, ext)
-	return filepath.Join(wavebase.GetWaveAppBinPath(), baseName), nil
+	return filepath.Join(wavebase.GetWaddleAppBinPath(), baseName), nil
 }
 
 // absWshBinDir must be an absolute, expanded path (no ~ or $HOME, etc.)
@@ -414,7 +414,7 @@ func InitRcFiles(waveHome string, absWshBinDir string) error {
 	if err != nil {
 		return fmt.Errorf("error writing bash-integration bash_preexec.sh: %v", err)
 	}
-	err = utilfn.WriteTemplateToFile(filepath.Join(fishDir, "wave.fish"), FishStartup_Wavefish, params)
+	err = utilfn.WriteTemplateToFile(filepath.Join(fishDir, "wave.fish"), FishStartup_Waddlefish, params)
 	if err != nil {
 		return fmt.Errorf("error writing fish-integration wave.fish: %v", err)
 	}
@@ -428,20 +428,20 @@ func InitRcFiles(waveHome string, absWshBinDir string) error {
 
 func initCustomShellStartupFilesInternal() error {
 	log.Printf("initializing wsh and shell startup files\n")
-	waveDataHome := wavebase.GetWaveDataDir()
-	binDir := filepath.Join(waveDataHome, WaveHomeBinDir)
+	waveDataHome := wavebase.GetWaddleDataDir()
+	binDir := filepath.Join(waveDataHome, WaddleHomeBinDir)
 	err := InitRcFiles(waveDataHome, binDir)
 	if err != nil {
 		return err
 	}
 
-	err = wavebase.CacheEnsureDir(binDir, WaveHomeBinDir, 0755, WaveHomeBinDir)
+	err = wavebase.CacheEnsureDir(binDir, WaddleHomeBinDir, 0755, WaddleHomeBinDir)
 	if err != nil {
 		return err
 	}
 
 	// copy the correct binary to bin
-	wshFullPath, err := GetLocalWshBinaryPath(wavebase.WaveVersion, runtime.GOOS, runtime.GOARCH)
+	wshFullPath, err := GetLocalWshBinaryPath(wavebase.WaddleVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
 		log.Printf("error (non-fatal), could not resolve wsh binary path: %v\n", err)
 	}
@@ -548,12 +548,12 @@ func getShellVersion(shellPath string, shellType string) (string, error) {
 	return matches[1], nil
 }
 
-func FixupWaveZshHistory() error {
+func FixupWaddleZshHistory() error {
 	if runtime.GOOS != "darwin" {
 		return nil
 	}
 
-	hasHistory, size := HasWaveZshHistory()
+	hasHistory, size := HasWaddleZshHistory()
 	if !hasHistory {
 		return nil
 	}
@@ -564,12 +564,12 @@ func FixupWaveZshHistory() error {
 	if size == 0 {
 		err := os.Remove(waveHistFile)
 		if err != nil {
-			log.Printf("error removing wave zsh history file %s: %v\n", waveHistFile, err)
+			log.Printf("error removing Waddle zsh history file %s: %v\n", waveHistFile, err)
 		}
 		return nil
 	}
 
-	log.Printf("merging wave zsh history %s into ~/.zsh_history\n", waveHistFile)
+	log.Printf("merging Waddle zsh history %s into ~/.zsh_history\n", waveHistFile)
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -587,7 +587,7 @@ func FixupWaveZshHistory() error {
 		hasExtendedStr = "true"
 	}
 
-	quotedWaveHistFile := utilfn.ShellQuote(waveHistFile, true, -1)
+	quotedWaddleHistFile := utilfn.ShellQuote(waveHistFile, true, -1)
 
 	script := fmt.Sprintf(`
 		HISTFILE=~/.zsh_history
@@ -598,7 +598,7 @@ func FixupWaveZshHistory() error {
 		fc -RI
 		fc -RI %s
 		fc -W
-	`, hasExtendedStr, quotedWaveHistFile)
+	`, hasExtendedStr, quotedWaddleHistFile)
 
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
@@ -615,9 +615,9 @@ func FixupWaveZshHistory() error {
 
 	err = os.Remove(waveHistFile)
 	if err != nil {
-		log.Printf("error removing wave zsh history file %s: %v\n", waveHistFile, err)
+		log.Printf("error removing Waddle zsh history file %s: %v\n", waveHistFile, err)
 	}
-	log.Printf("successfully merged wave zsh history %s into ~/.zsh_history\n", waveHistFile)
+	log.Printf("successfully merged Waddle zsh history %s into ~/.zsh_history\n", waveHistFile)
 
 	return nil
 }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Block } from "@/app/block/block";
-import { handleWaveEvent } from "@/app/store/wps";
+import { handleWaddleEvent } from "@/app/store/wps";
 import * as React from "react";
 import { makeMockNodeModel } from "../mock/mock-node-model";
 import { SysinfoBlockId } from "../mock/mockwaveenv";
@@ -37,7 +37,7 @@ export default function SysinfoPreview() {
         const intervalId = window.setInterval(() => {
             const nextEvent = makeMockSysinfoEvent(nextTs, nextStep);
             historyRef.current = [...historyRef.current.slice(-(DefaultSysinfoHistoryPoints - 1)), nextEvent];
-            handleWaveEvent(nextEvent);
+            handleWaddleEvent(nextEvent);
             nextStep++;
             nextTs += 1000;
         }, 1000);

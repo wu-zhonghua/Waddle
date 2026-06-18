@@ -15,22 +15,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/genconn"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wsl"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/genconn"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/userinput"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wsl"
 )
 
 const (
@@ -124,7 +124,7 @@ func (conn *WslConn) Debugf(ctx context.Context, format string, args ...any) {
 
 func (conn *WslConn) FireConnChangeEvent() {
 	status := conn.DeriveConnStatus()
-	event := wps.WaveEvent{
+	event := wps.WaddleEvent{
 		Event: wps.Event_ConnChange,
 		Scopes: []string{
 			fmt.Sprintf("connection:%s", conn.GetName()),
@@ -297,9 +297,9 @@ func (conn *WslConn) StartConnServer(ctx context.Context, afterUpdate bool) (boo
 		cancelFn()
 		return false, "", "", fmt.Errorf("error checking wsh version: %w", err)
 	}
-	if isUpToDate && !afterUpdate && os.Getenv(wavebase.WaveWshForceUpdateVarName) != "" {
+	if isUpToDate && !afterUpdate && os.Getenv(wavebase.WaddleWshForceUpdateVarName) != "" {
 		isUpToDate = false
-		conn.Infof(ctx, "%s set, forcing wsh update\n", wavebase.WaveWshForceUpdateVarName)
+		conn.Infof(ctx, "%s set, forcing wsh update\n", wavebase.WaddleWshForceUpdateVarName)
 	}
 	conn.Infof(ctx, "connserver up-to-date: %v\n", isUpToDate)
 	if !isUpToDate {
@@ -354,7 +354,7 @@ type WshInstallOpts struct {
 }
 
 var queryTextTemplate = strings.TrimSpace(`
-Wave requires Wave Shell Extensions to be
+Waddle requires Waddle Shell Extensions to be
 installed on %q
 to ensure a seamless experience.
 
@@ -381,7 +381,7 @@ func (conn *WslConn) UpdateWsh(ctx context.Context, clientDisplayName string, re
 func (conn *WslConn) getPermissionToInstallWsh(ctx context.Context, clientDisplayName string) (bool, error) {
 	conn.Infof(ctx, "running getPermissionToInstallWsh...\n")
 	queryText := fmt.Sprintf(queryTextTemplate, clientDisplayName)
-	title := "Install Wave Shell Extensions"
+	title := "Install Waddle Shell Extensions"
 	request := &userinput.UserInputRequest{
 		ResponseType: "confirm",
 		QueryText:    queryText,

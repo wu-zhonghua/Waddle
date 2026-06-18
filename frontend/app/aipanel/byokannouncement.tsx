@@ -3,10 +3,10 @@
 
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
 const BYOKAnnouncement = () => {
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
 
     const handleOpenConfig = async () => {
         RpcApi.RecordTEventCommand(
@@ -19,7 +19,7 @@ const BYOKAnnouncement = () => {
             },
             { noresponse: true }
         );
-        await model.openWaveAIConfig();
+        await model.openWaddleAIConfig();
     };
 
     const handleViewDocs = () => {
@@ -42,7 +42,7 @@ const BYOKAnnouncement = () => {
                 <div className="text-left flex-1">
                     <div className="text-blue-400 font-medium mb-1">New: BYOK & Local AI Support</div>
                     <div className="text-secondary text-sm mb-3">
-                        Wave AI now supports bring-your-own-key (BYOK) with OpenAI, Google Gemini, Azure, and
+                        Waddle AI now supports bring-your-own-key (BYOK) with OpenAI, Google Gemini, Azure, and
                         OpenRouter, plus local models via Ollama, LM Studio, and other OpenAI-compatible providers.
                     </div>
                     <div className="flex items-center gap-3">
@@ -53,7 +53,7 @@ const BYOKAnnouncement = () => {
                             Configure AI Modes
                         </button>
                         <a
-                            href="https://docs.waveterm.dev/waveai-modes"
+                            href="https://docs.waddle.dev/waveai-modes"
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={handleViewDocs}

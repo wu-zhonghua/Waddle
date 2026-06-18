@@ -7,11 +7,11 @@ import (
 	"log"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 // BadgeStore is an in-memory store for transient badges.
@@ -41,7 +41,7 @@ func InitBadgeStore() error {
 	return nil
 }
 
-func handleBadgeEvent(event *wps.WaveEvent) {
+func handleBadgeEvent(event *wps.WaddleEvent) {
 	if event.Event != wps.Event_Badge {
 		return
 	}

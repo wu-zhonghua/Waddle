@@ -15,16 +15,16 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/wavetermdev/waveterm/pkg/tsunamiutil"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/waveappstore"
-	"github.com/wavetermdev/waveterm/pkg/waveapputil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
-	"github.com/wavetermdev/waveterm/tsunami/build"
+	"github.com/waddledev/waddle/pkg/tsunamiutil"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/waveappstore"
+	"github.com/waddledev/waddle/pkg/waveapputil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wstore"
+	"github.com/waddledev/waddle/tsunami/build"
 )
 
 type TsunamiAppProc struct {
@@ -69,7 +69,7 @@ func (c *TsunamiController) setManifestMetadata(appId string) {
 		rtInfo["tsunami:schemas"] = schemas
 	}
 	wstore.SetRTInfo(blockRef, rtInfo)
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event:  wps.Event_TsunamiUpdateMeta,
 		Scopes: []string{waveobj.MakeORef(waveobj.OType_Block, c.blockId).String()},
 		Data:   manifest.AppMeta,
@@ -166,7 +166,7 @@ func (c *TsunamiController) Start(ctx context.Context, blockMeta waveobj.MetaMap
 	}
 
 	if !upToDate || force {
-		nodePath := wavebase.GetWaveAppElectronExecPath()
+		nodePath := wavebase.GetWaddleAppElectronExecPath()
 		if nodePath == "" {
 			return fmt.Errorf("electron executable path not set")
 		}
@@ -419,7 +419,7 @@ func MakeTsunamiController(tabId string, blockId string, connName string) Contro
 func (c *TsunamiController) sendStatusUpdate() {
 	rtStatus := c.GetRuntimeStatus()
 	log.Printf("sending blockcontroller update %#v\n", rtStatus)
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_ControllerStatus,
 		Scopes: []string{
 			waveobj.MakeORef(waveobj.OType_Tab, c.tabId).String(),

@@ -7,9 +7,9 @@ import { recordTEvent } from "@/app/store/global";
 import { cn, fireAndForget } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useEffect, useRef, useState } from "react";
-import { WaveUIMessagePart } from "./aitypes";
+import { WaddleUIMessagePart } from "./aitypes";
 import { RestoreBackupModal } from "./restorebackupmodal";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
 // matches pkg/filebackup/filebackup.go
 const BackupRetentionDays = 5;
@@ -112,7 +112,7 @@ const AIToolApprovalButtons = memo(({ count, onApprove, onDeny }: AIToolApproval
 AIToolApprovalButtons.displayName = "AIToolApprovalButtons";
 
 interface AIToolUseBatchItemProps {
-    part: WaveUIMessagePart & { type: "data-tooluse" };
+    part: WaddleUIMessagePart & { type: "data-tooluse" };
     effectiveApproval: string;
 }
 
@@ -140,7 +140,7 @@ const AIToolUseBatchItem = memo(({ part, effectiveApproval }: AIToolUseBatchItem
 AIToolUseBatchItem.displayName = "AIToolUseBatchItem";
 
 interface AIToolUseBatchProps {
-    parts: Array<WaveUIMessagePart & { type: "data-tooluse" }>;
+    parts: Array<WaddleUIMessagePart & { type: "data-tooluse" }>;
     isStreaming: boolean;
 }
 
@@ -154,14 +154,14 @@ const AIToolUseBatch = memo(({ parts, isStreaming }: AIToolUseBatchProps) => {
     const handleApprove = () => {
         setUserApprovalOverride("user-approved");
         parts.forEach((part) => {
-            WaveAIModel.getInstance().toolUseSendApproval(part.data.toolcallid, "user-approved");
+            WaddleAIModel.getInstance().toolUseSendApproval(part.data.toolcallid, "user-approved");
         });
     };
 
     const handleDeny = () => {
         setUserApprovalOverride("user-denied");
         parts.forEach((part) => {
-            WaveAIModel.getInstance().toolUseSendApproval(part.data.toolcallid, "user-denied");
+            WaddleAIModel.getInstance().toolUseSendApproval(part.data.toolcallid, "user-denied");
         });
     };
 
@@ -185,14 +185,14 @@ const AIToolUseBatch = memo(({ parts, isStreaming }: AIToolUseBatchProps) => {
 AIToolUseBatch.displayName = "AIToolUseBatch";
 
 interface AIToolUseProps {
-    part: WaveUIMessagePart & { type: "data-tooluse" };
+    part: WaddleUIMessagePart & { type: "data-tooluse" };
     isStreaming: boolean;
 }
 
 const AIToolUse = memo(({ part, isStreaming }: AIToolUseProps) => {
     const toolData = part.data;
     const [userApprovalOverride, setUserApprovalOverride] = useState<string | null>(null);
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const restoreModalToolCallId = useAtomValue(model.restoreBackupModalToolCallId);
     const showRestoreModal = restoreModalToolCallId === toolData.toolcallid;
     const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -217,12 +217,12 @@ const AIToolUse = memo(({ part, isStreaming }: AIToolUseProps) => {
 
     const handleApprove = () => {
         setUserApprovalOverride("user-approved");
-        WaveAIModel.getInstance().toolUseSendApproval(toolData.toolcallid, "user-approved");
+        WaddleAIModel.getInstance().toolUseSendApproval(toolData.toolcallid, "user-approved");
     };
 
     const handleDeny = () => {
         setUserApprovalOverride("user-denied");
-        WaveAIModel.getInstance().toolUseSendApproval(toolData.toolcallid, "user-denied");
+        WaddleAIModel.getInstance().toolUseSendApproval(toolData.toolcallid, "user-denied");
     };
 
     const handleMouseEnter = () => {
@@ -262,7 +262,7 @@ const AIToolUse = memo(({ part, isStreaming }: AIToolUseProps) => {
 
     const handleOpenDiff = () => {
         recordTEvent("waveai:showdiff");
-        fireAndForget(() => WaveAIModel.getInstance().openDiff(toolData.inputfilename, toolData.toolcallid));
+        fireAndForget(() => WaddleAIModel.getInstance().openDiff(toolData.inputfilename, toolData.toolcallid));
     };
 
     return (
@@ -320,7 +320,7 @@ const AIToolUse = memo(({ part, isStreaming }: AIToolUseProps) => {
 AIToolUse.displayName = "AIToolUse";
 
 interface AIToolProgressProps {
-    part: WaveUIMessagePart & { type: "data-toolprogress" };
+    part: WaddleUIMessagePart & { type: "data-toolprogress" };
 }
 
 const AIToolProgress = memo(({ part }: AIToolProgressProps) => {
@@ -342,37 +342,37 @@ const AIToolProgress = memo(({ part }: AIToolProgressProps) => {
 AIToolProgress.displayName = "AIToolProgress";
 
 interface AIToolUseGroupProps {
-    parts: Array<WaveUIMessagePart & { type: "data-tooluse" | "data-toolprogress" }>;
+    parts: Array<WaddleUIMessagePart & { type: "data-tooluse" | "data-toolprogress" }>;
     isStreaming: boolean;
 }
 
 type ToolGroupItem =
-    | { type: "batch"; parts: Array<WaveUIMessagePart & { type: "data-tooluse" }> }
-    | { type: "single"; part: WaveUIMessagePart & { type: "data-tooluse" } }
-    | { type: "progress"; part: WaveUIMessagePart & { type: "data-toolprogress" } };
+    | { type: "batch"; parts: Array<WaddleUIMessagePart & { type: "data-tooluse" }> }
+    | { type: "single"; part: WaddleUIMessagePart & { type: "data-tooluse" } }
+    | { type: "progress"; part: WaddleUIMessagePart & { type: "data-toolprogress" } };
 
 export const AIToolUseGroup = memo(({ parts, isStreaming }: AIToolUseGroupProps) => {
     const tooluseParts = parts.filter((p) => p.type === "data-tooluse") as Array<
-        WaveUIMessagePart & { type: "data-tooluse" }
+        WaddleUIMessagePart & { type: "data-tooluse" }
     >;
     const toolprogressParts = parts.filter((p) => p.type === "data-toolprogress") as Array<
-        WaveUIMessagePart & { type: "data-toolprogress" }
+        WaddleUIMessagePart & { type: "data-toolprogress" }
     >;
 
     const tooluseCallIds = new Set(tooluseParts.map((p) => p.data.toolcallid));
     const filteredProgressParts = toolprogressParts.filter((p) => !tooluseCallIds.has(p.data.toolcallid));
 
-    const isFileOp = (part: WaveUIMessagePart & { type: "data-tooluse" }) => {
+    const isFileOp = (part: WaddleUIMessagePart & { type: "data-tooluse" }) => {
         const toolName = part.data?.toolname;
         return toolName === "read_text_file" || toolName === "read_dir";
     };
 
-    const needsApproval = (part: WaveUIMessagePart & { type: "data-tooluse" }) => {
+    const needsApproval = (part: WaddleUIMessagePart & { type: "data-tooluse" }) => {
         return getEffectiveApprovalStatus(part.data?.approval, isStreaming) === "needs-approval";
     };
 
-    const readFileNeedsApproval: Array<WaveUIMessagePart & { type: "data-tooluse" }> = [];
-    const readFileOther: Array<WaveUIMessagePart & { type: "data-tooluse" }> = [];
+    const readFileNeedsApproval: Array<WaddleUIMessagePart & { type: "data-tooluse" }> = [];
+    const readFileOther: Array<WaddleUIMessagePart & { type: "data-tooluse" }> = [];
 
     for (const part of tooluseParts) {
         if (isFileOp(part)) {

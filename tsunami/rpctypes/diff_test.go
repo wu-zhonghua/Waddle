@@ -10,8 +10,8 @@ import (
 
 func TestDiffRenderedElemsPropsAndArrayDiff(t *testing.T) {
 	oldElem := &RenderedElem{
-		WaveId: "root",
-		Tag:    "div",
+		WaddleId: "root",
+		Tag:      "div",
 		Props: map[string]any{
 			"class": "old",
 			"items": []any{
@@ -23,8 +23,8 @@ func TestDiffRenderedElemsPropsAndArrayDiff(t *testing.T) {
 		},
 	}
 	newElem := &RenderedElem{
-		WaveId: "root",
-		Tag:    "div",
+		WaddleId: "root",
+		Tag:      "div",
 		Props: map[string]any{
 			"class": "new",
 			"items": []any{
@@ -61,29 +61,29 @@ func TestDiffRenderedElemsPropsAndArrayDiff(t *testing.T) {
 
 func TestDiffRenderedElemsChildrenOpsStayFlat(t *testing.T) {
 	oldElem := &RenderedElem{
-		WaveId: "root",
-		Tag:    "div",
+		WaddleId: "root",
+		Tag:      "div",
 		Children: []RenderedElem{
-			{WaveId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
-			{WaveId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "old"}},
-			{WaveId: "c", Tag: "div", Props: map[string]any{"key": "c"}},
+			{WaddleId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
+			{WaddleId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "old"}},
+			{WaddleId: "c", Tag: "div", Props: map[string]any{"key": "c"}},
 		},
 	}
 	inserted := RenderedElem{
-		WaveId: "x",
-		Tag:    "div",
-		Props:  map[string]any{"key": "x"},
+		WaddleId: "x",
+		Tag:      "div",
+		Props:    map[string]any{"key": "x"},
 		Children: []RenderedElem{
-			{WaveId: "x-child", Tag: "span", Props: map[string]any{"label": "nested"}},
+			{WaddleId: "x-child", Tag: "span", Props: map[string]any{"label": "nested"}},
 		},
 	}
 	newElem := &RenderedElem{
-		WaveId: "root",
-		Tag:    "div",
+		WaddleId: "root",
+		Tag:      "div",
 		Children: []RenderedElem{
-			{WaveId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "new"}},
+			{WaddleId: "b", Tag: "div", Props: map[string]any{"key": "b", "label": "new"}},
 			inserted,
-			{WaveId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
+			{WaddleId: "a", Tag: "div", Props: map[string]any{"key": "a"}},
 		},
 	}
 
@@ -110,15 +110,15 @@ func TestDiffRenderedElemsChildrenOpsStayFlat(t *testing.T) {
 
 func TestDiffRenderedElemsTextChildrenAreOpaque(t *testing.T) {
 	oldElem := &RenderedElem{
-		WaveId: "root",
-		Tag:    "div",
+		WaddleId: "root",
+		Tag:      "div",
 		Children: []RenderedElem{
 			{Tag: "#text", Text: "old"},
 		},
 	}
 	newElem := &RenderedElem{
-		WaveId: "root",
-		Tag:    "div",
+		WaddleId: "root",
+		Tag:      "div",
 		Children: []RenderedElem{
 			{Tag: "#text", Text: "new"},
 		},

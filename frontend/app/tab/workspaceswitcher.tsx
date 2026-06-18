@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { useWaddleEnv, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import {
     ExpandableMenu,
     ExpandableMenuItem,
@@ -25,19 +25,19 @@ import { waveEventSubscribeSingle } from "../store/wps";
 import { WorkspaceEditor } from "./workspaceeditor";
 import "./workspaceswitcher.scss";
 
-export type WorkspaceSwitcherEnv = WaveEnvSubset<{
+export type WorkspaceSwitcherEnv = WaddleEnvSubset<{
     electron: {
-        deleteWorkspace: WaveEnv["electron"]["deleteWorkspace"];
-        createWorkspace: WaveEnv["electron"]["createWorkspace"];
-        switchWorkspace: WaveEnv["electron"]["switchWorkspace"];
+        deleteWorkspace: WaddleEnv["electron"]["deleteWorkspace"];
+        createWorkspace: WaddleEnv["electron"]["createWorkspace"];
+        switchWorkspace: WaddleEnv["electron"]["switchWorkspace"];
     };
     atoms: {
-        workspace: WaveEnv["atoms"]["workspace"];
+        workspace: WaddleEnv["atoms"]["workspace"];
     };
     services: {
-        workspace: WaveEnv["services"]["workspace"];
+        workspace: WaddleEnv["services"]["workspace"];
     };
-    wos: WaveEnv["wos"];
+    wos: WaddleEnv["wos"];
 }>;
 
 type WorkspaceListEntry = {
@@ -50,7 +50,7 @@ const workspaceMapAtom = atom<WorkspaceList>([]);
 const workspaceSplitAtom = splitAtom(workspaceMapAtom);
 const editingWorkspaceAtom = atom<string>();
 const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
-    const env = useWaveEnv<WorkspaceSwitcherEnv>();
+    const env = useWaddleEnv<WorkspaceSwitcherEnv>();
     const setWorkspaceList = useSetAtom(workspaceMapAtom);
     const activeWorkspace = useAtomValueSafe(env.atoms.workspace);
     const workspaceList = useAtomValue(workspaceSplitAtom);
@@ -64,7 +64,7 @@ const WorkspaceSwitcher = forwardRef<HTMLDivElement>((_, ref) => {
         const newList: WorkspaceList = [];
         for (const entry of workspaceList) {
             // This just ensures that the atom exists for easier setting of the object
-            globalStore.get(env.wos.getWaveObjectAtom(makeORef("workspace", entry.workspaceid)));
+            globalStore.get(env.wos.getWaddleObjectAtom(makeORef("workspace", entry.workspaceid)));
             newList.push({
                 windowId: entry.windowid,
                 workspace: await env.services.workspace.GetWorkspace(entry.workspaceid),
@@ -161,7 +161,7 @@ const WorkspaceSwitcherItem = ({
     entryAtom: PrimitiveAtom<WorkspaceListEntry>;
     onDeleteWorkspace: (workspaceId: string) => void;
 }) => {
-    const env = useWaveEnv<WorkspaceSwitcherEnv>();
+    const env = useWaddleEnv<WorkspaceSwitcherEnv>();
     const activeWorkspace = useAtomValueSafe(env.atoms.workspace);
     const [workspaceEntry, setWorkspaceEntry] = useAtom(entryAtom);
     const [editingWorkspace, setEditingWorkspace] = useAtom(editingWorkspaceAtom);

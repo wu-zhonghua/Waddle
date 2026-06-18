@@ -12,14 +12,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sawka/txwrap"
-	"github.com/wavetermdev/waveterm/pkg/util/migrateutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/util/migrateutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
 
-	dbfs "github.com/wavetermdev/waveterm/db"
+	dbfs "github.com/waddledev/waddle/db"
 )
 
-const WStoreDBName = "waveterm.db"
+const WStoreDBName = "waddle.db"
 
 type TxWrap = txwrap.TxWrap
 
@@ -42,8 +42,8 @@ func InitWStore() error {
 }
 
 func GetDBName() string {
-	waveHome := wavebase.GetWaveDataDir()
-	return filepath.Join(waveHome, wavebase.WaveDBDir, WStoreDBName)
+	waveHome := wavebase.GetWaddleDataDir()
+	return filepath.Join(waveHome, wavebase.WaddleDBDir, WStoreDBName)
 }
 
 func MakeDB(ctx context.Context) (*sqlx.DB, error) {

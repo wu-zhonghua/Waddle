@@ -26,6 +26,7 @@ export interface TreeNodeData {
     isDirectory: boolean;
     mimeType?: string;
     icon?: string;
+    iconColor?: string;
     isReadonly?: boolean;
     notfound?: boolean;
     staterror?: string;
@@ -68,6 +69,7 @@ export interface TreeViewProps {
     className?: string;
     onOpenFile?: (id: string, node: TreeNodeData) => void;
     onSelectionChange?: (id: string, node: TreeNodeData) => void;
+    onNodeContextMenu?: (event: MouseEvent<HTMLDivElement>, id: string, node: TreeNodeData) => void;
 }
 
 export interface TreeViewRef {
@@ -219,6 +221,7 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
         className,
         onOpenFile,
         onSelectionChange,
+        onNodeContextMenu,
     } = props;
     const [nodesById, setNodesById] = useState<Map<string, TreeNodeData>>(
         () =>
@@ -456,6 +459,11 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                                     transform: `translateY(${virtualRow.start}px)`,
                                 }}
                                 onClick={() => row.kind === "node" && commitSelection(row.id)}
+                                onContextMenu={(event) => {
+                                    if (row.kind === "node" && row.node != null) {
+                                        onNodeContextMenu?.(event, row.id, row.node);
+                                    }
+                                }}
                                 onDoubleClick={() => {
                                     if (row.kind !== "node") {
                                         return;
@@ -497,7 +505,10 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                                         <i
                                             className={makeIconClass(getNodeIcon(row.node, row.isExpanded), true)}
                                             style={{
-                                                color: row.node.notfound || row.node.staterror ? "var(--color-error)" : "inherit",
+                                                color:
+                                                    row.node.notfound || row.node.staterror
+                                                        ? "var(--color-error)"
+                                                        : (row.node.iconColor ?? "inherit"),
                                             }}
                                         />
                                         <span

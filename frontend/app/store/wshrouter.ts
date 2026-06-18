@@ -1,7 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { handleWaveEvent } from "@/app/store/wps";
+import { handleWaddleEvent } from "@/app/store/wps";
 import * as util from "@/util/util";
 import debug from "debug";
 
@@ -89,7 +89,7 @@ class WshRouter {
         }
         // handle events
         if (msg.command == "eventrecv") {
-            handleWaveEvent(msg.data);
+            handleWaddleEvent(msg.data);
             return;
         }
         if (!util.isBlank(msg.command)) {

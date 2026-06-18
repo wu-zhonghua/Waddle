@@ -20,24 +20,24 @@ import (
 
 	"github.com/kevinburke/ssh_config"
 	"github.com/skeema/knownhosts"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/genconn"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/genconn"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/userinput"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wstore"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/mod/semver"
 )
@@ -170,7 +170,7 @@ func (conn *SSHConn) Debugf(ctx context.Context, format string, args ...any) {
 
 func (conn *SSHConn) FireConnChangeEvent() {
 	status := conn.DeriveConnStatus()
-	event := wps.WaveEvent{
+	event := wps.WaddleEvent{
 		Event: wps.Event_ConnChange,
 		Scopes: []string{
 			fmt.Sprintf("connection:%s", conn.GetName()),
@@ -280,7 +280,7 @@ func (conn *SSHConn) OpenDomainSocketListener(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error generating random string: %w", err)
 	}
-	sockName := fmt.Sprintf("/tmp/waveterm-%s.sock", randStr)
+	sockName := fmt.Sprintf("/tmp/waddle-%s.sock", randStr)
 	conn.Infof(ctx, "generated domain socket name %s\n", sockName)
 	listener, err := client.ListenUnix(sockName)
 	if err != nil {
@@ -322,7 +322,7 @@ func IsWshVersionUpToDate(logCtx context.Context, wshVersionLine string) (bool, 
 		return false, "", "", fmt.Errorf("unexpected version format: %s", wshVersionLine)
 	}
 	clientVersion := parts[1]
-	expectedVersion := fmt.Sprintf("v%s", wavebase.WaveVersion)
+	expectedVersion := fmt.Sprintf("v%s", wavebase.WaddleVersion)
 	if semver.Compare(clientVersion, expectedVersion) < 0 {
 		return false, clientVersion, "", nil
 	}
@@ -499,9 +499,9 @@ func (conn *SSHConn) StartConnServer(ctx context.Context, afterUpdate bool, useR
 		sshSession.Close()
 		return false, "", "", fmt.Errorf("error checking wsh version: %w", err)
 	}
-	if isUpToDate && !afterUpdate && os.Getenv(wavebase.WaveWshForceUpdateVarName) != "" {
+	if isUpToDate && !afterUpdate && os.Getenv(wavebase.WaddleWshForceUpdateVarName) != "" {
 		isUpToDate = false
-		conn.Infof(ctx, "%s set, forcing wsh update\n", wavebase.WaveWshForceUpdateVarName)
+		conn.Infof(ctx, "%s set, forcing wsh update\n", wavebase.WaddleWshForceUpdateVarName)
 	}
 	conn.Infof(ctx, "connserver up-to-date: %v\n", isUpToDate)
 	if !isUpToDate {
@@ -593,7 +593,7 @@ type WshInstallOpts struct {
 }
 
 var queryTextTemplate = strings.TrimSpace(`
-Wave requires Wave Shell Extensions to be
+Waddle requires Waddle Shell Extensions to be
 installed on %q
 to ensure a seamless experience.
 
@@ -620,7 +620,7 @@ func (conn *SSHConn) UpdateWsh(ctx context.Context, clientDisplayName string, re
 func (conn *SSHConn) getPermissionToInstallWsh(ctx context.Context, clientDisplayName string) (bool, error) {
 	conn.Infof(ctx, "running getPermissionToInstallWsh...\n")
 	queryText := fmt.Sprintf(queryTextTemplate, clientDisplayName)
-	title := "Install Wave Shell Extensions"
+	title := "Install Waddle Shell Extensions"
 	request := &userinput.UserInputRequest{
 		ResponseType: "confirm",
 		QueryText:    queryText,
@@ -1255,7 +1255,7 @@ func GetConnectionsFromConfig() ([]string, error) {
 	localConfig := filepath.Join(home, ".ssh", "config")
 	systemConfig := filepath.Join("/etc", "ssh", "config")
 	sshConfigFiles := []string{localConfig, systemConfig}
-	remote.WaveSshConfigUserSettings().ReloadConfigs()
+	remote.WaddleSshConfigUserSettings().ReloadConfigs()
 
 	return resolveSshConfigPatterns(sshConfigFiles)
 }

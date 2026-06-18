@@ -1,22 +1,22 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { handleWaveAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
+import { handleWaddleAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
 import { useAtomValue } from "jotai";
 import { memo } from "react";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
 export const AIPanelHeader = memo(() => {
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const widgetAccess = useAtomValue(model.widgetAccessAtom);
     const inBuilder = model.inBuilder;
 
     const handleKebabClick = (e: React.MouseEvent) => {
-        handleWaveAIContextMenu(e, false);
+        handleWaddleAIContextMenu(e, false);
     };
 
     const handleContextMenu = (e: React.MouseEvent) => {
-        handleWaveAIContextMenu(e, false);
+        handleWaddleAIContextMenu(e, false);
     };
 
     return (
@@ -26,7 +26,7 @@ export const AIPanelHeader = memo(() => {
         >
             <h2 className="text-white text-sm @xs:text-lg font-semibold flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
                 <i className="fa fa-sparkles text-accent"></i>
-                Wave AI
+                Waddle AI
             </h2>
 
             <div className="flex items-center flex-shrink-0 whitespace-nowrap">

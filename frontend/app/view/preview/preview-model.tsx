@@ -166,8 +166,8 @@ export class PreviewModel implements ViewModel {
     refreshVersion: PrimitiveAtom<number>;
     directorySearchActive: PrimitiveAtom<boolean>;
     refreshCallback: () => void;
-    directoryKeyDownHandler: (waveEvent: WaveKeyboardEvent) => boolean;
-    codeEditKeyDownHandler: (waveEvent: WaveKeyboardEvent) => boolean;
+    directoryKeyDownHandler: (waveEvent: WaddleKeyboardEvent) => boolean;
+    codeEditKeyDownHandler: (waveEvent: WaddleKeyboardEvent) => boolean;
     env: PreviewEnv;
 
     constructor({ blockId, nodeModel, tabModel, waveEnv }: ViewModelInitType) {
@@ -186,7 +186,7 @@ export class PreviewModel implements ViewModel {
         this.openFileError = atom(null) as PrimitiveAtom<string>;
         this.openFileModalGiveFocusRef = createRef();
         this.manageConnection = atom(true);
-        this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = this.env.wos.getWaddleObjectAtom<Block>(`block:${blockId}`);
         this.markdownShowToc = atom(false);
         this.filterOutNowsh = atom(true);
         this.monacoRef = createRef();
@@ -818,7 +818,7 @@ export class PreviewModel implements ViewModel {
         return false;
     }
 
-    keyDownHandler(e: WaveKeyboardEvent): boolean {
+    keyDownHandler(e: WaddleKeyboardEvent): boolean {
         if (checkKeyPressed(e, "Cmd:ArrowLeft")) {
             fireAndForget(this.goHistoryBack.bind(this));
             return true;

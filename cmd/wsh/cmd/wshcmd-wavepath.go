@@ -10,13 +10,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 var wavepathCmd = &cobra.Command{
 	Use:     "wavepath {config|data|log}",
-	Short:   "Get paths to various waveterm files and directories",
+	Short:   "Get paths to various waddle files and directories",
 	RunE:    wavepathRun,
 	PreRunE: preRunSetupRpcClient,
 }
@@ -58,7 +58,7 @@ func wavepathRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no WADDLE_TABID env var set")
 	}
 
 	path, err := wshclient.PathCommand(RpcClient, wshrpc.PathCommandData{

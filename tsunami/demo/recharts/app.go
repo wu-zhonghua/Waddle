@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/wavetermdev/waveterm/tsunami/app"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/waddledev/waddle/tsunami/app"
+	"github.com/waddledev/waddle/tsunami/vdom"
 )
 
 var AppMeta = app.AppMeta{

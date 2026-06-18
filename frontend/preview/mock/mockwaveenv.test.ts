@@ -10,10 +10,10 @@ vi.mock("../preview-contextmenu", () => ({
     showPreviewContextMenu,
 }));
 
-describe("makeMockWaveEnv", () => {
+describe("makeMockWaddleEnv", () => {
     it("uses the preview context menu by default", async () => {
-        const { makeMockWaveEnv } = await import("./mockwaveenv");
-        const env = makeMockWaveEnv();
+        const { makeMockWaddleEnv } = await import("./mockwaveenv");
+        const env = makeMockWaddleEnv();
         const menu = [{ label: "Open" }];
         const event = { stopPropagation: vi.fn() } as any;
 
@@ -29,8 +29,8 @@ describe("makeMockWaveEnv", () => {
     });
 
     it("implements file info, read, list, and join commands", async () => {
-        const { makeMockWaveEnv } = await import("./mockwaveenv");
-        const env = makeMockWaveEnv();
+        const { makeMockWaddleEnv } = await import("./mockwaveenv");
+        const env = makeMockWaddleEnv();
 
         const bashrcInfo = await env.rpc.FileInfoCommand(null as any, {
             info: { path: "wsh://local//Users/mike/.bashrc" },
@@ -47,7 +47,7 @@ describe("makeMockWaveEnv", () => {
             path: "/Users/mike",
         });
         expect(visibleHomeEntries.some((entry) => entry.name === ".bashrc")).toBe(false);
-        expect(visibleHomeEntries.some((entry) => entry.name === "waveterm")).toBe(true);
+        expect(visibleHomeEntries.some((entry) => entry.name === "waddle")).toBe(true);
 
         const allHomeEntries = await env.rpc.FileListCommand(null as any, {
             path: "/Users/mike",
@@ -56,22 +56,22 @@ describe("makeMockWaveEnv", () => {
         expect(allHomeEntries.some((entry) => entry.name === ".bashrc")).toBe(true);
 
         const dirRead = await env.rpc.FileReadCommand(null as any, {
-            info: { path: "/Users/mike/waveterm" },
+            info: { path: "/Users/mike/waddle" },
         });
         expect(dirRead.entries.some((entry) => entry.name === "docs" && entry.isdir)).toBe(true);
 
         const joined = await env.rpc.FileJoinCommand(null as any, [
             "wsh://local//Users/mike/Documents",
-            "../waveterm/docs",
+            "../waddle/docs",
             "preview-notes.md",
         ]);
-        expect(joined.path).toBe("/Users/mike/waveterm/docs/preview-notes.md");
+        expect(joined.path).toBe("/Users/mike/waddle/docs/preview-notes.md");
         expect(joined.mimetype).toBe("text/markdown");
     });
 
     it("implements file list and read stream commands", async () => {
-        const { makeMockWaveEnv } = await import("./mockwaveenv");
-        const env = makeMockWaveEnv();
+        const { makeMockWaddleEnv } = await import("./mockwaveenv");
+        const env = makeMockWaddleEnv();
 
         const listPackets: CommandRemoteListEntriesRtnData[] = [];
         for await (const packet of env.rpc.FileListStreamCommand(null as any, {
@@ -85,8 +85,8 @@ describe("makeMockWaveEnv", () => {
     });
 
     it("implements secrets commands with in-memory storage", async () => {
-        const { makeMockWaveEnv } = await import("./mockwaveenv");
-        const env = makeMockWaveEnv({ platform: "linux" });
+        const { makeMockWaddleEnv } = await import("./mockwaveenv");
+        const env = makeMockWaddleEnv({ platform: "linux" });
 
         await env.rpc.SetSecretsCommand(
             null as any,

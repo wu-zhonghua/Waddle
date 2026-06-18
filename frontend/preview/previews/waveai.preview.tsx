@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Block } from "@/app/block/block";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import * as React from "react";
 import { makeMockNodeModel } from "../mock/mock-node-model";
 
 const PreviewNodeId = "preview-waveai-node";
 
-export default function WaveAIPreview() {
-    const env = useWaveEnv();
+export default function WaddleAIPreview() {
+    const env = useWaddleEnv();
     const [blockId, setBlockId] = React.useState<string>(null);
 
     React.useEffect(() => {

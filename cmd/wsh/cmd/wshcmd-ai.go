@@ -14,17 +14,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 var aiCmd = &cobra.Command{
 	Use:   "ai [options] [files...]",
-	Short: "Append content to Wave AI sidebar prompt",
-	Long: `Append content to Wave AI sidebar prompt (does not auto-submit by default)
+	Short: "Append content to Waddle AI sidebar prompt",
+	Long: `Append content to Waddle AI sidebar prompt (does not auto-submit by default)
 
 Arguments:
   files...               Files to attach (use '-' for stdin)
@@ -160,18 +160,18 @@ func aiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 		})
 	}
 
-	tabId := os.Getenv("WAVETERM_TABID")
+	tabId := os.Getenv("WADDLE_TABID")
 	if tabId == "" {
-		return fmt.Errorf("WAVETERM_TABID environment variable not set")
+		return fmt.Errorf("WADDLE_TABID environment variable not set")
 	}
 
 	route := wshutil.MakeTabRouteId(tabId)
 
 	if aiNewBlockFlag {
-		newChatData := wshrpc.CommandWaveAIAddContextData{
+		newChatData := wshrpc.CommandWaddleAIAddContextData{
 			NewChat: true,
 		}
-		err := wshclient.WaveAIAddContextCommand(RpcClient, newChatData, &wshrpc.RpcOpts{
+		err := wshclient.WaddleAIAddContextCommand(RpcClient, newChatData, &wshrpc.RpcOpts{
 			Route:   route,
 			Timeout: rpcTimeout,
 		})
@@ -181,10 +181,10 @@ func aiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	}
 
 	for _, file := range allFiles {
-		contextData := wshrpc.CommandWaveAIAddContextData{
+		contextData := wshrpc.CommandWaddleAIAddContextData{
 			Files: []wshrpc.AIAttachedFile{file},
 		}
-		err := wshclient.WaveAIAddContextCommand(RpcClient, contextData, &wshrpc.RpcOpts{
+		err := wshclient.WaddleAIAddContextCommand(RpcClient, contextData, &wshrpc.RpcOpts{
 			Route:   route,
 			Timeout: rpcTimeout,
 		})
@@ -194,11 +194,11 @@ func aiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	}
 
 	if aiMessageFlag != "" || aiSubmitFlag {
-		finalContextData := wshrpc.CommandWaveAIAddContextData{
+		finalContextData := wshrpc.CommandWaddleAIAddContextData{
 			Text:   aiMessageFlag,
 			Submit: aiSubmitFlag,
 		}
-		err := wshclient.WaveAIAddContextCommand(RpcClient, finalContextData, &wshrpc.RpcOpts{
+		err := wshclient.WaddleAIAddContextCommand(RpcClient, finalContextData, &wshrpc.RpcOpts{
 			Route:   route,
 			Timeout: rpcTimeout,
 		})

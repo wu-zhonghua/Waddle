@@ -14,19 +14,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/jobcontroller"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/util/ds"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wslconn"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 const (
@@ -137,7 +137,7 @@ func InitBlockController() {
 	}, nil)
 }
 
-func handleBlockCloseEvent(event *wps.WaveEvent) {
+func handleBlockCloseEvent(event *wps.WaddleEvent) {
 	blockId, ok := event.Data.(string)
 	if !ok {
 		log.Printf("[blockclose] invalid event data type")
@@ -373,7 +373,7 @@ func HandleAppendBlockFile(blockId string, blockFile string, data []byte) error 
 	if err != nil {
 		return fmt.Errorf("error appending to blockfile: %w", err)
 	}
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_BlockFile,
 		Scopes: []string{
 			waveobj.MakeORef(waveobj.OType_Block, blockId).String(),
@@ -405,7 +405,7 @@ func HandleTruncateBlockFile(blockId string) error {
 	if err != nil {
 		log.Printf("error deleting cache file (continuing): %v\n", err)
 	}
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event:  wps.Event_BlockFile,
 		Scopes: []string{waveobj.MakeORef(waveobj.OType_Block, blockId).String()},
 		Data: &wps.WSFileEventData{
@@ -462,26 +462,26 @@ func makeSwapToken(ctx context.Context, logCtx context.Context, blockId string, 
 		Env:   make(map[string]string),
 		Exp:   time.Now().Add(5 * time.Minute),
 	}
-	token.Env["TERM_PROGRAM"] = "waveterm"
-	token.Env["WAVETERM_BLOCKID"] = blockId
-	token.Env["WAVETERM_VERSION"] = wavebase.WaveVersion
-	token.Env["WAVETERM"] = "1"
+	token.Env["TERM_PROGRAM"] = "waddle"
+	token.Env["WADDLE_BLOCKID"] = blockId
+	token.Env["WADDLE_VERSION"] = wavebase.WaddleVersion
+	token.Env["WADDLE"] = "1"
 	tabId, err := wstore.DBFindTabForBlockId(ctx, blockId)
 	if err != nil {
 		log.Printf("error finding tab for block: %v\n", err)
 	} else {
-		token.Env["WAVETERM_TABID"] = tabId
+		token.Env["WADDLE_TABID"] = tabId
 	}
 	if tabId != "" {
 		wsId, err := wstore.DBFindWorkspaceForTabId(ctx, tabId)
 		if err != nil {
 			log.Printf("error finding workspace for tab: %v\n", err)
 		} else {
-			token.Env["WAVETERM_WORKSPACEID"] = wsId
+			token.Env["WADDLE_WORKSPACEID"] = wsId
 		}
 	}
-	token.Env["WAVETERM_CLIENTID"] = wstore.GetClientId()
-	token.Env["WAVETERM_CONN"] = remoteName
+	token.Env["WADDLE_CLIENTID"] = wstore.GetClientId()
+	token.Env["WADDLE_CONN"] = remoteName
 	envMap, err := resolveEnvMap(blockId, blockMeta, remoteName)
 	if err != nil {
 		log.Printf("error resolving env map: %v\n", err)

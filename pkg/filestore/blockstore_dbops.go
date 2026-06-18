@@ -9,11 +9,11 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/wavetermdev/waveterm/pkg/util/dbutil"
+	"github.com/waddledev/waddle/pkg/util/dbutil"
 )
 
 // can return fs.ErrExist
-func dbInsertFile(ctx context.Context, file *WaveFile) error {
+func dbInsertFile(ctx context.Context, file *WaddleFile) error {
 	// will fail if file already exists
 	return WithTx(ctx, func(tx *TxWrap) error {
 		query := "SELECT zoneid FROM db_wave_file WHERE zoneid = ? AND name = ?"
@@ -45,10 +45,10 @@ func dbGetZoneFileNames(ctx context.Context, zoneId string) ([]string, error) {
 	})
 }
 
-func dbGetZoneFile(ctx context.Context, zoneId string, name string) (*WaveFile, error) {
-	return WithTxRtn(ctx, func(tx *TxWrap) (*WaveFile, error) {
+func dbGetZoneFile(ctx context.Context, zoneId string, name string) (*WaddleFile, error) {
+	return WithTxRtn(ctx, func(tx *TxWrap) (*WaddleFile, error) {
 		query := "SELECT * FROM db_wave_file WHERE zoneid = ? AND name = ?"
-		file := dbutil.GetMappable[*WaveFile](tx, query, zoneId, name)
+		file := dbutil.GetMappable[*WaddleFile](tx, query, zoneId, name)
 		return file, nil
 	})
 }
@@ -83,15 +83,15 @@ func dbGetFileParts(ctx context.Context, zoneId string, name string, parts []int
 	})
 }
 
-func dbGetZoneFiles(ctx context.Context, zoneId string) ([]*WaveFile, error) {
-	return WithTxRtn(ctx, func(tx *TxWrap) ([]*WaveFile, error) {
+func dbGetZoneFiles(ctx context.Context, zoneId string) ([]*WaddleFile, error) {
+	return WithTxRtn(ctx, func(tx *TxWrap) ([]*WaddleFile, error) {
 		query := "SELECT * FROM db_wave_file WHERE zoneid = ?"
-		files := dbutil.SelectMappable[*WaveFile](tx, query, zoneId)
+		files := dbutil.SelectMappable[*WaddleFile](tx, query, zoneId)
 		return files, nil
 	})
 }
 
-func dbWriteCacheEntry(ctx context.Context, file *WaveFile, dataEntries map[int]*DataCacheEntry, replace bool) error {
+func dbWriteCacheEntry(ctx context.Context, file *WaddleFile, dataEntries map[int]*DataCacheEntry, replace bool) error {
 	return WithTx(ctx, func(tx *TxWrap) error {
 		query := `SELECT zoneid FROM db_wave_file WHERE zoneid = ? AND name = ?`
 		if !tx.Exists(query, file.ZoneId, file.Name) {

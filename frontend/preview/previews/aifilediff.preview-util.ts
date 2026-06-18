@@ -29,7 +29,7 @@ export function greetAll(names: string[]) {
 export function makeMockAiFileDiffResponse(
     original = DefaultAiFileDiffOriginal,
     modified = DefaultAiFileDiffModified
-): CommandWaveAIGetToolDiffRtnData {
+): CommandWaddleAIGetToolDiffRtnData {
     return {
         originalcontents64: stringToBase64(original),
         modifiedcontents64: stringToBase64(modified),

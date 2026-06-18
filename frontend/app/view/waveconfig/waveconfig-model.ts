@@ -7,8 +7,8 @@ import type { TabModel } from "@/app/store/tab-model";
 import { makeORef } from "@/app/store/wos";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { SecretsContent } from "@/app/view/waveconfig/secretscontent";
-import { WaveConfigView } from "@/app/view/waveconfig/waveconfig";
-import type { WaveConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
+import { WaddleConfigView } from "@/app/view/waveconfig/waveconfig";
+import type { WaddleConfigEnv } from "@/app/view/waveconfig/waveconfigenv";
 import { base64ToString, stringToBase64 } from "@/util/util";
 import { atom, type Atom, type PrimitiveAtom } from "jotai";
 import type * as MonacoTypes from "monaco-editor";
@@ -27,7 +27,7 @@ export type ConfigFile = {
     validator?: ConfigValidator;
     isSecrets?: boolean;
     hasJsonView?: boolean;
-    visualComponent?: React.ComponentType<{ model: WaveConfigViewModel }>;
+    visualComponent?: React.ComponentType<{ model: WaddleConfigViewModel }>;
 };
 
 export const SecretNameRegex = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -42,7 +42,7 @@ function validateAiJson(parsed: any): ValidationResult {
     return { success: true };
 }
 
-function validateWaveAiJson(parsed: any): ValidationResult {
+function validateWaddleAiJson(parsed: any): ValidationResult {
     const keys = Object.keys(parsed);
     const keyPattern = /^[a-zA-Z0-9_@.-]+$/;
     for (const key of keys) {
@@ -61,14 +61,14 @@ function makeConfigFiles(isWindows: boolean): ConfigFile[] {
             name: "General",
             path: "settings.json",
             language: "json",
-            docsUrl: "https://docs.waveterm.dev/config",
+            docsUrl: "https://docs.waddle.dev/config",
             hasJsonView: true,
         },
         {
             name: "Connections",
             path: "connections.json",
             language: "json",
-            docsUrl: "https://docs.waveterm.dev/connections",
+            docsUrl: "https://docs.waddle.dev/connections",
             description: isWindows ? "SSH hosts and WSL distros" : "SSH hosts",
             hasJsonView: true,
         },
@@ -76,24 +76,24 @@ function makeConfigFiles(isWindows: boolean): ConfigFile[] {
             name: "Sidebar Widgets",
             path: "widgets.json",
             language: "json",
-            docsUrl: "https://docs.waveterm.dev/customwidgets",
+            docsUrl: "https://docs.waddle.dev/customwidgets",
             hasJsonView: true,
         },
         {
-            name: "Wave AI Modes",
+            name: "Waddle AI Modes",
             path: "waveai.json",
             language: "json",
             description: "Local models and BYOK",
-            docsUrl: "https://docs.waveterm.dev/waveai-modes",
-            validator: validateWaveAiJson,
+            docsUrl: "https://docs.waddle.dev/waveai-modes",
+            validator: validateWaddleAiJson,
             hasJsonView: true,
-            // visualComponent: WaveAIVisualContent,
+            // visualComponent: WaddleAIVisualContent,
         },
         {
             name: "Tab Backgrounds",
             path: "backgrounds.json",
             language: "json",
-            docsUrl: "https://docs.waveterm.dev/tab-backgrounds",
+            docsUrl: "https://docs.waddle.dev/tab-backgrounds",
             hasJsonView: true,
         },
         {
@@ -119,22 +119,22 @@ const deprecatedConfigFiles: ConfigFile[] = [
         path: "presets/ai.json",
         language: "json",
         deprecated: true,
-        docsUrl: "https://docs.waveterm.dev/ai-presets",
+        docsUrl: "https://docs.waddle.dev/ai-presets",
         validator: validateAiJson,
         hasJsonView: true,
     },
 ];
 
-export class WaveConfigViewModel implements ViewModel {
+export class WaddleConfigViewModel implements ViewModel {
     blockId: string;
     viewType = "waveconfig";
     viewIcon = atom("gear");
-    viewName = atom("Wave Config");
-    viewComponent = WaveConfigView;
+    viewName = atom("Waddle Config");
+    viewComponent = WaddleConfigView;
     noPadding = atom(true);
     nodeModel: BlockNodeModel;
     tabModel: TabModel;
-    env: WaveConfigEnv;
+    env: WaddleConfigEnv;
 
     selectedFileAtom: PrimitiveAtom<ConfigFile>;
     fileContentAtom: PrimitiveAtom<string>;
@@ -166,7 +166,7 @@ export class WaveConfigViewModel implements ViewModel {
         this.blockId = blockId;
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
-        this.env = waveEnv as WaveConfigEnv;
+        this.env = waveEnv as WaddleConfigEnv;
         this.configDir = this.env.electron.getConfigDir();
         const platform = this.env.electron.getPlatform();
         this.saveShortcut = platform === "darwin" ? "Cmd+S" : "Alt+S";

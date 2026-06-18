@@ -17,12 +17,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/genconn"
-	"github.com/wavetermdev/waveterm/pkg/util/iterfn"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/genconn"
+	"github.com/waddledev/waddle/pkg/util/iterfn"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wconfig"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -102,7 +102,7 @@ func CpWshToRemote(ctx context.Context, client *ssh.Client, clientOs string, cli
 	if ok {
 		blocklogger.Debugf(ctx, "[conndebug] CpWshToRemote, timeout: %v\n", time.Until(deadline))
 	}
-	wshLocalPath, err := shellutil.GetLocalWshBinaryPath(wavebase.WaveVersion, clientOs, clientArch)
+	wshLocalPath, err := shellutil.GetLocalWshBinaryPath(wavebase.WaddleVersion, clientOs, clientArch)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func IsPowershell(shellPath string) bool {
 }
 
 func NormalizeConfigPattern(pattern string) string {
-	userName, err := WaveSshConfigUserSettings().GetStrict(pattern, "User")
+	userName, err := WaddleSshConfigUserSettings().GetStrict(pattern, "User")
 	if err != nil || userName == "" {
 		log.Printf("warning: error parsing username of %s for conn dropdown: %v", pattern, err)
 		localUser, err := user.Current()
@@ -175,7 +175,7 @@ func NormalizeConfigPattern(pattern string) string {
 			userName = localUser.Username
 		}
 	}
-	port, err := WaveSshConfigUserSettings().GetStrict(pattern, "Port")
+	port, err := WaddleSshConfigUserSettings().GetStrict(pattern, "Port")
 	if err != nil {
 		port = "22"
 	}
@@ -191,7 +191,7 @@ func NormalizeConfigPattern(pattern string) string {
 }
 
 func ParseProfiles() []string {
-	connfile, cerrs := wconfig.ReadWaveHomeConfigFile(wconfig.ProfilesFile)
+	connfile, cerrs := wconfig.ReadWaddleHomeConfigFile(wconfig.ProfilesFile)
 	if len(cerrs) > 0 {
 		log.Printf("error reading config file: %v", cerrs[0])
 		return nil

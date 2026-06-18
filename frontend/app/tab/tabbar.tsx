@@ -3,7 +3,7 @@
 
 import { Tooltip } from "@/app/element/tooltip";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
 import { deleteLayoutModelForTab } from "@/layout/index";
 import { isMacOSTahoeOrLater } from "@/util/platformutil";
@@ -45,8 +45,8 @@ interface TabBarProps {
     noTabs?: boolean;
 }
 
-const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
-    const env = useWaveEnv<TabBarEnv>();
+const WaddleAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement> }) => {
+    const env = useWaddleEnv<TabBarEnv>();
     const aiPanelOpen = useAtomValue(WorkspaceLayoutModel.getInstance().panelVisibleAtom);
     const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
 
@@ -61,7 +61,7 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
 
     return (
         <Tooltip
-            content="Toggle Wave AI Panel"
+            content="Toggle Waddle AI Panel"
             placement="bottom"
             hideOnClick
             divClassName={`flex h-[22px] px-3.5 justify-end mb-1 items-center rounded-md mr-1 box-border cursor-pointer bg-hover hover:bg-hoverbg transition-colors text-[12px] ${aiPanelOpen ? "text-accent" : "text-secondary"}`}
@@ -73,7 +73,7 @@ const WaveAIButton = memo(({ divRef }: { divRef?: React.RefObject<HTMLDivElement
         </Tooltip>
     );
 });
-WaveAIButton.displayName = "WaveAIButton";
+WaddleAIButton.displayName = "WaddleAIButton";
 
 function strArrayIsEqual(a: string[], b: string[]) {
     // null check
@@ -95,7 +95,7 @@ function strArrayIsEqual(a: string[], b: string[]) {
 }
 
 const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
-    const env = useWaveEnv<TabBarEnv>();
+    const env = useWaddleEnv<TabBarEnv>();
     const [tabIds, setTabIds] = useState<string[]>([]);
     const [dragStartPositions, setDragStartPositions] = useState<number[]>([]);
     const [draggingTab, setDraggingTab] = useState<string>();
@@ -613,7 +613,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
                     <i className="fa fa-ellipsis" />
                 </div>
             )}
-            <WaveAIButton divRef={waveAIButtonRef} />
+            <WaddleAIButton divRef={waveAIButtonRef} />
             <Tooltip
                 content="Workspace Switcher"
                 placement="bottom"
@@ -676,4 +676,4 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     );
 });
 
-export { TabBar, WaveAIButton };
+export { TabBar, WaddleAIButton };

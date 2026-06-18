@@ -1,15 +1,15 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 
 const UpgradeOnboardingModal_v0_14_2_Content = () => {
-    const waveEnv = useWaveEnv();
+    const waveEnv = useWaddleEnv();
     return (
         <div className="flex flex-col items-start w-full mb-2 unselectable">
             <div className="text-secondary leading-relaxed mb-4">
                 <p className="mb-0">
-                    Wave v0.14.2 introduces a new block badge system for at-a-glance status, along with directory
+                    Waddle v0.14.2 introduces a new block badge system for at-a-glance status, along with directory
                     preview improvements and bug fixes. v0.14.3 is a patch release fixing a showstopper bug in
                     onboarding.
                 </p>
@@ -43,7 +43,7 @@ const UpgradeOnboardingModal_v0_14_2_Content = () => {
                                 hooks to surface AI task status as tab bar notifications{" "}
                                 <button
                                     onClick={() =>
-                                        waveEnv.electron.openExternal("https://docs.waveterm.dev/claude-code")
+                                        waveEnv.electron.openExternal("https://docs.waddle.dev/claude-code")
                                     }
                                     className="text-accent text-sm font-normal cursor-pointer hover:underline"
                                 >

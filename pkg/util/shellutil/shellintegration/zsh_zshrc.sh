@@ -1,36 +1,36 @@
 # add wsh to path, source dynamic script from wsh token
-WAVETERM_WSHBINDIR={{.WSHBINDIR}}
-export PATH="$WAVETERM_WSHBINDIR:$PATH"
-source <(wsh token "$WAVETERM_SWAPTOKEN" zsh 2>/dev/null)
-unset WAVETERM_SWAPTOKEN
+WADDLE_WSHBINDIR={{.WSHBINDIR}}
+export PATH="$WADDLE_WSHBINDIR:$PATH"
+source <(wsh token "$WADDLE_SWAPTOKEN" zsh 2>/dev/null)
+unset WADDLE_SWAPTOKEN
 
 # Source the original zshrc only if ZDOTDIR has not been changed
-if [ "$ZDOTDIR" = "$WAVETERM_ZDOTDIR" ]; then
+if [ "$ZDOTDIR" = "$WADDLE_ZDOTDIR" ]; then
   [ -f ~/.zshrc ] && source ~/.zshrc
 fi
 
-if [[ ":$PATH:" != *":$WAVETERM_WSHBINDIR:"* ]]; then
-  export PATH="$WAVETERM_WSHBINDIR:$PATH"
+if [[ ":$PATH:" != *":$WADDLE_WSHBINDIR:"* ]]; then
+  export PATH="$WADDLE_WSHBINDIR:$PATH"
 fi
-unset WAVETERM_WSHBINDIR
+unset WADDLE_WSHBINDIR
 
 if [[ -n ${_comps+x} ]]; then
   source <(wsh completion zsh)
 fi
 
 # fix history (macos)
-if [[ "$HISTFILE" == "$WAVETERM_ZDOTDIR/.zsh_history" ]]; then
+if [[ "$HISTFILE" == "$WADDLE_ZDOTDIR/.zsh_history" ]]; then
   HISTFILE="$HOME/.zsh_history"
 fi
 
-typeset -g _WAVETERM_SI_FIRSTPRECMD=1
+typeset -g _WADDLE_SI_FIRSTPRECMD=1
 
 # shell integration
-_waveterm_si_blocked() {
+_waddle_si_blocked() {
   [[ -n "$TMUX" || -n "$STY" || "$TERM" == tmux* || "$TERM" == screen* ]]
 }
 
-_waveterm_si_urlencode() {
+_waddle_si_urlencode() {
   if (( $+functions[omz_urlencode] )); then
     omz_urlencode "$1"
   else
@@ -48,7 +48,7 @@ _waveterm_si_urlencode() {
   fi
 }
 
-_waveterm_si_compmode() {
+_waddle_si_compmode() {
   # fzf-based completion wins
   if typeset -f _fzf_tab_complete >/dev/null 2>&1 || typeset -f _fzf_complete >/dev/null 2>&1; then
     echo "fzf"
@@ -69,33 +69,33 @@ _waveterm_si_compmode() {
   echo "standard"
 }
 
-_waveterm_si_osc7() {
-  _waveterm_si_blocked && return
-  local encoded_pwd=$(_waveterm_si_urlencode "$PWD")
+_waddle_si_osc7() {
+  _waddle_si_blocked && return
+  local encoded_pwd=$(_waddle_si_urlencode "$PWD")
   printf '\033]7;file://localhost%s\007' "$encoded_pwd"  # OSC 7 - current directory
 }
 
-_waveterm_si_precmd() {
-  local _waveterm_si_status=$?
-  _waveterm_si_blocked && return
+_waddle_si_precmd() {
+  local _waddle_si_status=$?
+  _waddle_si_blocked && return
   # D;status for previous command (skip before first prompt)
-  if (( !_WAVETERM_SI_FIRSTPRECMD )); then
-    printf '\033]16162;D;{"exitcode":%d}\007' "$_waveterm_si_status"
+  if (( !_WADDLE_SI_FIRSTPRECMD )); then
+    printf '\033]16162;D;{"exitcode":%d}\007' "$_waddle_si_status"
   else
     local uname_info=$(uname -smr 2>/dev/null)
     local omz=false
-    local comp=$(_waveterm_si_compmode)
+    local comp=$(_waddle_si_compmode)
     [[ -n "$ZSH" && -r "$ZSH/oh-my-zsh.sh" ]] && omz=true
     printf '\033]16162;M;{"shell":"zsh","shellversion":"%s","uname":"%s","integration":true,"omz":%s,"comp":"%s"}\007' "$ZSH_VERSION" "$uname_info" "$omz" "$comp"
     # OSC 7 only sent on first prompt - chpwd hook handles directory changes
-    _waveterm_si_osc7
+    _waddle_si_osc7
   fi
   printf '\033]16162;A\007'
-  _WAVETERM_SI_FIRSTPRECMD=0
+  _WADDLE_SI_FIRSTPRECMD=0
 }
 
-_waveterm_si_preexec() {
-  _waveterm_si_blocked && return
+_waddle_si_preexec() {
+  _waddle_si_blocked && return
   local cmd="$1"
   local cmd_length=${#cmd}
   if [ "$cmd_length" -gt 8192 ]; then
@@ -110,18 +110,18 @@ _waveterm_si_preexec() {
   fi
 }
 
-typeset -g WAVETERM_SI_INPUTEMPTY=1
+typeset -g WADDLE_SI_INPUTEMPTY=1
 
-_waveterm_si_inputempty() {
-  _waveterm_si_blocked && return
+_waddle_si_inputempty() {
+  _waddle_si_blocked && return
   
   local current_empty=1
   if [[ -n "$BUFFER" ]]; then
     current_empty=0
   fi
   
-  if (( current_empty != WAVETERM_SI_INPUTEMPTY )); then
-    WAVETERM_SI_INPUTEMPTY=$current_empty
+  if (( current_empty != WADDLE_SI_INPUTEMPTY )); then
+    WADDLE_SI_INPUTEMPTY=$current_empty
     if (( current_empty )); then
       printf '\033]16162;I;{"inputempty":true}\007'
     else
@@ -132,11 +132,11 @@ _waveterm_si_inputempty() {
 
 autoload -Uz add-zle-hook-widget 2>/dev/null
 if (( $+functions[add-zle-hook-widget] )); then
-  add-zle-hook-widget zle-line-init _waveterm_si_inputempty
-  add-zle-hook-widget zle-line-pre-redraw _waveterm_si_inputempty
+  add-zle-hook-widget zle-line-init _waddle_si_inputempty
+  add-zle-hook-widget zle-line-pre-redraw _waddle_si_inputempty
 fi
 
 autoload -U add-zsh-hook
-add-zsh-hook precmd  _waveterm_si_precmd
-add-zsh-hook preexec _waveterm_si_preexec
-add-zsh-hook chpwd   _waveterm_si_osc7
+add-zsh-hook precmd  _waddle_si_precmd
+add-zsh-hook preexec _waddle_si_preexec
+add-zsh-hook chpwd   _waddle_si_osc7

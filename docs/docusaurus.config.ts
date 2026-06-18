@@ -5,20 +5,20 @@ import { docOgRenderer } from "./src/renderer/image-renderers";
 const baseUrl = process.env.EMBEDDED ? "/docsite/" : "/";
 
 const config: Config = {
-    title: "Wave Terminal Documentation",
+    title: "Waddle Documentation",
     tagline: "Level Up Your Terminal With Graphical Widgets",
-    favicon: "img/logo/wave-logo_appicon.svg",
+    favicon: "img/logo/waddle-logo_appicon.svg",
 
     // Set the production url of your site here
-    url: "https://docs.waveterm.dev/",
+    url: "https://docs.waddle.dev/",
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
     baseUrl,
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: "wavetermdev", // Usually your GitHub org/user name.
-    projectName: "waveterm-docs", // Usually your repo name.
+    organizationName: "waddledev", // Usually your GitHub org/user name.
+    projectName: "waddle-docs", // Usually your repo name.
     deploymentBranch: "main",
 
     onBrokenAnchors: "ignore",
@@ -40,7 +40,7 @@ const config: Config = {
                 path: "docs",
                 routeBasePath: "/",
                 exclude: ["features/**"],
-                editUrl: !process.env.EMBEDDED ? "https://github.com/wavetermdev/waveterm/edit/main/docs/" : undefined,
+                editUrl: !process.env.EMBEDDED ? "https://github.com/waddledev/waddle/edit/main/docs/" : undefined,
                 rehypePlugins: [rehypeHighlight],
             } as import("@docusaurus/plugin-content-docs").Options,
         ],
@@ -82,9 +82,9 @@ const config: Config = {
         },
         navbar: {
             logo: {
-                src: "img/logo/wave-light.png",
-                srcDark: "img/logo/wave-dark.png",
-                href: "https://www.waveterm.dev/",
+                src: "img/logo/waddle-light.png",
+                srcDark: "img/logo/waddle-dark.png",
+                href: "https://www.waddle.dev/",
             },
             hideOnScroll: true,
             items: [
@@ -98,7 +98,7 @@ const config: Config = {
                     ? [
                           {
                               position: "left",
-                              href: "https://docs.waveterm.dev/storybook",
+                              href: "https://docs.waddle.dev/storybook",
                               label: "Storybook",
                           },
                           {
@@ -108,7 +108,7 @@ const config: Config = {
                               "aria-label": "Discord invite",
                           },
                           {
-                              href: "https://github.com/wavetermdev/waveterm",
+                              href: "https://github.com/waddledev/waddle",
                               position: "right",
                               className: "header-link-custom custom-icon-github",
                               "aria-label": "GitHub repository",
@@ -121,7 +121,7 @@ const config: Config = {
             {
                 name: "keywords",
                 content:
-                    "terminal, developer, development, command, line, wave, linux, macos, windows, connection, ssh, cli, waveterm, documentation, docs, ai, graphical, widgets, remote, open, source, open-source, go, golang, react, typescript, javascript",
+                    "terminal, developer, development, command, line, wave, linux, macos, windows, connection, ssh, cli, waddle, documentation, docs, ai, graphical, widgets, remote, open, source, open-source, go, golang, react, typescript, javascript",
             },
             {
                 name: "og:type",
@@ -129,15 +129,15 @@ const config: Config = {
             },
             {
                 name: "og:site_name",
-                content: "Wave Terminal Documentation",
+                content: "Waddle Documentation",
             },
             {
                 name: "application-name",
-                content: "Wave Terminal Documentation",
+                content: "Waddle Documentation",
             },
             {
                 name: "apple-mobile-web-app-title",
-                content: "Wave Terminal Documentation",
+                content: "Waddle Documentation",
             },
         ],
         footer: {
@@ -146,7 +146,7 @@ const config: Config = {
         algolia: {
             appId: "B6A8512SN4",
             apiKey: "e879cd8663f109b2822cd004d9cd468c",
-            indexName: "waveterm",
+            indexName: "waddle",
         },
     },
     headTags: [
@@ -183,7 +183,7 @@ const config: Config = {
             tagName: "script",
             attributes: {
                 defer: "true",
-                "data-domain": "docs.waveterm.dev",
+                "data-domain": "docs.waddle.dev",
                 src: "https://plausible.io/js/script.file-downloads.outbound-links.tagged-events.js",
             },
         },

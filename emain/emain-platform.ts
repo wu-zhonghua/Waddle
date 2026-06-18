@@ -7,39 +7,39 @@ import envPaths from "env-paths";
 import { existsSync, mkdirSync } from "fs";
 import os from "os";
 import path from "path";
-import { WaveDevVarName, WaveDevViteVarName } from "../frontend/util/isdev";
+import { WaddleDevVarName, WaddleDevViteVarName } from "../frontend/util/isdev";
 import * as keyutil from "../frontend/util/keyutil";
 
 // This is a little trick to ensure that Electron puts all its runtime data into a subdirectory to avoid conflicts with our own data.
-// On macOS, it will store to ~/Library/Application \Support/waveterm/electron
-// On Linux, it will store to ~/.config/waveterm/electron
-// On Windows, it will store to %LOCALAPPDATA%/waveterm/electron
-app.setName("waveterm/electron");
+// On macOS, it will store to ~/Library/Application \Support/waddle/electron
+// On Linux, it will store to ~/.config/waddle/electron
+// On Windows, it will store to %LOCALAPPDATA%/waddle/electron
+app.setName("waddle/electron");
 
 const isDev = !app.isPackaged;
 const isDevVite = isDev && process.env.ELECTRON_RENDERER_URL;
 console.log(`Running in ${isDev ? "development" : "production"} mode`);
 if (isDev) {
-    process.env[WaveDevVarName] = "1";
+    process.env[WaddleDevVarName] = "1";
 }
 if (isDevVite) {
-    process.env[WaveDevViteVarName] = "1";
+    process.env[WaddleDevViteVarName] = "1";
 }
 
-const waveDirNamePrefix = "waveterm";
+const waveDirNamePrefix = "waddle";
 const waveDirNameSuffix = isDev ? "dev" : "";
 const waveDirName = `${waveDirNamePrefix}${waveDirNameSuffix ? `-${waveDirNameSuffix}` : ""}`;
 
-const paths = envPaths("waveterm", { suffix: waveDirNameSuffix });
+const paths = envPaths("waddle", { suffix: waveDirNameSuffix });
 
-app.setName(isDev ? "Wave (Dev)" : "Wave");
+app.setName(isDev ? "Waddle (Dev)" : "Waddle");
 const unamePlatform = process.platform;
 const unameArch: string = process.arch;
 keyutil.setKeyUtilPlatform(unamePlatform);
 
-const WaveConfigHomeVarName = "WAVETERM_CONFIG_HOME";
-const WaveDataHomeVarName = "WAVETERM_DATA_HOME";
-const WaveHomeVarName = "WAVETERM_HOME";
+const WaddleConfigHomeVarName = "WADDLE_CONFIG_HOME";
+const WaddleDataHomeVarName = "WADDLE_DATA_HOME";
+const WaddleHomeVarName = "WADDLE_HOME";
 
 export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) {
     if (!fullConfig.settings["app:dismissarchitecturewarning"] && app.runningUnderARM64Translation) {
@@ -47,8 +47,8 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
         const dialogOpts: Electron.MessageBoxOptions = {
             type: "warning",
             buttons: ["Dismiss", "Learn More"],
-            title: "Wave has detected a performance issue",
-            message: `Wave is running in ARM64 translation mode which may impact performance.\n\nRecommendation: Download the native ARM64 version from our website for optimal performance.`,
+            title: "Waddle has detected a performance issue",
+            message: `Waddle is running in ARM64 translation mode which may impact performance.\n\nRecommendation: Download the native ARM64 version from our website for optimal performance.`,
         };
 
         const choice = dialog.showMessageBoxSync(null, dialogOpts);
@@ -57,7 +57,7 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
             console.log("User chose to learn more");
             fireAndForget(() =>
                 shell.openExternal(
-                    "https://docs.waveterm.dev/faq#why-does-wave-warn-me-about-arm64-translation-when-it-launches"
+                    "https://docs.waddle.dev/faq#why-does-wave-warn-me-about-arm64-translation-when-it-launches"
                 )
             );
             throw new Error("User redirected to docsite to learn more about ARM64 translation, exiting");
@@ -68,19 +68,19 @@ export function checkIfRunningUnderARM64Translation(fullConfig: FullConfigType) 
 }
 
 /**
- * Gets the path to the old Wave home directory (defaults to `~/.waveterm`).
+ * Gets the path to the old Waddle home directory (defaults to `~/.waddle`).
  * @returns The path to the directory if it exists and contains valid data for the current app, otherwise null.
  */
-function getWaveHomeDir(): string {
-    let home = process.env[WaveHomeVarName];
+function getWaddleHomeDir(): string {
+    let home = process.env[WaddleHomeVarName];
     if (!home) {
         const homeDir = app.getPath("home");
         if (homeDir) {
             home = path.join(homeDir, `.${waveDirName}`);
         }
     }
-    // If home exists and it has `wave.lock` in it, we know it has valid data from Wave >=v0.8. Otherwise, it could be for WaveLegacy (<v0.8)
-    if (home && existsSync(home) && existsSync(path.join(home, "wave.lock"))) {
+    // If home exists and it has `waddle.lock` in it, we know it has valid data from Waddle >=v0.8. Otherwise, it could be for WaddleLegacy (<v0.8)
+    if (home && existsSync(home) && existsSync(path.join(home, "waddle.lock"))) {
         return home;
     }
     return null;
@@ -99,18 +99,18 @@ function ensurePathExists(path: string): string {
 }
 
 /**
- * Gets the path to the directory where Wave configurations are stored. Creates the directory if it does not exist.
- * Handles backwards compatibility with the old Wave Home directory model, where configurations and data were stored together.
+ * Gets the path to the directory where Waddle configurations are stored. Creates the directory if it does not exist.
+ * Handles backwards compatibility with the old Waddle Home directory model, where configurations and data were stored together.
  * @returns The path where configurations should be stored.
  */
-function getWaveConfigDir(): string {
+function getWaddleConfigDir(): string {
     // If wave home dir exists, use it for backwards compatibility
-    const waveHomeDir = getWaveHomeDir();
+    const waveHomeDir = getWaddleHomeDir();
     if (waveHomeDir) {
         return path.join(waveHomeDir, "config");
     }
 
-    const override = process.env[WaveConfigHomeVarName];
+    const override = process.env[WaddleConfigHomeVarName];
     const xdgConfigHome = process.env.XDG_CONFIG_HOME;
     let retVal: string;
     if (override) {
@@ -124,18 +124,18 @@ function getWaveConfigDir(): string {
 }
 
 /**
- * Gets the path to the directory where Wave data is stored. Creates the directory if it does not exist.
- * Handles backwards compatibility with the old Wave Home directory model, where configurations and data were stored together.
+ * Gets the path to the directory where Waddle data is stored. Creates the directory if it does not exist.
+ * Handles backwards compatibility with the old Waddle Home directory model, where configurations and data were stored together.
  * @returns The path where data should be stored.
  */
-function getWaveDataDir(): string {
+function getWaddleDataDir(): string {
     // If wave home dir exists, use it for backwards compatibility
-    const waveHomeDir = getWaveHomeDir();
+    const waveHomeDir = getWaddleHomeDir();
     if (waveHomeDir) {
         return waveHomeDir;
     }
 
-    const override = process.env[WaveDataHomeVarName];
+    const override = process.env[WaddleDataHomeVarName];
     const xdgDataHome = process.env.XDG_DATA_HOME;
     let retVal: string;
     if (override) {
@@ -149,7 +149,7 @@ function getWaveDataDir(): string {
 }
 
 function getElectronAppBasePath(): string {
-    // import.meta.dirname in dev points to waveterm/dist/main
+    // import.meta.dirname in dev points to waddle/dist/main
     return path.dirname(import.meta.dirname);
 }
 
@@ -159,7 +159,7 @@ function getElectronAppUnpackedBasePath(): string {
 
 function getElectronAppResourcesPath(): string {
     if (isDev) {
-        // import.meta.dirname in dev points to waveterm/dist/main
+        // import.meta.dirname in dev points to waddle/dist/main
         return path.dirname(import.meta.dirname);
     }
     return process.resourcesPath;
@@ -167,7 +167,7 @@ function getElectronAppResourcesPath(): string {
 
 const wavesrvBinName = `wavesrv.${unameArch}`;
 
-function getWaveSrvPath(): string {
+function getWaddleSrvPath(): string {
     if (process.platform === "win32") {
         const winBinName = `${wavesrvBinName}.exe`;
         const appPath = path.join(getElectronAppUnpackedBasePath(), "bin", winBinName);
@@ -176,8 +176,8 @@ function getWaveSrvPath(): string {
     return path.join(getElectronAppUnpackedBasePath(), "bin", wavesrvBinName);
 }
 
-function getWaveSrvCwd(): string {
-    return getWaveDataDir();
+function getWaddleSrvCwd(): string {
+    return getWaddleDataDir();
 }
 
 ipcMain.on("get-is-dev", (event) => {
@@ -197,10 +197,10 @@ ipcMain.on("get-webview-preload", (event) => {
     event.returnValue = path.join(getElectronAppBasePath(), "preload", "preload-webview.cjs");
 });
 ipcMain.on("get-data-dir", (event) => {
-    event.returnValue = getWaveDataDir();
+    event.returnValue = getWaddleDataDir();
 });
 ipcMain.on("get-config-dir", (event) => {
-    event.returnValue = getWaveConfigDir();
+    event.returnValue = getWaddleConfigDir();
 });
 ipcMain.on("get-home-dir", (event) => {
     event.returnValue = app.getPath("home");
@@ -272,15 +272,15 @@ export {
     getElectronAppBasePath,
     getElectronAppResourcesPath,
     getElectronAppUnpackedBasePath,
-    getWaveConfigDir,
-    getWaveDataDir,
-    getWaveSrvCwd,
-    getWaveSrvPath,
+    getWaddleConfigDir,
+    getWaddleDataDir,
+    getWaddleSrvCwd,
+    getWaddleSrvPath,
     getXdgCurrentDesktop,
     isDev,
     isDevVite,
     unameArch,
     unamePlatform,
-    WaveConfigHomeVarName,
-    WaveDataHomeVarName,
+    WaddleConfigHomeVarName,
+    WaddleDataHomeVarName,
 };

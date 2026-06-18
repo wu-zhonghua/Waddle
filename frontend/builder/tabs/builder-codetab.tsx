@@ -44,7 +44,7 @@ const BuilderCodeTab = memo(() => {
         }
     };
 
-    const handleKeyDown = keyutil.keydownWrapper((waveEvent: WaveKeyboardEvent) => {
+    const handleKeyDown = keyutil.keydownWrapper((waveEvent: WaddleKeyboardEvent) => {
         if (keyutil.checkKeyPressed(waveEvent, "Cmd:s")) {
             handleSave();
             return true;

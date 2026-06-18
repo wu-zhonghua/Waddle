@@ -17,12 +17,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcloud"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcloud"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 // the wcore package coordinates actions across the storage layer
@@ -72,7 +72,7 @@ func EnsureInitialData() (bool, error) {
 	wsId := ""
 	if firstLaunch {
 		log.Println("client has no windows and first launch, creating starter workspace")
-		starterWs, err := CreateWorkspace(ctx, "Starter workspace", "custom@wave-logo-solid", "#58C142", false, true)
+		starterWs, err := CreateWorkspace(ctx, "Starter workspace", "custom@waddle-logo-solid", "#58C142", false, true)
 		if err != nil {
 			return firstLaunch, fmt.Errorf("error creating starter workspace: %w", err)
 		}
@@ -105,7 +105,7 @@ func GetClientData(ctx context.Context) (*waveobj.Client, error) {
 	return clientData, nil
 }
 
-func SendWaveObjUpdate(oref waveobj.ORef) {
+func SendWaddleObjUpdate(oref waveobj.ORef) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelFn()
 	// send a waveobj:update event
@@ -114,10 +114,10 @@ func SendWaveObjUpdate(oref waveobj.ORef) {
 		log.Printf("error getting object for update event: %v", err)
 		return
 	}
-	wps.Broker.Publish(wps.WaveEvent{
-		Event:  wps.Event_WaveObjUpdate,
+	wps.Broker.Publish(wps.WaddleEvent{
+		Event:  wps.Event_WaddleObjUpdate,
 		Scopes: []string{oref.String()},
-		Data: waveobj.WaveObjUpdate{
+		Data: waveobj.WaddleObjUpdate{
 			UpdateType: waveobj.UpdateType_Update,
 			OType:      waveObj.GetOType(),
 			OID:        waveobj.GetOID(waveObj),

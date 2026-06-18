@@ -10,26 +10,26 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/eventbus"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/service"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/web/webcmd"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/eventbus"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/service"
+	"github.com/waddledev/waddle/pkg/tsgen/tsgenmeta"
+	"github.com/waddledev/waddle/pkg/userinput"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/vdom"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/web/webcmd"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 // add extra types to generate here
 var ExtraTypes = []any{
 	waveobj.ORef{},
-	(*waveobj.WaveObj)(nil),
+	(*waveobj.WaddleObj)(nil),
 	map[string]any{},
 	service.WebCallType{},
 	service.WebReturnType{},
@@ -37,7 +37,7 @@ var ExtraTypes = []any{
 	eventbus.WSEventType{},
 	wps.WSFileEventData{},
 	waveobj.LayoutActionData{},
-	filestore.WaveFile{},
+	filestore.WaddleFile{},
 	wconfig.FullConfigType{},
 	wconfig.WatcherUpdate{},
 	wshutil.RpcMessage{},
@@ -68,7 +68,7 @@ var anyRType = reflect.TypeOf((*interface{})(nil)).Elem()
 var metaRType = reflect.TypeOf((*waveobj.MetaMapType)(nil)).Elem()
 var metaSettingsType = reflect.TypeOf((*wshrpc.MetaSettingsType)(nil)).Elem()
 var uiContextRType = reflect.TypeOf((*waveobj.UIContext)(nil)).Elem()
-var waveObjRType = reflect.TypeOf((*waveobj.WaveObj)(nil)).Elem()
+var waveObjRType = reflect.TypeOf((*waveobj.WaddleObj)(nil)).Elem()
 var updatesRtnRType = reflect.TypeOf(waveobj.UpdatesRtnType{})
 var orefRType = reflect.TypeOf((*waveobj.ORef)(nil)).Elem()
 var wshRpcInterfaceRType = reflect.TypeOf((*wshrpc.WshRpcInterface)(nil)).Elem()
@@ -175,7 +175,7 @@ func TypeToTSType(t reflect.Type, tsTypesMap map[reflect.Type]string) (string, [
 }
 
 var tsRenameMap = map[string]string{
-	"Window":           "WaveWindow",
+	"Window":           "WaddleWindow",
 	"Elem":             "VDomElem",
 	"MetaTSType":       "MetaType",
 	"MetaSettingsType": "SettingsType",
@@ -187,10 +187,10 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 	if tsRename, ok := tsRenameMap[tsTypeName]; ok {
 		tsTypeName = tsRename
 	}
-	var isWaveObj bool
+	var isWaddleObj bool
 	if !embedded {
 		if rtype.Implements(waveObjRType) || reflect.PointerTo(rtype).Implements(waveObjRType) {
-			isWaveObj = true
+			isWaddleObj = true
 		}
 	}
 	var fieldsBuf bytes.Buffer
@@ -210,7 +210,7 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 		if fieldName == "" {
 			continue
 		}
-		if isWaveObj && (fieldName == waveobj.OTypeKeyName || fieldName == waveobj.OIDKeyName || fieldName == waveobj.VersionKeyName || fieldName == waveobj.MetaKeyName) {
+		if isWaddleObj && (fieldName == waveobj.OTypeKeyName || fieldName == waveobj.OIDKeyName || fieldName == waveobj.VersionKeyName || fieldName == waveobj.MetaKeyName) {
 			continue
 		}
 		optMarker := ""
@@ -237,11 +237,11 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 	}
 	if !embedded {
 		buf.WriteString(fmt.Sprintf("// %s\n", rtype.String()))
-		if fieldsBuf.Len() == 0 && !isWaveObj {
+		if fieldsBuf.Len() == 0 && !isWaddleObj {
 			// empty struct - use "object" instead of "{}" to satisfy linter
 			buf.WriteString(fmt.Sprintf("type %s = object;\n", tsTypeName))
-		} else if isWaveObj {
-			buf.WriteString(fmt.Sprintf("type %s = WaveObj & {\n", tsTypeName))
+		} else if isWaddleObj {
+			buf.WriteString(fmt.Sprintf("type %s = WaddleObj & {\n", tsTypeName))
 			buf.Write(fieldsBuf.Bytes())
 			buf.WriteString("};\n")
 		} else {
@@ -255,10 +255,10 @@ func generateTSTypeInternal(rtype reflect.Type, tsTypesMap map[reflect.Type]stri
 	return buf.String(), subTypes
 }
 
-func GenerateWaveObjTSType() string {
+func GenerateWaddleObjTSType() string {
 	var buf bytes.Buffer
-	buf.WriteString("// waveobj.WaveObj\n")
-	buf.WriteString("type WaveObj = {\n")
+	buf.WriteString("// waveobj.WaddleObj\n")
+	buf.WriteString("type WaddleObj = {\n")
 	buf.WriteString("    otype: string;\n")
 	buf.WriteString("    oid: string;\n")
 	buf.WriteString("    version: number;\n")
@@ -320,7 +320,7 @@ func GenerateTSType(rtype reflect.Type, tsTypesMap map[reflect.Type]string) {
 		return
 	}
 	if rtype == waveObjRType {
-		tsTypesMap[rtype] = GenerateWaveObjTSType()
+		tsTypesMap[rtype] = GenerateWaddleObjTSType()
 		return
 	}
 	if rtype == metaSettingsType {
@@ -423,8 +423,8 @@ func GenerateServiceClass(serviceName string, serviceObj any, tsTypesMap map[ref
 	sb.WriteString("export class ")
 	sb.WriteString(tsServiceName + "Type")
 	sb.WriteString(" {\n")
-	sb.WriteString("    waveEnv: WaveEnv;\n\n")
-	sb.WriteString("    constructor(waveEnv?: WaveEnv) {\n")
+	sb.WriteString("    waveEnv: WaddleEnv;\n\n")
+	sb.WriteString("    constructor(waveEnv?: WaddleEnv) {\n")
 	sb.WriteString("        this.waveEnv = waveEnv;\n")
 	sb.WriteString("    }\n\n")
 	isFirst := true
@@ -524,14 +524,14 @@ func getTsWshMethodDataParamsAndExpr(methodDecl *wshrpc.WshRpcMethodDecl, tsType
 	return methodParamBuilder.String(), fmt.Sprintf("{ args: [%s] }", argBuilder.String())
 }
 
-func GenerateWaveObjTypes(tsTypesMap map[reflect.Type]string) {
+func GenerateWaddleObjTypes(tsTypesMap map[reflect.Type]string) {
 	for _, typeUnion := range TypeUnions {
 		GenerateTSTypeUnion(typeUnion, tsTypesMap)
 	}
 	for _, extraType := range ExtraTypes {
 		GenerateTSType(reflect.TypeOf(extraType), tsTypesMap)
 	}
-	for _, rtype := range waveobj.AllWaveObjTypes() {
+	for _, rtype := range waveobj.AllWaddleObjTypes() {
 		if rtype.String() == "*waveobj.MainServer" {
 			continue
 		}

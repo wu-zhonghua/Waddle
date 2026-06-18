@@ -3,7 +3,7 @@
 
 import { atom, Atom, PrimitiveAtom } from "jotai";
 import { globalStore } from "./jotaiStore";
-import { setWaveWindowType } from "./windowtype";
+import { setWaddleWindowType } from "./windowtype";
 import * as WOS from "./wos";
 
 let atoms!: GlobalAtomsType;
@@ -15,7 +15,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
     const windowIdAtom = atom(initOpts.windowId) as PrimitiveAtom<string>;
     const builderIdAtom = atom(initOpts.builderId) as PrimitiveAtom<string>;
     const builderAppIdAtom = atom<string>(null) as PrimitiveAtom<string>;
-    setWaveWindowType(initOpts.isPreview ? "preview" : initOpts.builderId != null ? "builder" : "tab");
+    setWaddleWindowType(initOpts.isPreview ? "preview" : initOpts.builderId != null ? "builder" : "tab");
     const uiContextAtom = atom((get) => {
         const uiContext: UIContext = {
             windowid: initOpts.windowId,
@@ -44,7 +44,7 @@ function initGlobalAtoms(initOpts: GlobalInitOptions) {
     }
 
     const workspaceIdAtom: Atom<string> = atom((get) => {
-        const windowData = WOS.getObjectValue<WaveWindow>(WOS.makeORef("window", get(windowIdAtom)), get);
+        const windowData = WOS.getObjectValue<WaddleWindow>(WOS.makeORef("window", get(windowIdAtom)), get);
         return windowData?.workspaceid ?? null;
     });
     const workspaceAtom: Atom<Workspace> = atom((get) => {

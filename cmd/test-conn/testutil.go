@@ -13,46 +13,46 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/shellexec"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshserver"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/shellexec"
+	"github.com/waddledev/waddle/pkg/userinput"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshserver"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
-func setupWaveEnvVars() error {
+func setupWaddleEnvVars() error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	isDev := os.Getenv("WAVETERM_DEV") != ""
+	isDev := os.Getenv("WADDLE_DEV") != ""
 	devSuffix := ""
 	if isDev {
 		devSuffix = "-dev"
 	}
 
-	configHome := os.Getenv("WAVETERM_CONFIG_HOME")
+	configHome := os.Getenv("WADDLE_CONFIG_HOME")
 	if configHome == "" {
-		configHome = filepath.Join(homeDir, ".config", "waveterm"+devSuffix)
-		os.Setenv("WAVETERM_CONFIG_HOME", configHome)
+		configHome = filepath.Join(homeDir, ".config", "waddle"+devSuffix)
+		os.Setenv("WADDLE_CONFIG_HOME", configHome)
 	}
 	log.Printf("Using config directory: %s", configHome)
 
-	dataHome := os.Getenv("WAVETERM_DATA_HOME")
+	dataHome := os.Getenv("WADDLE_DATA_HOME")
 	if dataHome == "" {
 		if runtime.GOOS == "darwin" {
-			dataHome = filepath.Join(homeDir, "Library", "Application Support", "waveterm"+devSuffix)
-			os.Setenv("WAVETERM_DATA_HOME", dataHome)
+			dataHome = filepath.Join(homeDir, "Library", "Application Support", "waddle"+devSuffix)
+			os.Setenv("WADDLE_DATA_HOME", dataHome)
 		} else {
-			return fmt.Errorf("WAVETERM_DATA_HOME must be set on non-macOS systems")
+			return fmt.Errorf("WADDLE_DATA_HOME must be set on non-macOS systems")
 		}
 	}
 	log.Printf("Using data directory: %s", dataHome)
@@ -63,7 +63,7 @@ func setupWaveEnvVars() error {
 func initTestHarness(autoAccept bool) error {
 	log.Printf("Initializing test harness...")
 
-	err := setupWaveEnvVars()
+	err := setupWaddleEnvVars()
 	if err != nil {
 		return fmt.Errorf("failed to setup wave env vars: %w", err)
 	}
@@ -225,10 +225,10 @@ func testWshExec(connName string, cmd string, timeout time.Duration) error {
 		Env:   make(map[string]string),
 		Exp:   time.Now().Add(5 * time.Minute),
 	}
-	swapToken.Env["TERM_PROGRAM"] = "waveterm"
-	swapToken.Env["WAVETERM"] = "1"
-	swapToken.Env["WAVETERM_VERSION"] = wavebase.WaveVersion
-	swapToken.Env["WAVETERM_CONN"] = connName
+	swapToken.Env["TERM_PROGRAM"] = "waddle"
+	swapToken.Env["WADDLE"] = "1"
+	swapToken.Env["WADDLE_VERSION"] = wavebase.WaddleVersion
+	swapToken.Env["WADDLE_CONN"] = connName
 
 	cmdOpts := shellexec.CommandOptsType{
 		SwapToken: swapToken,

@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/waddledev/waddle/tsunami/rpctypes"
+	"github.com/waddledev/waddle/tsunami/util"
+	"github.com/waddledev/waddle/tsunami/vdom"
 )
 
 const SSEKeepAliveDuration = 5 * time.Second
@@ -420,7 +420,7 @@ func (h *httpHandlers) handleTermInput(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("failed to parse JSON: %v", err), http.StatusBadRequest)
 		return
 	}
-	if strings.TrimSpace(event.WaveId) == "" {
+	if strings.TrimSpace(event.WaddleId) == "" {
 		http.Error(w, "waveid is required", http.StatusBadRequest)
 		return
 	}

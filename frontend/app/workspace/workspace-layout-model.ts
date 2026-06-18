@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { WaddleAIModel } from "@/app/aipanel/waveai-model";
 import { globalStore } from "@/app/store/jotaiStore";
 import { isBuilderWindow } from "@/app/store/windowtype";
 import * as WOS from "@/app/store/wos";
@@ -396,7 +396,7 @@ class WorkspaceLayoutModel {
             recordTEvent("action:openwaveai");
         }
         globalStore.set(this.panelVisibleAtom, visible);
-        getApi().setWaveAIOpen(visible);
+        getApi().setWaddleAIOpen(visible);
         RpcApi.SetMetaCommand(TabRpcClient, {
             oref: WOS.makeORef("tab", this.getTabId()),
             meta: { "waveai:panelopen": visible },
@@ -408,7 +408,7 @@ class WorkspaceLayoutModel {
         if (visible) {
             if (!opts?.nofocus) {
                 this.focusTimeoutRef = setTimeout(() => {
-                    WaveAIModel.getInstance().focusInput();
+                    WaddleAIModel.getInstance().focusInput();
                     this.focusTimeoutRef = null;
                 }, 350);
             }

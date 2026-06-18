@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
 const DevModeCorsOrigins = "http://localhost:5173,http://localhost:5174"
 
 func GetTsunamiAppCachePath(scope string, appName string, osArch string) (string, error) {
-	cachesDir := wavebase.GetWaveCachesDir()
+	cachesDir := wavebase.GetWaddleCachesDir()
 	tsunamiCacheDir := filepath.Join(cachesDir, "tsunami-build-cache")
 	fullAppName := appName + "." + osArch
 	if strings.HasPrefix(osArch, "windows") {

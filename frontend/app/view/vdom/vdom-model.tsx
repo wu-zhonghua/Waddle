@@ -148,9 +148,9 @@ export class VDomModel {
         this.contextActive = jotai.atom(false);
         this.reset();
         this.viewIcon = jotai.atom("bolt");
-        this.viewName = jotai.atom("Wave App");
+        this.viewName = jotai.atom("Waddle App");
         this.backendRoute = jotai.atom((get) => {
-            const blockData = get(WOS.getWaveObjectAtom<Block>(makeORef("block", this.blockId)));
+            const blockData = get(WOS.getWaddleObjectAtom<Block>(makeORef("block", this.blockId)));
             return blockData?.meta?.["vdom:route"];
         });
         this.noPadding = jotai.atom(true);
@@ -223,7 +223,7 @@ export class VDomModel {
     }
 
     getBackendRoute(): string {
-        const blockData = globalStore.get(WOS.getWaveObjectAtom<Block>(makeORef("block", this.blockId)));
+        const blockData = globalStore.get(WOS.getWaddleObjectAtom<Block>(makeORef("block", this.blockId)));
         return blockData?.meta?.["vdom:route"];
     }
 
@@ -254,7 +254,7 @@ export class VDomModel {
         return fullUrl;
     }
 
-    keyDownHandler(e: WaveKeyboardEvent): boolean {
+    keyDownHandler(e: WaddleKeyboardEvent): boolean {
         if (this.backendOpts?.closeonctrlc && checkKeyPressed(e, "Ctrl:c")) {
             this.shouldDispose = true;
             this.queueUpdate(true);
@@ -655,7 +655,7 @@ export class VDomModel {
 
     createFeUpdate(): VDomFrontendUpdate {
         const blockORef = makeORef("block", this.blockId);
-        const blockAtom = WOS.getWaveObjectAtom<Block>(blockORef);
+        const blockAtom = WOS.getWaddleObjectAtom<Block>(blockORef);
         const blockData = globalStore.get(blockAtom);
         const isBlockFocused = globalStore.get(this.nodeModel.isFocused);
         const renderContext: VDomRenderContext = {

@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
 )
 
 func init() {
-	for _, rtype := range waveobj.AllWaveObjTypes() {
+	for _, rtype := range waveobj.AllWaddleObjTypes() {
 		waveobj.RegisterType(rtype)
 	}
 }

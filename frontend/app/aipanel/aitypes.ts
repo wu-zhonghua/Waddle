@@ -3,7 +3,7 @@
 
 import { ChatRequestOptions, FileUIPart, UIMessage, UIMessagePart } from "ai";
 
-type WaveUIDataTypes = {
+type WaddleUIDataTypes = {
     // pkg/aiusechat/uctypes/uctypes.go UIMessageDataUserFile
     userfile: {
         filename: string;
@@ -32,16 +32,16 @@ type WaveUIDataTypes = {
     };
 };
 
-export type WaveUIMessage = UIMessage<unknown, WaveUIDataTypes, any>;
-export type WaveUIMessagePart = UIMessagePart<WaveUIDataTypes, any>;
+export type WaddleUIMessage = UIMessage<unknown, WaddleUIDataTypes, any>;
+export type WaddleUIMessagePart = UIMessagePart<WaddleUIDataTypes, any>;
 
 export type UseChatSetMessagesType = (
-    messages: WaveUIMessage[] | ((messages: WaveUIMessage[]) => WaveUIMessage[])
+    messages: WaddleUIMessage[] | ((messages: WaddleUIMessage[]) => WaddleUIMessage[])
 ) => void;
 
 export type UseChatSendMessageType = (
     message?:
-        | (Omit<WaveUIMessage, "id" | "role"> & {
+        | (Omit<WaddleUIMessage, "id" | "role"> & {
               id?: string;
               role?: "system" | "user" | "assistant";
           } & {

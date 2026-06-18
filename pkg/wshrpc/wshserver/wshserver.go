@@ -21,43 +21,43 @@ import (
 	"time"
 
 	"github.com/skratchdot/open-golang/open"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/buildercontroller"
-	"github.com/wavetermdev/waveterm/pkg/filebackup"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/genconn"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/remote/fileshare/wshfs"
-	"github.com/wavetermdev/waveterm/pkg/secretstore"
-	"github.com/wavetermdev/waveterm/pkg/suggestion"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveappstore"
-	"github.com/wavetermdev/waveterm/pkg/waveapputil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcloud"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wsl"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
-	"github.com/wavetermdev/waveterm/tsunami/build"
+	"github.com/waddledev/waddle/pkg/aiusechat"
+	"github.com/waddledev/waddle/pkg/aiusechat/chatstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/blockcontroller"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/buildercontroller"
+	"github.com/waddledev/waddle/pkg/filebackup"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/genconn"
+	"github.com/waddledev/waddle/pkg/jobcontroller"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/remote/fileshare/wshfs"
+	"github.com/waddledev/waddle/pkg/secretstore"
+	"github.com/waddledev/waddle/pkg/suggestion"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveappstore"
+	"github.com/waddledev/waddle/pkg/waveapputil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcloud"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wsl"
+	"github.com/waddledev/waddle/pkg/wslconn"
+	"github.com/waddledev/waddle/pkg/wstore"
+	"github.com/waddledev/waddle/tsunami/build"
 )
 
 var InvalidWslDistroNames = []string{"docker-desktop", "docker-desktop-data"}
@@ -161,7 +161,7 @@ func (ws *WshServer) UpdateTabNameCommand(ctx context.Context, tabId string, new
 	if err != nil {
 		return fmt.Errorf("error updating tab name: %w", err)
 	}
-	wcore.SendWaveObjUpdate(oref)
+	wcore.SendWaddleObjUpdate(oref)
 	return nil
 }
 
@@ -171,7 +171,7 @@ func (ws *WshServer) UpdateWorkspaceTabIdsCommand(ctx context.Context, workspace
 	if err != nil {
 		return fmt.Errorf("error updating workspace tab ids: %w", err)
 	}
-	wcore.SendWaveObjUpdate(oref)
+	wcore.SendWaddleObjUpdate(oref)
 	return nil
 }
 
@@ -182,7 +182,7 @@ func (ws *WshServer) SetMetaCommand(ctx context.Context, data wshrpc.CommandSetM
 	if err != nil {
 		return fmt.Errorf("error updating object meta: %w", err)
 	}
-	wcore.SendWaveObjUpdate(oref)
+	wcore.SendWaddleObjUpdate(oref)
 	return nil
 }
 
@@ -444,7 +444,7 @@ func (ws *WshServer) WriteTempFileCommand(ctx context.Context, data wshrpc.Comma
 	if name == "" || name == "." || name == ".." {
 		return "", fmt.Errorf("invalid filename")
 	}
-	tempDir, err := os.MkdirTemp("", "waveterm-")
+	tempDir, err := os.MkdirTemp("", "waddle-")
 	if err != nil {
 		return "", fmt.Errorf("error creating temp directory: %w", err)
 	}
@@ -503,11 +503,11 @@ func (ws *WshServer) WaitForRouteCommand(ctx context.Context, data wshrpc.Comman
 	return err == nil, nil
 }
 
-func (ws *WshServer) EventRecvCommand(ctx context.Context, data wps.WaveEvent) error {
+func (ws *WshServer) EventRecvCommand(ctx context.Context, data wps.WaddleEvent) error {
 	return nil
 }
 
-func (ws *WshServer) EventPublishCommand(ctx context.Context, data wps.WaveEvent) error {
+func (ws *WshServer) EventPublishCommand(ctx context.Context, data wps.WaddleEvent) error {
 	rpcSource := wshutil.GetRpcSourceFromContext(ctx)
 	if rpcSource == "" {
 		return fmt.Errorf("no rpc source set")
@@ -546,7 +546,7 @@ func (ws *WshServer) EventUnsubAllCommand(ctx context.Context) error {
 	return nil
 }
 
-func (ws *WshServer) EventReadHistoryCommand(ctx context.Context, data wshrpc.CommandEventReadHistoryData) ([]*wps.WaveEvent, error) {
+func (ws *WshServer) EventReadHistoryCommand(ctx context.Context, data wshrpc.CommandEventReadHistoryData) ([]*wps.WaddleEvent, error) {
 	events := wps.Broker.ReadEventHistory(data.Event, data.Scope, data.MaxItems)
 	return events, nil
 }
@@ -564,7 +564,7 @@ func (ws *WshServer) GetFullConfigCommand(ctx context.Context) (wconfig.FullConf
 	return watcher.GetFullConfig(), nil
 }
 
-func (ws *WshServer) GetWaveAIModeConfigCommand(ctx context.Context) (wconfig.AIModeConfigUpdate, error) {
+func (ws *WshServer) GetWaddleAIModeConfigCommand(ctx context.Context) (wconfig.AIModeConfigUpdate, error) {
 	fullConfig := wconfig.GetWatcher().GetFullConfig()
 	resolvedConfigs := aiusechat.ComputeResolvedAIModeConfigs(fullConfig)
 	return wconfig.AIModeConfigUpdate{Configs: resolvedConfigs}, nil
@@ -791,8 +791,8 @@ func (ws *WshServer) FindGitBashCommand(ctx context.Context, rescan bool) (strin
 	return shellutil.FindGitBash(&fullConfig, rescan), nil
 }
 
-func waveFileToWaveFileInfo(wf *filestore.WaveFile) *wshrpc.WaveFileInfo {
-	return &wshrpc.WaveFileInfo{
+func waveFileToWaddleFileInfo(wf *filestore.WaddleFile) *wshrpc.WaddleFileInfo {
+	return &wshrpc.WaddleFileInfo{
 		ZoneId:    wf.ZoneId,
 		Name:      wf.Name,
 		Opts:      wf.Opts,
@@ -820,9 +820,9 @@ func (ws *WshServer) BlockInfoCommand(ctx context.Context, blockId string) (*wsh
 	if err != nil {
 		return nil, fmt.Errorf("error listing blockfiles: %w", err)
 	}
-	var fileInfoList []*wshrpc.WaveFileInfo
+	var fileInfoList []*wshrpc.WaddleFileInfo
 	for _, wf := range fileList {
-		fileInfoList = append(fileInfoList, waveFileToWaveFileInfo(wf))
+		fileInfoList = append(fileInfoList, waveFileToWaddleFileInfo(wf))
 	}
 	return &wshrpc.BlockInfoData{
 		BlockId:     blockId,
@@ -863,13 +863,13 @@ func (ws *WshServer) DebugTermCommand(ctx context.Context, data wshrpc.CommandDe
 	}, nil
 }
 
-func (ws *WshServer) WaveInfoCommand(ctx context.Context) (*wshrpc.WaveInfoData, error) {
-	return &wshrpc.WaveInfoData{
-		Version:   wavebase.WaveVersion,
+func (ws *WshServer) WaddleInfoCommand(ctx context.Context) (*wshrpc.WaddleInfoData, error) {
+	return &wshrpc.WaddleInfoData{
+		Version:   wavebase.WaddleVersion,
 		ClientId:  wstore.GetClientId(),
 		BuildTime: wavebase.BuildTime,
-		ConfigDir: wavebase.GetWaveConfigDir(),
-		DataDir:   wavebase.GetWaveDataDir(),
+		ConfigDir: wavebase.GetWaddleConfigDir(),
+		DataDir:   wavebase.GetWaddleDataDir(),
 	}, nil
 }
 
@@ -1032,7 +1032,7 @@ func (ws *WshServer) WriteAppFileCommand(ctx context.Context, data wshrpc.Comman
 	return waveappstore.WriteAppFile(data.AppId, data.FileName, contents)
 }
 
-func (ws *WshServer) WaveFileReadStreamCommand(ctx context.Context, data wshrpc.CommandWaveFileReadStreamData) (*wshrpc.WaveFileInfo, error) {
+func (ws *WshServer) WaddleFileReadStreamCommand(ctx context.Context, data wshrpc.CommandWaddleFileReadStreamData) (*wshrpc.WaddleFileInfo, error) {
 	const maxStreamFileSize = 5 * 1024 * 1024
 
 	waveFile, err := filestore.WFS.Stat(ctx, data.ZoneId, data.Name)
@@ -1063,7 +1063,7 @@ func (ws *WshServer) WaveFileReadStreamCommand(ctx context.Context, data wshrpc.
 
 	go func() {
 		defer func() {
-			panichandler.PanicHandler("WaveFileReadStreamCommand", recover())
+			panichandler.PanicHandler("WaddleFileReadStreamCommand", recover())
 		}()
 		defer writer.Close()
 
@@ -1073,7 +1073,7 @@ func (ws *WshServer) WaveFileReadStreamCommand(ctx context.Context, data wshrpc.
 		}
 	}()
 
-	rtnInfo := &wshrpc.WaveFileInfo{
+	rtnInfo := &wshrpc.WaddleFileInfo{
 		ZoneId:    waveFile.ZoneId,
 		Name:      waveFile.Name,
 		Opts:      waveFile.Opts,
@@ -1253,7 +1253,7 @@ func (ws WshServer) SendTelemetryCommand(ctx context.Context) error {
 	return wcloud.SendAllTelemetry(wstore.GetClientId())
 }
 
-func (ws *WshServer) WaveAIEnableTelemetryCommand(ctx context.Context) error {
+func (ws *WshServer) WaddleAIEnableTelemetryCommand(ctx context.Context) error {
 	// Enable telemetry in config
 	meta := waveobj.MetaMapType{
 		wconfig.ConfigKey_TelemetryEnabled: true,
@@ -1279,7 +1279,7 @@ func (ws *WshServer) WaveAIEnableTelemetryCommand(ctx context.Context) error {
 	return nil
 }
 
-func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.CommandGetWaveAIChatData) (*uctypes.UIChat, error) {
+func (ws *WshServer) GetWaddleAIChatCommand(ctx context.Context, data wshrpc.CommandGetWaddleAIChatData) (*uctypes.UIChat, error) {
 	aiChat := chatstore.DefaultChatStore.Get(data.ChatId)
 	if aiChat == nil {
 		return nil, nil
@@ -1291,21 +1291,21 @@ func (ws *WshServer) GetWaveAIChatCommand(ctx context.Context, data wshrpc.Comma
 	return uiChat, nil
 }
 
-func (ws *WshServer) GetWaveAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error) {
+func (ws *WshServer) GetWaddleAIRateLimitCommand(ctx context.Context) (*uctypes.RateLimitInfo, error) {
 	return aiusechat.GetGlobalRateLimit(), nil
 }
 
-func (ws *WshServer) WaveAIToolApproveCommand(ctx context.Context, data wshrpc.CommandWaveAIToolApproveData) error {
+func (ws *WshServer) WaddleAIToolApproveCommand(ctx context.Context, data wshrpc.CommandWaddleAIToolApproveData) error {
 	return aiusechat.UpdateToolApproval(data.ToolCallId, data.Approval)
 }
 
-func (ws *WshServer) WaveAIGetToolDiffCommand(ctx context.Context, data wshrpc.CommandWaveAIGetToolDiffData) (*wshrpc.CommandWaveAIGetToolDiffRtnData, error) {
+func (ws *WshServer) WaddleAIGetToolDiffCommand(ctx context.Context, data wshrpc.CommandWaddleAIGetToolDiffData) (*wshrpc.CommandWaddleAIGetToolDiffRtnData, error) {
 	originalContent, modifiedContent, err := aiusechat.CreateWriteTextFileDiff(ctx, data.ChatId, data.ToolCallId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &wshrpc.CommandWaveAIGetToolDiffRtnData{
+	return &wshrpc.CommandWaddleAIGetToolDiffRtnData{
 		OriginalContents64: base64.StdEncoding.EncodeToString(originalContent),
 		ModifiedContents64: base64.StdEncoding.EncodeToString(modifiedContent),
 	}, nil
@@ -1417,11 +1417,11 @@ func (ws *WshServer) PathCommand(ctx context.Context, data wshrpc.PathCommandDat
 	var path string
 	switch pathType {
 	case "config":
-		path = wavebase.GetWaveConfigDir()
+		path = wavebase.GetWaddleConfigDir()
 	case "data":
-		path = wavebase.GetWaveDataDir()
+		path = wavebase.GetWaddleDataDir()
 	case "log":
-		path = filepath.Join(wavebase.GetWaveDataDir(), "waveapp.log")
+		path = filepath.Join(wavebase.GetWaddleDataDir(), "waddleapp.log")
 	}
 
 	if openInternal && openExternal {

@@ -9,30 +9,30 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/gogen"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/gogen"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
 const WshClientFileName = "pkg/wshrpc/wshclient/wshclient.go"
-const WaveObjMetaConstsFileName = "pkg/waveobj/metaconsts.go"
+const WaddleObjMetaConstsFileName = "pkg/waveobj/metaconsts.go"
 const SettingsMetaConstsFileName = "pkg/wconfig/metaconsts.go"
 
 func GenerateWshClient() error {
 	fmt.Fprintf(os.Stderr, "generating wshclient file to %s\n", WshClientFileName)
 	var buf strings.Builder
 	gogen.GenerateBoilerplate(&buf, "wshclient", []string{
-		"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes",
-		"github.com/wavetermdev/waveterm/pkg/baseds",
-		"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata",
-		"github.com/wavetermdev/waveterm/pkg/vdom",
-		"github.com/wavetermdev/waveterm/pkg/waveobj",
-		"github.com/wavetermdev/waveterm/pkg/wconfig",
-		"github.com/wavetermdev/waveterm/pkg/wps",
-		"github.com/wavetermdev/waveterm/pkg/wshrpc",
-		"github.com/wavetermdev/waveterm/pkg/wshutil",
+		"github.com/waddledev/waddle/pkg/aiusechat/uctypes",
+		"github.com/waddledev/waddle/pkg/baseds",
+		"github.com/waddledev/waddle/pkg/telemetry/telemetrydata",
+		"github.com/waddledev/waddle/pkg/vdom",
+		"github.com/waddledev/waddle/pkg/waveobj",
+		"github.com/waddledev/waddle/pkg/wconfig",
+		"github.com/waddledev/waddle/pkg/wps",
+		"github.com/waddledev/waddle/pkg/wshrpc",
+		"github.com/waddledev/waddle/pkg/wshutil",
 	})
 	wshDeclMap := wshrpc.GenerateWshCommandDeclMap()
 	for _, key := range utilfn.GetOrderedMapKeys(wshDeclMap) {
@@ -53,15 +53,15 @@ func GenerateWshClient() error {
 	return err
 }
 
-func GenerateWaveObjMetaConsts() error {
-	fmt.Fprintf(os.Stderr, "generating waveobj meta consts file to %s\n", WaveObjMetaConstsFileName)
+func GenerateWaddleObjMetaConsts() error {
+	fmt.Fprintf(os.Stderr, "generating waveobj meta consts file to %s\n", WaddleObjMetaConstsFileName)
 	var buf strings.Builder
 	gogen.GenerateBoilerplate(&buf, "waveobj", []string{})
 	gogen.GenerateMetaMapConsts(&buf, "MetaKey_", reflect.TypeOf(waveobj.MetaTSType{}), false)
 	buf.WriteString("\n")
-	written, err := utilfn.WriteFileIfDifferent(WaveObjMetaConstsFileName, []byte(buf.String()))
+	written, err := utilfn.WriteFileIfDifferent(WaddleObjMetaConstsFileName, []byte(buf.String()))
 	if !written {
-		fmt.Fprintf(os.Stderr, "no changes to %s\n", WaveObjMetaConstsFileName)
+		fmt.Fprintf(os.Stderr, "no changes to %s\n", WaddleObjMetaConstsFileName)
 	}
 	return err
 }
@@ -85,7 +85,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error generating wshclient: %v\n", err)
 		return
 	}
-	err = GenerateWaveObjMetaConsts()
+	err = GenerateWaddleObjMetaConsts()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error generating waveobj meta consts: %v\n", err)
 		return

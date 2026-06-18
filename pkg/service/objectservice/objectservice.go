@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/tsgen/tsgenmeta"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 type ObjectService struct{}
@@ -36,7 +36,7 @@ func (svc *ObjectService) GetObject_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *ObjectService) GetObject(orefStr string) (waveobj.WaveObj, error) {
+func (svc *ObjectService) GetObject(orefStr string) (waveobj.WaddleObj, error) {
 	oref, err := parseORef(orefStr)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (svc *ObjectService) GetObjects_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *ObjectService) GetObjects(orefStrArr []string) ([]waveobj.WaveObj, error) {
+func (svc *ObjectService) GetObjects(orefStrArr []string) ([]waveobj.WaddleObj, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
 
@@ -139,14 +139,14 @@ func (svc *ObjectService) UpdateObject_Meta() tsgenmeta.MethodMeta {
 	}
 }
 
-func (svc *ObjectService) UpdateObject(uiContext waveobj.UIContext, waveObj waveobj.WaveObj, returnUpdates bool) (waveobj.UpdatesRtnType, error) {
+func (svc *ObjectService) UpdateObject(uiContext waveobj.UIContext, waveObj waveobj.WaddleObj, returnUpdates bool) (waveobj.UpdatesRtnType, error) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), DefaultTimeout)
 	defer cancelFn()
 	ctx = waveobj.ContextWithUpdates(ctx)
 	if waveObj == nil {
 		return nil, fmt.Errorf("update wavobj is nil")
 	}
-	oref := waveobj.ORefFromWaveObj(waveObj)
+	oref := waveobj.ORefFromWaddleObj(waveObj)
 	found, err := wstore.DBExistsORef(ctx, *oref)
 	if err != nil {
 		return nil, fmt.Errorf("error getting object: %w", err)
@@ -159,7 +159,7 @@ func (svc *ObjectService) UpdateObject(uiContext waveobj.UIContext, waveObj wave
 		return nil, fmt.Errorf("error updating object: %w", err)
 	}
 	if (waveObj.GetOType() == waveobj.OType_Workspace) && (waveObj.(*waveobj.Workspace).Name != "") {
-		wps.Broker.Publish(wps.WaveEvent{
+		wps.Broker.Publish(wps.WaddleEvent{
 			Event: wps.Event_WorkspaceUpdate})
 	}
 	if returnUpdates {

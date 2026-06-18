@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/blockcontroller"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/tsgen/tsgenmeta"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 const DefaultTimeout = 2 * time.Second
@@ -52,7 +52,7 @@ func (svc *WorkspaceService) UpdateWorkspace(ctx context.Context, workspaceId st
 		return nil, nil
 	}
 
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_WorkspaceUpdate,
 	})
 

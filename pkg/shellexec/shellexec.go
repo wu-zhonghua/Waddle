@@ -20,18 +20,18 @@ import (
 	"maps"
 
 	"github.com/creack/pty"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/pamparse"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/jobcontroller"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/util/pamparse"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wslconn"
 )
 
 const DefaultGracefulKillWait = 400 * time.Millisecond
@@ -223,18 +223,18 @@ func StartWslShellProc(ctx context.Context, termSize waveobj.TermSize, cmdStr st
 		if shellType == shellutil.ShellType_bash {
 			// add --rcfile
 			// cant set -l or -i with --rcfile
-			bashPath := fmt.Sprintf("~/.waveterm/%s/.bashrc", shellutil.BashIntegrationDir)
+			bashPath := fmt.Sprintf("~/.waddle/%s/.bashrc", shellutil.BashIntegrationDir)
 			shellOpts = append(shellOpts, "--rcfile", bashPath)
 		} else if shellType == shellutil.ShellType_fish {
 			if cmdOpts.Login {
 				shellOpts = append(shellOpts, "-l")
 			}
 			// source the wave.fish file
-			waveFishPath := fmt.Sprintf("~/.waveterm/%s/wave.fish", shellutil.FishIntegrationDir)
+			waveFishPath := fmt.Sprintf("~/.waddle/%s/wave.fish", shellutil.FishIntegrationDir)
 			carg := fmt.Sprintf(`"source %s"`, waveFishPath)
 			shellOpts = append(shellOpts, "-C", carg)
 		} else if shellType == shellutil.ShellType_pwsh {
-			pwshPath := fmt.Sprintf("~/.waveterm/%s/wavepwsh.ps1", shellutil.PwshIntegrationDir)
+			pwshPath := fmt.Sprintf("~/.waddle/%s/wavepwsh.ps1", shellutil.PwshIntegrationDir)
 			// powershell is weird about quoted path executables and requires an ampersand first
 			shellPath = "& " + shellPath
 			shellOpts = append(shellOpts, "-ExecutionPolicy", "Bypass", "-NoExit", "-File", pwshPath)
@@ -257,7 +257,7 @@ func StartWslShellProc(ctx context.Context, termSize waveobj.TermSize, cmdStr st
 	conn.Infof(ctx, "WSL-NEWSESSION (StartWslShellProc)\n")
 
 	if shellType == shellutil.ShellType_zsh {
-		zshDir := fmt.Sprintf("~/.waveterm/%s", shellutil.ZshIntegrationDir)
+		zshDir := fmt.Sprintf("~/.waddle/%s", shellutil.ZshIntegrationDir)
 		conn.Infof(ctx, "setting ZDOTDIR to %s\n", zshDir)
 		cmdCombined = fmt.Sprintf(`ZDOTDIR=%s %s`, zshDir, cmdCombined)
 	}
@@ -266,12 +266,12 @@ func StartWslShellProc(ctx context.Context, termSize waveobj.TermSize, cmdStr st
 		conn.Infof(ctx, "error packing swap token: %v", err)
 	} else {
 		conn.Debugf(ctx, "packed swaptoken %s\n", packedToken)
-		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaveSwapTokenVarName, packedToken, cmdCombined)
+		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaddleSwapTokenVarName, packedToken, cmdCombined)
 	}
-	jwtToken := cmdOpts.SwapToken.Env[wavebase.WaveJwtTokenVarName]
+	jwtToken := cmdOpts.SwapToken.Env[wavebase.WaddleJwtTokenVarName]
 	if jwtToken != "" && cmdOpts.ForceJwt {
 		conn.Debugf(ctx, "adding JWT token to environment\n")
-		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaveJwtTokenVarName, jwtToken, cmdCombined)
+		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaddleJwtTokenVarName, jwtToken, cmdCombined)
 	}
 	log.Printf("full combined command: %s", cmdCombined)
 	ecmd := exec.Command("wsl.exe", "~", "-d", client.Name(), "--", "sh", "-c", cmdCombined)
@@ -381,18 +381,18 @@ func StartRemoteShellProc(ctx context.Context, logCtx context.Context, termSize 
 		if shellType == shellutil.ShellType_bash {
 			// add --rcfile
 			// cant set -l or -i with --rcfile
-			bashPath := fmt.Sprintf("%s/.waveterm/%s/.bashrc", remoteInfo.HomeDir, shellutil.BashIntegrationDir)
+			bashPath := fmt.Sprintf("%s/.waddle/%s/.bashrc", remoteInfo.HomeDir, shellutil.BashIntegrationDir)
 			shellOpts = append(shellOpts, "--rcfile", bashPath)
 		} else if shellType == shellutil.ShellType_fish {
 			if cmdOpts.Login {
 				shellOpts = append(shellOpts, "-l")
 			}
 			// source the wave.fish file
-			waveFishPath := fmt.Sprintf("%s/.waveterm/%s/wave.fish", remoteInfo.HomeDir, shellutil.FishIntegrationDir)
+			waveFishPath := fmt.Sprintf("%s/.waddle/%s/wave.fish", remoteInfo.HomeDir, shellutil.FishIntegrationDir)
 			carg := fmt.Sprintf(`"source %s"`, waveFishPath)
 			shellOpts = append(shellOpts, "-C", carg)
 		} else if shellType == shellutil.ShellType_pwsh {
-			pwshPath := fmt.Sprintf("%s/.waveterm/%s/wavepwsh.ps1", remoteInfo.HomeDir, shellutil.PwshIntegrationDir)
+			pwshPath := fmt.Sprintf("%s/.waddle/%s/wavepwsh.ps1", remoteInfo.HomeDir, shellutil.PwshIntegrationDir)
 			// powershell is weird about quoted path executables and requires an ampersand first
 			shellPath = "& " + shellPath
 			shellOpts = append(shellOpts, "-ExecutionPolicy", "Bypass", "-NoExit", "-File", pwshPath)
@@ -442,7 +442,7 @@ func StartRemoteShellProc(ctx context.Context, logCtx context.Context, termSize 
 	session.Stdout = remoteStdoutWrite
 	session.Stderr = remoteStdoutWrite
 	if shellType == shellutil.ShellType_zsh {
-		zshDir := fmt.Sprintf("~/.waveterm/%s", shellutil.ZshIntegrationDir)
+		zshDir := fmt.Sprintf("~/.waddle/%s", shellutil.ZshIntegrationDir)
 		conn.Infof(logCtx, "setting ZDOTDIR to %s\n", zshDir)
 		cmdCombined = fmt.Sprintf(`ZDOTDIR=%s %s`, zshDir, cmdCombined)
 	}
@@ -451,12 +451,12 @@ func StartRemoteShellProc(ctx context.Context, logCtx context.Context, termSize 
 		conn.Infof(logCtx, "error packing swap token: %v", err)
 	} else {
 		conn.Debugf(logCtx, "packed swaptoken %s\n", packedToken)
-		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaveSwapTokenVarName, packedToken, cmdCombined)
+		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaddleSwapTokenVarName, packedToken, cmdCombined)
 	}
-	jwtToken := cmdOpts.SwapToken.Env[wavebase.WaveJwtTokenVarName]
+	jwtToken := cmdOpts.SwapToken.Env[wavebase.WaddleJwtTokenVarName]
 	if jwtToken != "" && cmdOpts.ForceJwt {
 		conn.Debugf(logCtx, "adding JWT token to environment\n")
-		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaveJwtTokenVarName, jwtToken, cmdCombined)
+		cmdCombined = fmt.Sprintf(`%s=%s %s`, wavebase.WaddleJwtTokenVarName, jwtToken, cmdCombined)
 	}
 	shellutil.AddTokenSwapEntry(cmdOpts.SwapToken)
 	session.RequestPty("xterm-256color", termSize.Rows, termSize.Cols, nil)
@@ -507,17 +507,17 @@ func StartRemoteShellJob(ctx context.Context, logCtx context.Context, termSize w
 
 	if cmdStr == "" {
 		if shellType == shellutil.ShellType_bash {
-			bashPath := fmt.Sprintf("%s/.waveterm/%s/.bashrc", remoteInfo.HomeDir, shellutil.BashIntegrationDir)
+			bashPath := fmt.Sprintf("%s/.waddle/%s/.bashrc", remoteInfo.HomeDir, shellutil.BashIntegrationDir)
 			shellOpts = append(shellOpts, "--rcfile", bashPath)
 		} else if shellType == shellutil.ShellType_fish {
 			if cmdOpts.Login {
 				shellOpts = append(shellOpts, "-l")
 			}
-			waveFishPath := fmt.Sprintf("%s/.waveterm/%s/wave.fish", remoteInfo.HomeDir, shellutil.FishIntegrationDir)
+			waveFishPath := fmt.Sprintf("%s/.waddle/%s/wave.fish", remoteInfo.HomeDir, shellutil.FishIntegrationDir)
 			carg := fmt.Sprintf(`source %s`, waveFishPath)
 			shellOpts = append(shellOpts, "-C", carg)
 		} else if shellType == shellutil.ShellType_pwsh {
-			pwshPath := fmt.Sprintf("%s/.waveterm/%s/wavepwsh.ps1", remoteInfo.HomeDir, shellutil.PwshIntegrationDir)
+			pwshPath := fmt.Sprintf("%s/.waddle/%s/wavepwsh.ps1", remoteInfo.HomeDir, shellutil.PwshIntegrationDir)
 			shellOpts = append(shellOpts, "-ExecutionPolicy", "Bypass", "-NoExit", "-File", pwshPath)
 		} else {
 			if cmdOpts.Login {
@@ -543,7 +543,7 @@ func StartRemoteShellJob(ctx context.Context, logCtx context.Context, termSize w
 	env := make(map[string]string)
 	env["TERM"] = shellutil.DefaultTermType
 	if shellType == shellutil.ShellType_zsh {
-		zshDir := fmt.Sprintf("%s/.waveterm/%s", remoteInfo.HomeDir, shellutil.ZshIntegrationDir)
+		zshDir := fmt.Sprintf("%s/.waddle/%s", remoteInfo.HomeDir, shellutil.ZshIntegrationDir)
 		conn.Infof(logCtx, "setting ZDOTDIR to %s\n", zshDir)
 		env["ZDOTDIR"] = zshDir
 	}
@@ -553,12 +553,12 @@ func StartRemoteShellJob(ctx context.Context, logCtx context.Context, termSize w
 			conn.Infof(logCtx, "error packing swap token: %v", err)
 		} else {
 			conn.Debugf(logCtx, "packed swaptoken %s\n", packedToken)
-			env[wavebase.WaveSwapTokenVarName] = packedToken
+			env[wavebase.WaddleSwapTokenVarName] = packedToken
 		}
-		jwtToken := cmdOpts.SwapToken.Env[wavebase.WaveJwtTokenVarName]
+		jwtToken := cmdOpts.SwapToken.Env[wavebase.WaddleJwtTokenVarName]
 		if jwtToken != "" && cmdOpts.ForceJwt {
 			conn.Debugf(logCtx, "adding JWT token to environment\n")
-			env[wavebase.WaveJwtTokenVarName] = jwtToken
+			env[wavebase.WaddleJwtTokenVarName] = jwtToken
 		}
 		shellutil.AddTokenSwapEntry(cmdOpts.SwapToken)
 	}
@@ -604,11 +604,11 @@ func StartLocalShellProc(logCtx context.Context, termSize waveobj.TermSize, cmdS
 			if cmdOpts.Login {
 				shellOpts = append(shellOpts, "-l")
 			}
-			waveFishPath := shellutil.GetLocalWaveFishFilePath()
+			waveFishPath := shellutil.GetLocalWaddleFishFilePath()
 			carg := fmt.Sprintf("source %s", shellutil.HardQuoteFish(waveFishPath))
 			shellOpts = append(shellOpts, "-C", carg)
 		} else if shellType == shellutil.ShellType_pwsh {
-			shellOpts = append(shellOpts, "-ExecutionPolicy", "Bypass", "-NoExit", "-File", shellutil.GetLocalWavePowershellEnv())
+			shellOpts = append(shellOpts, "-ExecutionPolicy", "Bypass", "-NoExit", "-File", shellutil.GetLocalWaddlePowershellEnv())
 		} else {
 			if cmdOpts.Login {
 				shellOpts = append(shellOpts, "-l")
@@ -635,12 +635,12 @@ func StartLocalShellProc(logCtx context.Context, termSize waveobj.TermSize, cmdS
 		blocklogger.Infof(logCtx, "error packing swap token: %v", err)
 	} else {
 		blocklogger.Debugf(logCtx, "packed swaptoken %s\n", packedToken)
-		shellutil.UpdateCmdEnv(ecmd, map[string]string{wavebase.WaveSwapTokenVarName: packedToken})
+		shellutil.UpdateCmdEnv(ecmd, map[string]string{wavebase.WaddleSwapTokenVarName: packedToken})
 	}
-	jwtToken := cmdOpts.SwapToken.Env[wavebase.WaveJwtTokenVarName]
+	jwtToken := cmdOpts.SwapToken.Env[wavebase.WaddleJwtTokenVarName]
 	if jwtToken != "" && cmdOpts.ForceJwt {
 		blocklogger.Debugf(logCtx, "adding JWT token to environment\n")
-		shellutil.UpdateCmdEnv(ecmd, map[string]string{wavebase.WaveJwtTokenVarName: jwtToken})
+		shellutil.UpdateCmdEnv(ecmd, map[string]string{wavebase.WaddleJwtTokenVarName: jwtToken})
 	}
 
 	/*
@@ -671,7 +671,7 @@ func StartLocalShellProc(logCtx context.Context, termSize waveobj.TermSize, cmdS
 	if cwdErr := checkCwd(ecmd.Dir); cwdErr != nil {
 		ecmd.Dir = wavebase.GetHomeDir()
 	}
-	envToAdd := shellutil.WaveshellLocalEnvVars(shellutil.DefaultTermType)
+	envToAdd := shellutil.WaddleshellLocalEnvVars(shellutil.DefaultTermType)
 	if os.Getenv("LANG") == "" {
 		envToAdd["LANG"] = wavebase.DetermineLang()
 	}
@@ -694,7 +694,7 @@ func StartLocalShellProc(logCtx context.Context, termSize waveobj.TermSize, cmdS
 
 func RunSimpleCmdInPty(ecmd *exec.Cmd, termSize waveobj.TermSize) ([]byte, error) {
 	ecmd.Env = os.Environ()
-	shellutil.UpdateCmdEnv(ecmd, shellutil.WaveshellLocalEnvVars(shellutil.DefaultTermType))
+	shellutil.UpdateCmdEnv(ecmd, shellutil.WaddleshellLocalEnvVars(shellutil.DefaultTermType))
 	if termSize.Rows == 0 || termSize.Cols == 0 {
 		termSize.Rows = shellutil.DefaultTermRows
 		termSize.Cols = shellutil.DefaultTermCols

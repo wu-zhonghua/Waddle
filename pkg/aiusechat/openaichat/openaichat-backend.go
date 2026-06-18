@@ -16,19 +16,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/waddledev/waddle/pkg/aiusechat/aiutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/chatstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/web/sse"
 )
 
 // RunChatStep executes a chat step using the chat completions API
 func RunChatStep(
 	ctx context.Context,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, []*StoredChatMessage, *uctypes.RateLimitInfo, error) {
+	chatOpts uctypes.WaddleChatOpts,
+	cont *uctypes.WaddleContinueResponse,
+) (*uctypes.WaddleStopReason, []*StoredChatMessage, *uctypes.RateLimitInfo, error) {
 	if sseHandler == nil {
 		return nil, nil, nil, errors.New("sse handler is nil")
 	}
@@ -96,9 +96,9 @@ func processChatStream(
 	ctx context.Context,
 	body io.Reader,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *StoredChatMessage, error) {
+	chatOpts uctypes.WaddleChatOpts,
+	cont *uctypes.WaddleContinueResponse,
+) (*uctypes.WaddleStopReason, *StoredChatMessage, error) {
 	decoder := eventsource.NewDecoder(body)
 	var textBuilder strings.Builder
 	msgID := uuid.New().String()
@@ -115,7 +115,7 @@ func processChatStream(
 	for {
 		if err := ctx.Err(); err != nil {
 			_ = sseHandler.AiMsgError("request cancelled")
-			return &uctypes.WaveStopReason{
+			return &uctypes.WaddleStopReason{
 				Kind:      uctypes.StopKindCanceled,
 				ErrorType: "cancelled",
 				ErrorText: "request cancelled",
@@ -129,14 +129,14 @@ func processChatStream(
 			}
 			if sseHandler.Err() != nil {
 				partialMsg := extractPartialTextMessage(msgID, textBuilder.String())
-				return &uctypes.WaveStopReason{
+				return &uctypes.WaddleStopReason{
 					Kind:      uctypes.StopKindCanceled,
 					ErrorType: "client_disconnect",
 					ErrorText: "client disconnected",
 				}, partialMsg, nil
 			}
 			_ = sseHandler.AiMsgError(err.Error())
-			return &uctypes.WaveStopReason{
+			return &uctypes.WaddleStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "stream",
 				ErrorText: err.Error(),
@@ -212,7 +212,7 @@ func processChatStream(
 		}
 	}
 
-	var waveToolCalls []uctypes.WaveToolCall
+	var waveToolCalls []uctypes.WaddleToolCall
 	if len(validToolCalls) > 0 {
 		for _, tc := range validToolCalls {
 			var inputJSON any
@@ -222,7 +222,7 @@ func processChatStream(
 					continue
 				}
 			}
-			waveToolCalls = append(waveToolCalls, uctypes.WaveToolCall{
+			waveToolCalls = append(waveToolCalls, uctypes.WaddleToolCall{
 				ID:    tc.ID,
 				Name:  tc.Function.Name,
 				Input: inputJSON,
@@ -230,7 +230,7 @@ func processChatStream(
 		}
 	}
 
-	stopReason := &uctypes.WaveStopReason{
+	stopReason := &uctypes.WaddleStopReason{
 		Kind:      stopKind,
 		RawReason: finishReason,
 		ToolCalls: waveToolCalls,

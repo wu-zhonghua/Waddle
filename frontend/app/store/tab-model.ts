@@ -1,14 +1,14 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import { atom, Atom, PrimitiveAtom } from "jotai";
 import { createContext, useContext } from "react";
 import { globalStore } from "./jotaiStore";
 import * as WOS from "./wos";
 
-export type TabModelEnv = WaveEnvSubset<{
-    wos: WaveEnv["wos"];
+export type TabModelEnv = WaddleEnvSubset<{
+    wos: WaddleEnv["wos"];
 }>;
 
 const tabModelCache = new Map<string, TabModel>();
@@ -28,7 +28,7 @@ export class TabModel {
         this.waveEnv = waveEnv;
         this.tabAtom = atom((get) => {
             if (this.waveEnv != null) {
-                return get(this.waveEnv.wos.getWaveObjectAtom<Tab>(WOS.makeORef("tab", this.tabId)));
+                return get(this.waveEnv.wos.getWaddleObjectAtom<Tab>(WOS.makeORef("tab", this.tabId)));
             }
             return WOS.getObjectValue(WOS.makeORef("tab", this.tabId), get);
         });

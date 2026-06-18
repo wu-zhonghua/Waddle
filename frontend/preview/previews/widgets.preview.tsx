@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWaveEnv, WaveEnv, WaveEnvContext } from "@/app/waveenv/waveenv";
+import { useWaddleEnv, WaddleEnv, WaddleEnvContext } from "@/app/waveenv/waveenv";
 import { Widgets } from "@/app/workspace/widgets";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useRef } from "react";
@@ -57,7 +57,7 @@ const mockWidgets: { [key: string]: WidgetConfigType } = {
         label: "Web",
         description: "Open a web browser",
         "display:order": 2,
-        blockdef: { meta: { view: "web", url: "https://waveterm.dev" } },
+        blockdef: { meta: { view: "web", url: "https://waddle.dev" } },
     },
     "defwidget@files": {
         icon: "folder",
@@ -80,7 +80,7 @@ const mockWidgets: { [key: string]: WidgetConfigType } = {
 const fullConfigAtom = atom<FullConfigType>({ settings: {}, widgets: mockWidgets } as unknown as FullConfigType);
 
 function makeWidgetsEnv(
-    baseEnv: WaveEnv,
+    baseEnv: WaddleEnv,
     isDev: boolean,
     apps?: AppInfo[],
     atomOverrides?: Partial<GlobalAtomsType>
@@ -106,8 +106,8 @@ function WidgetsScenario({
     height?: number;
     apps?: AppInfo[];
 }) {
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<WaveEnv>(null);
+    const baseEnv = useWaddleEnv();
+    const envRef = useRef<WaddleEnv>(null);
     if (envRef.current == null) {
         envRef.current = makeWidgetsEnv(baseEnv, isDev, apps, {
             hasConfigErrors: hasConfigErrorsAtom,
@@ -117,7 +117,7 @@ function WidgetsScenario({
     return (
         <div className="flex flex-col gap-2">
             <div className="text-xs text-muted font-mono">{label}</div>
-            <WaveEnvContext.Provider value={envRef.current}>
+            <WaddleEnvContext.Provider value={envRef.current}>
                 <div
                     className="flex flex-row bg-panel border border-border rounded overflow-hidden"
                     style={height != null ? { height } : undefined}
@@ -127,15 +127,15 @@ function WidgetsScenario({
                     </div>
                     <Widgets />
                 </div>
-            </WaveEnvContext.Provider>
+            </WaddleEnvContext.Provider>
         </div>
     );
 }
 
 function WidgetsResizable({ isDev }: { isDev: boolean }) {
     const [height, setHeight] = useAtom(resizableHeightAtom);
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<WaveEnv>(null);
+    const baseEnv = useWaddleEnv();
+    const envRef = useRef<WaddleEnv>(null);
     if (envRef.current == null) {
         envRef.current = makeWidgetsEnv(baseEnv, isDev, mockApps, { hasConfigErrors: hasConfigErrorsAtom });
     }
@@ -153,7 +153,7 @@ function WidgetsResizable({ isDev }: { isDev: boolean }) {
                     className="cursor-pointer"
                 />
             </div>
-            <WaveEnvContext.Provider value={envRef.current}>
+            <WaddleEnvContext.Provider value={envRef.current}>
                 <div
                     className="flex flex-row bg-panel border border-border rounded overflow-hidden"
                     style={{ height, width: 300 }}
@@ -163,7 +163,7 @@ function WidgetsResizable({ isDev }: { isDev: boolean }) {
                     </div>
                     <Widgets />
                 </div>
-            </WaveEnvContext.Provider>
+            </WaddleEnvContext.Provider>
         </div>
     );
 }

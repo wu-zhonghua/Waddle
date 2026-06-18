@@ -17,12 +17,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/launchdarkly/eventsource"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/web/sse"
+	"github.com/waddledev/waddle/pkg/aiusechat/aiutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/chatstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/web/sse"
 )
 
 // ensureAltSse ensures the ?alt=sse query parameter is set on the endpoint
@@ -55,7 +55,7 @@ func appendPartToLastUserMessage(contents []GeminiContent, text string) {
 }
 
 // buildGeminiHTTPRequest creates an HTTP request for the Gemini API
-func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatOpts uctypes.WaveChatOpts) (*http.Request, error) {
+func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatOpts uctypes.WaddleChatOpts) (*http.Request, error) {
 	opts := chatOpts.Config
 
 	if opts.Model == "" {
@@ -180,9 +180,9 @@ func buildGeminiHTTPRequest(ctx context.Context, contents []GeminiContent, chatO
 func RunGeminiChatStep(
 	ctx context.Context,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *GeminiChatMessage, *uctypes.RateLimitInfo, error) {
+	chatOpts uctypes.WaddleChatOpts,
+	cont *uctypes.WaddleContinueResponse,
+) (*uctypes.WaddleStopReason, *GeminiChatMessage, *uctypes.RateLimitInfo, error) {
 	if sseHandler == nil {
 		return nil, nil, nil, errors.New("sse handler is nil")
 	}
@@ -275,9 +275,9 @@ func processGeminiStream(
 	ctx context.Context,
 	body io.Reader,
 	sseHandler *sse.SSEHandlerCh,
-	chatOpts uctypes.WaveChatOpts,
-	cont *uctypes.WaveContinueResponse,
-) (*uctypes.WaveStopReason, *GeminiChatMessage, error) {
+	chatOpts uctypes.WaddleChatOpts,
+	cont *uctypes.WaddleContinueResponse,
+) (*uctypes.WaddleStopReason, *GeminiChatMessage, error) {
 	msgID := uuid.New().String()
 	textID := uuid.New().String()
 	textStarted := false
@@ -297,7 +297,7 @@ func processGeminiStream(
 	for {
 		if err := ctx.Err(); err != nil {
 			_ = sseHandler.AiMsgError("request cancelled")
-			return &uctypes.WaveStopReason{
+			return &uctypes.WaddleStopReason{
 				Kind:      uctypes.StopKindCanceled,
 				ErrorType: "cancelled",
 				ErrorText: "request cancelled",
@@ -311,14 +311,14 @@ func processGeminiStream(
 			}
 			if sseHandler.Err() != nil {
 				partialMsg := extractPartialGeminiMessage(msgID, textBuilder.String())
-				return &uctypes.WaveStopReason{
+				return &uctypes.WaddleStopReason{
 					Kind:      uctypes.StopKindCanceled,
 					ErrorType: "client_disconnect",
 					ErrorText: "client disconnected",
 				}, partialMsg, nil
 			}
 			_ = sseHandler.AiMsgError(fmt.Sprintf("stream decode error: %v", err))
-			return &uctypes.WaveStopReason{
+			return &uctypes.WaddleStopReason{
 				Kind:      uctypes.StopKindError,
 				ErrorType: "stream",
 				ErrorText: err.Error(),
@@ -341,7 +341,7 @@ func processGeminiStream(
 		if chunk.PromptFeedback != nil && chunk.PromptFeedback.BlockReason != "" {
 			errorMsg := fmt.Sprintf("Content blocked: %s", chunk.PromptFeedback.BlockReason)
 			_ = sseHandler.AiMsgError(errorMsg)
-			return &uctypes.WaveStopReason{
+			return &uctypes.WaddleStopReason{
 				Kind:      uctypes.StopKindContent,
 				ErrorType: "blocked",
 				ErrorText: errorMsg,
@@ -451,12 +451,12 @@ func processGeminiStream(
 	}
 
 	// Build tool calls for stop reason
-	var waveToolCalls []uctypes.WaveToolCall
+	var waveToolCalls []uctypes.WaddleToolCall
 	if len(functionCalls) > 0 {
 		stopKind = uctypes.StopKindToolUse
 		for _, fcPart := range functionCalls {
 			if fcPart.FunctionCall != nil && fcPart.ToolUseData != nil {
-				waveToolCalls = append(waveToolCalls, uctypes.WaveToolCall{
+				waveToolCalls = append(waveToolCalls, uctypes.WaddleToolCall{
 					ID:          fcPart.ToolUseData.ToolCallId,
 					Name:        fcPart.FunctionCall.Name,
 					Input:       fcPart.FunctionCall.Args,
@@ -466,7 +466,7 @@ func processGeminiStream(
 		}
 	}
 
-	stopReason := &uctypes.WaveStopReason{
+	stopReason := &uctypes.WaddleStopReason{
 		Kind:      stopKind,
 		RawReason: finishReason,
 		ToolCalls: waveToolCalls,

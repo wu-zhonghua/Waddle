@@ -4,9 +4,9 @@
 import * as electron from "electron";
 import { getWebServerEndpoint } from "../frontend/util/endpoints";
 
-export const WaveAppPathVarName = "WAVETERM_APP_PATH";
-export const WaveAppResourcesPathVarName = "WAVETERM_RESOURCES_PATH";
-export const WaveAppElectronExecPath = "WAVETERM_ELECTRONEXECPATH";
+export const WaddleAppPathVarName = "WADDLE_APP_PATH";
+export const WaddleAppResourcesPathVarName = "WADDLE_RESOURCES_PATH";
+export const WaddleAppElectronExecPath = "WADDLE_ELECTRONEXECPATH";
 
 const MinZoomLevel = 0.4;
 const MaxZoomLevel = 2.6;
@@ -66,7 +66,7 @@ export function handleCtrlShiftFocus(sender: Electron.WebContents, focused: bool
     }
 }
 
-export function handleCtrlShiftState(sender: Electron.WebContents, waveEvent: WaveKeyboardEvent) {
+export function handleCtrlShiftState(sender: Electron.WebContents, waveEvent: WaddleKeyboardEvent) {
     if (waveEvent.type == "keyup") {
         if (waveEvent.key === "Control" || waveEvent.key === "Shift") {
             setCtrlShift(sender, false);

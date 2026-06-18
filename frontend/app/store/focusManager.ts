@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { waveAIHasFocusWithin } from "@/app/aipanel/waveai-focus-utils";
-import { WaveAIModel } from "@/app/aipanel/waveai-model";
+import { WaddleAIModel } from "@/app/aipanel/waveai-model";
 import { getBlockComponentModel } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { getLayoutModelForStaticTab } from "@/layout/index";
@@ -35,7 +35,7 @@ export class FocusManager {
         return FocusManager.instance;
     }
 
-    setWaveAIFocused(force: boolean = false) {
+    setWaddleAIFocused(force: boolean = false) {
         const isAlreadyFocused = globalStore.get(this.focusType) == "waveai";
         if (!force && isAlreadyFocused) {
             return;
@@ -65,7 +65,7 @@ export class FocusManager {
         globalStore.set(this.focusType, "node");
     }
 
-    requestWaveAIFocus(): void {
+    requestWaddleAIFocus(): void {
         globalStore.set(this.focusType, "waveai");
     }
 
@@ -76,7 +76,7 @@ export class FocusManager {
     refocusNode() {
         const ftype = globalStore.get(this.focusType);
         if (ftype == "waveai") {
-            WaveAIModel.getInstance().focusInput();
+            WaddleAIModel.getInstance().focusInput();
             return;
         }
         const layoutModel = getLayoutModelForStaticTab();

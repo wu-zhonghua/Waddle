@@ -4,15 +4,15 @@
 version: "3"
 
 vars:
-    APP_NAME: "Wave"
+    APP_NAME: "Waddle"
     BIN_DIR: "bin"
     VERSION:
         sh: node version.cjs
     RMRF: '{{if eq OS "windows"}}powershell -NoProfile -NonInteractive Remove-Item -Force -Recurse -ErrorAction SilentlyContinue{{else}}rm -rf{{end}}'
     DATE: '{{if eq OS "windows"}}powershell -NoProfile -NonInteractive Get-Date -UFormat{{else}}date{{end}}'
-    ARTIFACTS_BUCKET: waveterm-github-artifacts/staging-w2
-    RELEASES_BUCKET: dl.waveterm.dev/releases-w2
-    WINGET_PACKAGE: CommandLine.Wave
+    ARTIFACTS_BUCKET: waddle-github-artifacts/staging-w2
+    RELEASES_BUCKET: dl.waddle.dev/releases-w2
+    WINGET_PACKAGE: CommandLine.Waddle
 
 tasks:
     electron:dev:
@@ -25,11 +25,11 @@ tasks:
             - build:backend
             - build:tsunamiscaffold
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
-            WCLOUD_PING_ENDPOINT: "https://ping-dev.waveterm.dev/central"
-            WCLOUD_ENDPOINT: "https://api-dev.waveterm.dev/central"
-            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waveterm.dev"
-            WAVETERM_NOCONFIRMQUIT: "1"
+            WADDLE_ENVFILE: "{{.ROOT_DIR}}/.env"
+            WCLOUD_PING_ENDPOINT: "https://ping-dev.waddle.dev/central"
+            WCLOUD_ENDPOINT: "https://api-dev.waddle.dev/central"
+            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waddle.dev"
+            WADDLE_NOCONFIRMQUIT: "1"
 
     electron:start:
         desc: Run the Electron application directly.
@@ -40,10 +40,10 @@ tasks:
             - npm:install
             - build:backend
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
-            WCLOUD_PING_ENDPOINT: "https://ping-dev.waveterm.dev/central"
-            WCLOUD_ENDPOINT: "https://api-dev.waveterm.dev/central"
-            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waveterm.dev"
+            WADDLE_ENVFILE: "{{.ROOT_DIR}}/.env"
+            WCLOUD_PING_ENDPOINT: "https://ping-dev.waddle.dev/central"
+            WCLOUD_ENDPOINT: "https://api-dev.waddle.dev/central"
+            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waddle.dev"
 
     electron:quickdev:
         desc: Run the Electron application via the Vite dev server (quick dev - no docsite, arm64 only, no generate, no wsh).
@@ -52,11 +52,11 @@ tasks:
             - npm:install
             - build:backend:quickdev
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
-            WCLOUD_PING_ENDPOINT: "https://ping-dev.waveterm.dev/central"
-            WCLOUD_ENDPOINT: "https://api-dev.waveterm.dev/central"
-            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waveterm.dev/"
-            WAVETERM_NOCONFIRMQUIT: "1"
+            WADDLE_ENVFILE: "{{.ROOT_DIR}}/.env"
+            WCLOUD_PING_ENDPOINT: "https://ping-dev.waddle.dev/central"
+            WCLOUD_ENDPOINT: "https://api-dev.waddle.dev/central"
+            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waddle.dev/"
+            WADDLE_NOCONFIRMQUIT: "1"
 
     preview:
         desc: Run the standalone component preview server with HMR (no Electron, no backend).
@@ -79,10 +79,10 @@ tasks:
             - npm:install
             - build:backend:quickdev:windows
         env:
-            WAVETERM_ENVFILE: "{{.ROOT_DIR}}/.env"
-            WCLOUD_PING_ENDPOINT: "https://ping-dev.waveterm.dev/central"
-            WCLOUD_ENDPOINT: "https://api-dev.waveterm.dev/central"
-            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waveterm.dev/"
+            WADDLE_ENVFILE: "{{.ROOT_DIR}}/.env"
+            WCLOUD_PING_ENDPOINT: "https://ping-dev.waddle.dev/central"
+            WCLOUD_ENDPOINT: "https://api-dev.waddle.dev/central"
+            WCLOUD_WS_ENDPOINT: "wss://wsapi-dev.waddle.dev/"
 
     docs:npm:install:
         desc: Runs `npm install` in docs directory
@@ -268,7 +268,7 @@ tasks:
             vars:
                 - ARCHS
         cmd:
-            cmd: CGO_ENABLED=1 GOARCH={{.GOARCH}} {{.GO_ENV_VARS}} go build -tags "osusergo,sqlite_omit_load_extension" -ldflags "{{.GO_LDFLAGS}} -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.WaveVersion={{.VERSION}}" -o dist/bin/wavesrv.{{if eq .GOARCH "amd64"}}x64{{else}}{{.GOARCH}}{{end}}{{exeExt}} cmd/server/main-server.go
+            cmd: CGO_ENABLED=1 GOARCH={{.GOARCH}} {{.GO_ENV_VARS}} go build -tags "osusergo,sqlite_omit_load_extension" -ldflags "{{.GO_LDFLAGS}} -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.WaddleVersion={{.VERSION}}" -o dist/bin/wavesrv.{{if eq .GOARCH "amd64"}}x64{{else}}{{.GOARCH}}{{end}}{{exeExt}} cmd/server/main-server.go
             for:
                 var: ARCHS
                 split: ","
@@ -342,7 +342,7 @@ tasks:
                 - GOOS
                 - GOARCH
                 - VERSION
-        cmd: (CGO_ENABLED=0 GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build -ldflags="-s -w -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.WaveVersion={{.VERSION}}" -o dist/bin/wsh-{{.VERSION}}-{{.GOOS}}.{{.NORMALIZEDARCH}}{{.EXT}} cmd/wsh/main-wsh.go)
+        cmd: (CGO_ENABLED=0 GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build -ldflags="-s -w -X main.BuildTime=$({{.DATE}} +'%Y%m%d%H%M') -X main.WaddleVersion={{.VERSION}}" -o dist/bin/wsh-{{.VERSION}}-{{.GOOS}}.{{.NORMALIZEDARCH}}{{.EXT}} cmd/wsh/main-wsh.go)
         internal: true
 
     build:tsunamiscaffold:
@@ -421,7 +421,7 @@ tasks:
             CHANNEL: '{{if contains "beta" .UP_VERSION}}beta{{else}}beta,stable{{end}}'
         cmd: |
             echo "Releasing to channels: [{{.CHANNEL}}]"
-            for file in waveterm_{{.UP_VERSION}}_*.snap; do
+            for file in waddle_{{.UP_VERSION}}_*.snap; do
                 echo "Publishing $file"
                 snapcraft upload --release={{.CHANNEL}} $file
                 echo "Finished publishing $file"
@@ -446,14 +446,14 @@ tasks:
               vars:
                   GOOS: darwin
                   GOARCH: arm64
-            - cp dist/bin/wsh-{{.VERSION}}-darwin.arm64 ~/Library/Application\ Support/waveterm-dev/bin/wsh
+            - cp dist/bin/wsh-{{.VERSION}}-darwin.arm64 ~/Library/Application\ Support/waddle-dev/bin/wsh
 
     dev:clearconfig:
-        desc: Clear the config directory for waveterm-dev
-        cmd: "{{.RMRF}} ~/.config/waveterm-dev"
+        desc: Clear the config directory for waddle-dev
+        cmd: "{{.RMRF}} ~/.config/waddle-dev"
 
     dev:cleardata:
-        desc: Clear the data directory for waveterm-dev
+        desc: Clear the data directory for waddle-dev
         cmds:
             - task: dev:cleardata:windows
             - task: dev:cleardata:linux
@@ -475,17 +475,17 @@ tasks:
     dev:cleardata:windows:
         internal: true
         platforms: [windows]
-        cmd: '{{.RMRF}} %LOCALAPPDATA%\waveterm-dev\Data'
+        cmd: '{{.RMRF}} %LOCALAPPDATA%\waddle-dev\Data'
 
     dev:cleardata:linux:
         internal: true
         platforms: [linux]
-        cmd: "rm -rf ~/.local/share/waveterm-dev"
+        cmd: "rm -rf ~/.local/share/waddle-dev"
 
     dev:cleardata:macos:
         internal: true
         platforms: [darwin]
-        cmd: 'rm -rf ~/Library/Application\ Support/waveterm-dev'
+        cmd: 'rm -rf ~/Library/Application\ Support/waddle-dev'
 
     npm:install:
         desc: Runs `npm install`

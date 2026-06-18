@@ -5,7 +5,7 @@ import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { cn } from "@/util/util";
 import { useState } from "react";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
 interface TelemetryRequiredMessageProps {
     className?: string;
@@ -17,9 +17,9 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
     const handleEnableTelemetry = async () => {
         setIsEnabling(true);
         try {
-            await RpcApi.WaveAIEnableTelemetryCommand(TabRpcClient);
+            await RpcApi.WaddleAIEnableTelemetryCommand(TabRpcClient);
             setTimeout(() => {
-                WaveAIModel.getInstance().focusInput();
+                WaddleAIModel.getInstance().focusInput();
             }, 100);
         } catch (error) {
             console.error("Failed to enable telemetry:", error);
@@ -34,9 +34,9 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
                 <div className="max-w-md space-y-6">
                     <div className="space-y-4">
                         <i className="fa fa-sparkles text-accent text-5xl"></i>
-                        <h2 className="text-2xl font-semibold text-foreground">Wave AI</h2>
+                        <h2 className="text-2xl font-semibold text-foreground">Waddle AI</h2>
                         <p className="text-secondary leading-relaxed">
-                            Wave AI is free to use and provides integrated AI chat that can interact with your widgets,
+                            Waddle AI is free to use and provides integrated AI chat that can interact with your widgets,
                             help you with code, analyze files, and assist with your terminal workflows.
                         </p>
                     </div>
@@ -45,10 +45,10 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
                         <div className="flex items-start gap-3">
                             <i className="fa fa-info-circle text-blue-400 text-lg mt-0.5"></i>
                             <div className="text-left">
-                                <div className="text-blue-400 font-medium mb-1">Telemetry keeps Wave AI free</div>
+                                <div className="text-blue-400 font-medium mb-1">Telemetry keeps Waddle AI free</div>
                                 <div className="text-secondary text-sm mb-3">
                                     <p className="mb-2">
-                                        To keep Wave AI free for everyone, we require a small amount of <i>anonymous</i>{" "}
+                                        To keep Waddle AI free for everyone, we require a small amount of <i>anonymous</i>{" "}
                                         usage data (app version, feature usage, system info).
                                     </p>
                                     <p className="mb-2">
@@ -57,18 +57,18 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
                                     </p>
                                     <p className="mb-2">
                                         We never collect your files, prompts, keystrokes, hostnames, or personally
-                                        identifying information. Wave AI is powered by OpenAI's APIs, please refer to
+                                        identifying information. Waddle AI is powered by OpenAI's APIs, please refer to
                                         OpenAI's privacy policy for details on how they handle your data.
                                     </p>
                                     <p>
                                         For information about BYOK and local model support, see{" "}
                                         <a
-                                            href="https://docs.waveterm.dev/waveai-modes"
+                                            href="https://docs.waddle.dev/waveai-modes"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="!text-secondary hover:!text-accent/80 cursor-pointer"
                                         >
-                                            https://docs.waveterm.dev/waveai-modes
+                                            https://docs.waddle.dev/waveai-modes
                                         </a>
                                         .
                                     </p>
@@ -86,7 +86,7 @@ const TelemetryRequiredMessage = ({ className }: TelemetryRequiredMessageProps) 
 
                     <div className="text-xs text-secondary">
                         <a
-                            href="https://waveterm.dev/privacy"
+                            href="https://waddle.dev/privacy"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="!text-secondary hover:!text-accent/80 cursor-pointer"

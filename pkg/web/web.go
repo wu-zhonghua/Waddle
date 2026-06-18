@@ -20,17 +20,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat"
-	"github.com/wavetermdev/waveterm/pkg/authkey"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/fileshare/wshfs"
-	"github.com/wavetermdev/waveterm/pkg/schema"
-	"github.com/wavetermdev/waveterm/pkg/service"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/aiusechat"
+	"github.com/waddledev/waddle/pkg/authkey"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote/fileshare/wshfs"
+	"github.com/waddledev/waddle/pkg/schema"
+	"github.com/waddledev/waddle/pkg/service"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 type WebFnType = func(http.ResponseWriter, *http.Request)
@@ -49,7 +49,7 @@ const (
 	ContentLengthHeaderKey = "Content-Length"
 	LastModifiedHeaderKey  = "Last-Modified"
 
-	WaveZoneFileInfoHeaderKey = "X-ZoneFileInfo"
+	WaddleZoneFileInfoHeaderKey = "X-ZoneFileInfo"
 )
 
 const HttpReadTimeout = 5 * time.Second
@@ -147,7 +147,7 @@ func marshalReturnValue(data any, err error) []byte {
 	return rtn
 }
 
-func handleWaveFile(w http.ResponseWriter, r *http.Request) {
+func handleWaddleFile(w http.ResponseWriter, r *http.Request) {
 	zoneId := r.URL.Query().Get("zoneid")
 	name := r.URL.Query().Get("name")
 	offsetStr := r.URL.Query().Get("offset")
@@ -188,7 +188,7 @@ func handleWaveFile(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set(ContentTypeHeaderKey, ContentTypeBinary)
 	w.Header().Set(ContentLengthHeaderKey, fmt.Sprintf("%d", file.Size-dataStartIdx))
-	w.Header().Set(WaveZoneFileInfoHeaderKey, base64.StdEncoding.EncodeToString(jsonFileBArr))
+	w.Header().Set(WaddleZoneFileInfoHeaderKey, base64.StdEncoding.EncodeToString(jsonFileBArr))
 	w.Header().Set(LastModifiedHeaderKey, time.UnixMilli(file.ModTs).UTC().Format(http.TimeFormat))
 	if dataStartIdx >= file.Size {
 		w.WriteHeader(http.StatusOK)
@@ -451,13 +451,13 @@ func RunWebServer(listener net.Listener) {
 	gr.HandleFunc("/wave/stream-local-file", WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamLocalFile))
 	gr.HandleFunc("/wave/stream-file", WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamFile))
 	gr.PathPrefix("/wave/stream-file/").HandlerFunc(WebFnWrap(WebFnOpts{AllowCaching: true}, handleStreamFile))
-	gr.HandleFunc("/api/post-chat-message", WebFnWrap(WebFnOpts{AllowCaching: false}, aiusechat.WaveAIPostMessageHandler))
+	gr.HandleFunc("/api/post-chat-message", WebFnWrap(WebFnOpts{AllowCaching: false}, aiusechat.WaddleAIPostMessageHandler))
 
 	// Non-streaming /wave/ routes get timeout protection
 	waveRouter := mux.NewRouter()
-	waveRouter.HandleFunc("/wave/file", WebFnWrap(WebFnOpts{AllowCaching: false}, handleWaveFile))
+	waveRouter.HandleFunc("/wave/file", WebFnWrap(WebFnOpts{AllowCaching: false}, handleWaddleFile))
 	waveRouter.HandleFunc("/wave/service", WebFnWrap(WebFnOpts{JsonErrors: true}, handleService))
-	waveRouter.HandleFunc("/wave/aichat", WebFnWrap(WebFnOpts{JsonErrors: true, AllowCaching: false}, aiusechat.WaveAIGetChatHandler))
+	waveRouter.HandleFunc("/wave/aichat", WebFnWrap(WebFnOpts{JsonErrors: true, AllowCaching: false}, aiusechat.WaddleAIGetChatHandler))
 
 	vdomRouter := mux.NewRouter()
 	vdomRouter.HandleFunc("/vdom/{uuid}/{path:.*}", WebFnWrap(WebFnOpts{AllowCaching: true}, handleVDom))

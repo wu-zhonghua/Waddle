@@ -20,7 +20,7 @@ export class BuilderFocusManager {
         return BuilderFocusManager.instance;
     }
 
-    setWaveAIFocused() {
+    setWaddleAIFocused() {
         globalStore.set(this.focusType, "waveai");
     }
 

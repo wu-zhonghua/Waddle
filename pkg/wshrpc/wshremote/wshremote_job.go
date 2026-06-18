@@ -17,10 +17,10 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 func isProcessRunning(pid int, pidStartTs int64) (*process.Process, error) {
@@ -151,7 +151,7 @@ func (impl *ServerImpl) RemoteStartJobCommand(ctx context.Context, data wshrpc.C
 
 	cmd := exec.Command(wshPath, "jobmanager", "--jobid", data.JobId, "--clientid", data.ClientId)
 	if data.PublicKeyBase64 != "" {
-		cmd.Env = append(os.Environ(), "WAVETERM_PUBLICKEY="+data.PublicKeyBase64)
+		cmd.Env = append(os.Environ(), "WADDLE_PUBLICKEY="+data.PublicKeyBase64)
 	}
 	cmd.ExtraFiles = []*os.File{readyPipeWrite}
 	stdin, err := cmd.StdinPipe()
@@ -174,7 +174,7 @@ func (impl *ServerImpl) RemoteStartJobCommand(ctx context.Context, data wshrpc.C
 	readyPipeWrite.Close()
 	log.Printf("RemoteStartJobCommand: job manager process started\n")
 
-	jobAuthTokenLine := fmt.Sprintf("Wave-JobAccessToken:%s\n", data.JobAuthToken)
+	jobAuthTokenLine := fmt.Sprintf("Waddle-JobAccessToken:%s\n", data.JobAuthToken)
 	if _, err := stdin.Write([]byte(jobAuthTokenLine)); err != nil {
 		cmd.Process.Kill()
 		return nil, fmt.Errorf("cannot write job auth token: %w", err)
@@ -214,7 +214,7 @@ func (impl *ServerImpl) RemoteStartJobCommand(ctx context.Context, data wshrpc.C
 		for scanner.Scan() {
 			line := scanner.Text()
 			log.Printf("RemoteStartJobCommand: ready pipe line: %s\n", line)
-			if strings.Contains(line, "Wave-JobManagerStart") {
+			if strings.Contains(line, "Waddle-JobManagerStart") {
 				startCh <- nil
 				return
 			}

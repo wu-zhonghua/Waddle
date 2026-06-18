@@ -1,4 +1,4 @@
-module github.com/wavetermdev/waveterm
+module github.com/waddledev/waddle
 
 go 1.25.6
 
@@ -23,6 +23,7 @@ require (
 	github.com/launchdarkly/eventsource v1.11.0
 	github.com/mattn/go-sqlite3 v1.14.44
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/waddledev/waddle/tsunami v0.12.3
 	github.com/sawka/txwrap v0.2.0
 	github.com/shirou/gopsutil/v4 v4.26.4
 	github.com/skeema/knownhosts v1.3.1
@@ -30,7 +31,6 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/ubuntu/gowsl v0.0.0-20240906163211-049fd49bd93b
 	github.com/wavetermdev/htmltoken v0.2.0
-	github.com/wavetermdev/waveterm/tsunami v0.12.3
 	golang.org/x/crypto v0.52.0
 	golang.org/x/mod v0.35.0
 	golang.org/x/sync v0.20.0
@@ -90,4 +90,4 @@ replace github.com/kevinburke/ssh_config => github.com/wavetermdev/ssh_config v0
 
 replace github.com/creack/pty => github.com/photostorm/pty v1.1.19-0.20230903182454-31354506054b
 
-replace github.com/wavetermdev/waveterm/tsunami => ./tsunami
+replace github.com/waddledev/waddle/tsunami => ./tsunami

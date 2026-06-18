@@ -5,11 +5,11 @@ import {
     ConnConfigKeyAtomFnType,
     MetaKeyAtomFnType,
     SettingsKeyAtomFnType,
-    WaveEnv,
-    WaveEnvSubset,
+    WaddleEnv,
+    WaddleEnvSubset,
 } from "@/app/waveenv/waveenv";
 
-export type BlockEnv = WaveEnvSubset<{
+export type BlockEnv = WaddleEnvSubset<{
     getSettingsKeyAtom: SettingsKeyAtomFnType<
         | "app:focusfollowscursor"
         | "app:showoverlayblocknums"
@@ -17,25 +17,25 @@ export type BlockEnv = WaveEnvSubset<{
         | "window:magnifiedblockblurprimarypx"
         | "window:magnifiedblockopacity"
     >;
-    showContextMenu: WaveEnv["showContextMenu"];
+    showContextMenu: WaddleEnv["showContextMenu"];
     atoms: {
-        modalOpen: WaveEnv["atoms"]["modalOpen"];
-        controlShiftDelayAtom: WaveEnv["atoms"]["controlShiftDelayAtom"];
+        modalOpen: WaddleEnv["atoms"]["modalOpen"];
+        controlShiftDelayAtom: WaddleEnv["atoms"]["controlShiftDelayAtom"];
     };
     electron: {
-        openExternal: WaveEnv["electron"]["openExternal"];
+        openExternal: WaddleEnv["electron"]["openExternal"];
     };
     rpc: {
-        ActivityCommand: WaveEnv["rpc"]["ActivityCommand"];
-        ConnEnsureCommand: WaveEnv["rpc"]["ConnEnsureCommand"];
-        ConnDisconnectCommand: WaveEnv["rpc"]["ConnDisconnectCommand"];
-        ConnConnectCommand: WaveEnv["rpc"]["ConnConnectCommand"];
-        SetConnectionsConfigCommand: WaveEnv["rpc"]["SetConnectionsConfigCommand"];
-        DismissWshFailCommand: WaveEnv["rpc"]["DismissWshFailCommand"];
+        ActivityCommand: WaddleEnv["rpc"]["ActivityCommand"];
+        ConnEnsureCommand: WaddleEnv["rpc"]["ConnEnsureCommand"];
+        ConnDisconnectCommand: WaddleEnv["rpc"]["ConnDisconnectCommand"];
+        ConnConnectCommand: WaddleEnv["rpc"]["ConnConnectCommand"];
+        SetConnectionsConfigCommand: WaddleEnv["rpc"]["SetConnectionsConfigCommand"];
+        DismissWshFailCommand: WaddleEnv["rpc"]["DismissWshFailCommand"];
     };
-    wos: WaveEnv["wos"];
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
-    getLocalHostDisplayNameAtom: WaveEnv["getLocalHostDisplayNameAtom"];
+    wos: WaddleEnv["wos"];
+    getConnStatusAtom: WaddleEnv["getConnStatusAtom"];
+    getLocalHostDisplayNameAtom: WaddleEnv["getLocalHostDisplayNameAtom"];
     getConnConfigKeyAtom: ConnConfigKeyAtomFnType<"conn:wshenabled">;
     getBlockMetaKeyAtom: MetaKeyAtomFnType<
         | "frame:text"
@@ -48,5 +48,5 @@ export type BlockEnv = WaveEnvSubset<{
         | "frame:icon"
     >;
     getTabMetaKeyAtom: MetaKeyAtomFnType<"bg:activebordercolor" | "bg:bordercolor" | "tab:background">;
-    getConfigBackgroundAtom: WaveEnv["getConfigBackgroundAtom"];
+    getConfigBackgroundAtom: WaddleEnv["getConfigBackgroundAtom"];
 }>;

@@ -9,8 +9,8 @@ import (
 )
 
 const TextTag = "#text"
-const WaveTextTag = "wave:text"
-const WaveNullTag = "wave:null"
+const WaddleTextTag = "wave:text"
+const WaddleNullTag = "wave:null"
 const FragmentTag = "#fragment"
 
 const KeyPropKey = "key"
@@ -34,7 +34,7 @@ type VDomFunc struct {
 	PreventDefault  bool     `json:"preventdefault,omitempty"`  // set to call e.preventDefault() on the client side
 	PreventBackend  bool     `json:"preventbackend,omitempty"`  // set to skip firing the event to the backend
 	GlobalEvent     string   `json:"globalevent,omitempty"`
-	Keys            []string `json:"keys,omitempty"` // special for keyDown events a list of keys to "capture"
+	Keys            []string `json:"keys,omitempty"`   // special for keyDown events a list of keys to "capture"
 	JsCode          string   `json:"jscode,omitempty"` // client-side JS function expression: (e, elem) => { ... }
 }
 
@@ -50,10 +50,10 @@ type VDomRef struct {
 
 func (r *VDomRef) MarshalJSON() ([]byte, error) {
 	type vdomRefAlias struct {
-		Type          string           `json:"type"`
-		RefId         string           `json:"refid"`
-		TrackPosition bool             `json:"trackposition,omitempty"`
-		HasCurrent    bool             `json:"hascurrent,omitempty"`
+		Type          string `json:"type"`
+		RefId         string `json:"refid"`
+		TrackPosition bool   `json:"trackposition,omitempty"`
+		HasCurrent    bool   `json:"hascurrent,omitempty"`
 	}
 	return json.Marshal(vdomRefAlias{
 		Type:          r.Type,
@@ -65,10 +65,10 @@ func (r *VDomRef) MarshalJSON() ([]byte, error) {
 
 func (r *VDomRef) UnmarshalJSON(data []byte) error {
 	type vdomRefAlias struct {
-		Type          string           `json:"type"`
-		RefId         string           `json:"refid"`
-		TrackPosition bool             `json:"trackposition,omitempty"`
-		HasCurrent    bool             `json:"hascurrent,omitempty"`
+		Type          string `json:"type"`
+		RefId         string `json:"refid"`
+		TrackPosition bool   `json:"trackposition,omitempty"`
+		HasCurrent    bool   `json:"hascurrent,omitempty"`
 	}
 	var alias vdomRefAlias
 	if err := json.Unmarshal(data, &alias); err != nil {
@@ -114,7 +114,7 @@ type VDomTermSize struct {
 }
 
 type VDomEvent struct {
-	WaveId          string             `json:"waveid"`
+	WaddleId        string             `json:"waveid"`
 	EventType       string             `json:"eventtype"` // usually the prop name (e.g. onClick, onKeyDown)
 	GlobalEventType string             `json:"globaleventtype,omitempty"`
 	TargetValue     string             `json:"targetvalue,omitempty"`   // set for onChange events on input/textarea/select

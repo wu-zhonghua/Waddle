@@ -14,45 +14,45 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat"
-	"github.com/wavetermdev/waveterm/pkg/authkey"
-	"github.com/wavetermdev/waveterm/pkg/blockcontroller"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/filebackup"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/remote/fileshare/wshfs"
-	"github.com/wavetermdev/waveterm/pkg/secretstore"
-	"github.com/wavetermdev/waveterm/pkg/service"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/sigutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wcloud"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/web"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshremote"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshserver"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/aiusechat"
+	"github.com/waddledev/waddle/pkg/authkey"
+	"github.com/waddledev/waddle/pkg/blockcontroller"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/filebackup"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/jobcontroller"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/remote/fileshare/wshfs"
+	"github.com/waddledev/waddle/pkg/secretstore"
+	"github.com/waddledev/waddle/pkg/service"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/sigutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wcloud"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/web"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshremote"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshserver"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wslconn"
+	"github.com/waddledev/waddle/pkg/wstore"
 
 	"net/http"
 	_ "net/http/pprof"
 )
 
 // these are set at build time
-var WaveVersion = "0.0.0"
+var WaddleVersion = "0.0.0"
 var BuildTime = "0"
 
 const InitialTelemetryWait = 10 * time.Second
@@ -68,7 +68,7 @@ const DiagnosticTick = 10 * time.Minute
 var shutdownOnce sync.Once
 
 func init() {
-	envFilePath := os.Getenv("WAVETERM_ENVFILE")
+	envFilePath := os.Getenv("WADDLE_ENVFILE")
 	if envFilePath != "" {
 		log.Printf("applying env file: %s\n", envFilePath)
 		_ = godotenv.Load(envFilePath)
@@ -137,8 +137,8 @@ func diagnosticLoop() {
 	defer func() {
 		panichandler.PanicHandler("diagnosticLoop", recover())
 	}()
-	if os.Getenv("WAVETERM_NOPING") != "" {
-		log.Printf("WAVETERM_NOPING set, disabling diagnostic ping\n")
+	if os.Getenv("WADDLE_NOPING") != "" {
+		log.Printf("WADDLE_NOPING set, disabling diagnostic ping\n")
 		return
 	}
 	var lastSentDate string
@@ -321,7 +321,7 @@ func startupActivityUpdate(firstLaunch bool) {
 		shellVersion = ""
 	}
 	userSetOnce := &telemetrydata.TEventUserProps{
-		ClientInitialVersion: "v" + WaveVersion,
+		ClientInitialVersion: "v" + WaddleVersion,
 	}
 	tosTs := telemetry.GetTosAgreedTs()
 	var cohortTime time.Time
@@ -338,7 +338,7 @@ func startupActivityUpdate(firstLaunch bool) {
 	fullConfig := wconfig.GetWatcher().GetFullConfig()
 	props := telemetrydata.TEventProps{
 		UserSet: &telemetrydata.TEventUserProps{
-			ClientVersion:       "v" + wavebase.WaveVersion,
+			ClientVersion:       "v" + wavebase.WaddleVersion,
 			ClientBuildTime:     wavebase.BuildTime,
 			ClientArch:          wavebase.ClientArch(),
 			ClientOSRelease:     wavebase.UnameKernelRelease(),
@@ -410,14 +410,14 @@ func grabAndRemoveEnvVars() error {
 		return err
 	}
 
-	// Remove WAVETERM env vars that leak from prod => dev
-	os.Unsetenv("WAVETERM_CLIENTID")
-	os.Unsetenv("WAVETERM_WORKSPACEID")
-	os.Unsetenv("WAVETERM_TABID")
-	os.Unsetenv("WAVETERM_BLOCKID")
-	os.Unsetenv("WAVETERM_CONN")
-	os.Unsetenv("WAVETERM_JWT")
-	os.Unsetenv("WAVETERM_VERSION")
+	// Remove WADDLE env vars that leak from prod => dev
+	os.Unsetenv("WADDLE_CLIENTID")
+	os.Unsetenv("WADDLE_WORKSPACEID")
+	os.Unsetenv("WADDLE_TABID")
+	os.Unsetenv("WADDLE_BLOCKID")
+	os.Unsetenv("WADDLE_CONN")
+	os.Unsetenv("WADDLE_JWT")
+	os.Unsetenv("WADDLE_VERSION")
 
 	return nil
 }
@@ -459,7 +459,7 @@ func maybeStartPprofServer() {
 func main() {
 	log.SetFlags(0) // disable timestamp since electron's winston logger already wraps with timestamp
 	log.SetPrefix("[wavesrv] ")
-	wavebase.WaveVersion = WaveVersion
+	wavebase.WaddleVersion = WaddleVersion
 	wavebase.BuildTime = BuildTime
 	wshutil.DefaultRouter = wshutil.NewWshRouter()
 	wshutil.DefaultRouter.SetAsRootRouter()
@@ -474,47 +474,47 @@ func main() {
 		log.Printf("error validating service map: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveDataDir()
+	err = wavebase.EnsureWaddleDataDir()
 	if err != nil {
 		log.Printf("error ensuring wave home dir: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveDBDir()
+	err = wavebase.EnsureWaddleDBDir()
 	if err != nil {
 		log.Printf("error ensuring wave db dir: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveConfigDir()
+	err = wavebase.EnsureWaddleConfigDir()
 	if err != nil {
-		log.Printf("error ensuring wave config dir: %v\n", err)
+		log.Printf("error ensuring Waddle config dir: %v\n", err)
 		return
 	}
 
 	// TODO: rather than ensure this dir exists, we should let the editor recursively create parent dirs on save
-	err = wavebase.EnsureWavePresetsDir()
+	err = wavebase.EnsureWaddlePresetsDir()
 	if err != nil {
 		log.Printf("error ensuring wave presets dir: %v\n", err)
 		return
 	}
-	err = wavebase.EnsureWaveCachesDir()
+	err = wavebase.EnsureWaddleCachesDir()
 	if err != nil {
-		log.Printf("error ensuring wave caches dir: %v\n", err)
+		log.Printf("error ensuring Waddle caches dir: %v\n", err)
 		return
 	}
-	waveLock, err := wavebase.AcquireWaveLock()
+	waveLock, err := wavebase.AcquireWaddleLock()
 	if err != nil {
-		log.Printf("error acquiring wave lock (another instance of Wave is likely running): %v\n", err)
+		log.Printf("error acquiring Waddle lock (another instance of Waddle is likely running): %v\n", err)
 		return
 	}
 	defer func() {
 		err = waveLock.Close()
 		if err != nil {
-			log.Printf("error releasing wave lock: %v\n", err)
+			log.Printf("error releasing Waddle lock: %v\n", err)
 		}
 	}()
-	log.Printf("wave version: %s (%s)\n", WaveVersion, BuildTime)
-	log.Printf("wave data dir: %s\n", wavebase.GetWaveDataDir())
-	log.Printf("wave config dir: %s\n", wavebase.GetWaveConfigDir())
+	log.Printf("Waddle version: %s (%s)\n", WaddleVersion, BuildTime)
+	log.Printf("Waddle data dir: %s\n", wavebase.GetWaddleDataDir())
+	log.Printf("Waddle config dir: %s\n", wavebase.GetWaddleConfigDir())
 	err = filestore.InitFilestore()
 	if err != nil {
 		log.Printf("error initializing filestore: %v\n", err)
@@ -554,9 +554,9 @@ func main() {
 		return
 	}
 
-	err = shellutil.FixupWaveZshHistory()
+	err = shellutil.FixupWaddleZshHistory()
 	if err != nil {
-		log.Printf("error fixing up wave zsh history: %v\n", err)
+		log.Printf("error fixing up Waddle zsh history: %v\n", err)
 	}
 	createMainWshClient()
 	sigutil.InstallShutdownSignalHandlers(doShutdown)
@@ -608,7 +608,7 @@ func main() {
 			BuildTime = "0"
 		}
 		// use fmt instead of log here to make sure it goes directly to stderr
-		fmt.Fprintf(os.Stderr, "WAVESRV-ESTART ws:%s web:%s version:%s buildtime:%s\n", wsListener.Addr(), webListener.Addr(), WaveVersion, BuildTime)
+		fmt.Fprintf(os.Stderr, "WAVESRV-ESTART ws:%s web:%s version:%s buildtime:%s\n", wsListener.Addr(), webListener.Addr(), WaddleVersion, BuildTime)
 	}()
 	go wshutil.RunWshRpcOverListener(unixListener, nil)
 	web.RunWebServer(webListener) // blocking

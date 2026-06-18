@@ -1,27 +1,27 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { MetaKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import type { MetaKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 
-export type WaveConfigEnv = WaveEnvSubset<{
+export type WaddleConfigEnv = WaddleEnvSubset<{
     electron: {
-        getConfigDir: WaveEnv["electron"]["getConfigDir"];
-        getPlatform: WaveEnv["electron"]["getPlatform"];
+        getConfigDir: WaddleEnv["electron"]["getConfigDir"];
+        getPlatform: WaddleEnv["electron"]["getPlatform"];
     };
     rpc: {
-        FileInfoCommand: WaveEnv["rpc"]["FileInfoCommand"];
-        FileReadCommand: WaveEnv["rpc"]["FileReadCommand"];
-        FileWriteCommand: WaveEnv["rpc"]["FileWriteCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
-        GetSecretsLinuxStorageBackendCommand: WaveEnv["rpc"]["GetSecretsLinuxStorageBackendCommand"];
-        GetSecretsNamesCommand: WaveEnv["rpc"]["GetSecretsNamesCommand"];
-        GetSecretsCommand: WaveEnv["rpc"]["GetSecretsCommand"];
-        SetSecretsCommand: WaveEnv["rpc"]["SetSecretsCommand"];
-        RecordTEventCommand: WaveEnv["rpc"]["RecordTEventCommand"];
+        FileInfoCommand: WaddleEnv["rpc"]["FileInfoCommand"];
+        FileReadCommand: WaddleEnv["rpc"]["FileReadCommand"];
+        FileWriteCommand: WaddleEnv["rpc"]["FileWriteCommand"];
+        SetMetaCommand: WaddleEnv["rpc"]["SetMetaCommand"];
+        GetSecretsLinuxStorageBackendCommand: WaddleEnv["rpc"]["GetSecretsLinuxStorageBackendCommand"];
+        GetSecretsNamesCommand: WaddleEnv["rpc"]["GetSecretsNamesCommand"];
+        GetSecretsCommand: WaddleEnv["rpc"]["GetSecretsCommand"];
+        SetSecretsCommand: WaddleEnv["rpc"]["SetSecretsCommand"];
+        RecordTEventCommand: WaddleEnv["rpc"]["RecordTEventCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
+        fullConfigAtom: WaddleEnv["atoms"]["fullConfigAtom"];
     };
     getBlockMetaKeyAtom: MetaKeyAtomFnType<"file">;
-    isWindows: WaveEnv["isWindows"];
+    isWindows: WaddleEnv["isWindows"];
 }>;

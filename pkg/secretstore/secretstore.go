@@ -16,10 +16,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 const (
@@ -76,7 +76,7 @@ func getLinuxStorageBackend() error {
 
 // must hold lock
 func readSecretsFromFile() (map[string]string, error) {
-	configDir := wavebase.GetWaveConfigDir()
+	configDir := wavebase.GetWaddleConfigDir()
 	secretsPath := filepath.Join(configDir, SecretsFileName)
 
 	encryptedData, err := os.ReadFile(secretsPath)
@@ -199,7 +199,7 @@ func writeSecretsToFile() error {
 		return fmt.Errorf("encryption timeout: %w", ctx.Err())
 	}
 
-	configDir := wavebase.GetWaveConfigDir()
+	configDir := wavebase.GetWaddleConfigDir()
 	secretsPath := filepath.Join(configDir, SecretsFileName)
 
 	if err := os.WriteFile(secretsPath, []byte(result.CipherText), 0600); err != nil {
@@ -283,7 +283,7 @@ func GetSecretNames() ([]string, error) {
 func CountSecrets() (int, error) {
 	lock.Lock()
 	defer lock.Unlock()
-	
+
 	if !initialized {
 		return 0, fmt.Errorf("secret store not initialized")
 	}

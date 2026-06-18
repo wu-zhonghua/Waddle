@@ -3,8 +3,8 @@
 
 import { ModalsRenderer } from "@/app/modals/modalsrenderer";
 import { globalStore } from "@/app/store/jotaiStore";
-import { WaveEnvContext } from "@/app/waveenv/waveenv";
-import { makeWaveEnvImpl } from "@/app/waveenv/waveenvimpl";
+import { WaddleEnvContext } from "@/app/waveenv/waveenv";
+import { makeWaddleEnvImpl } from "@/app/waveenv/waveenvimpl";
 import { AppSelectionModal } from "@/builder/app-selection-modal";
 import { BuilderWorkspace } from "@/builder/builder-workspace";
 import { atoms, isDev } from "@/store/global";
@@ -45,12 +45,12 @@ function BuilderAppInner() {
                 style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             >
                 {isDev() ? (
-                    <div className="text-accent text-xl" title="Running Wave Dev Build">
+                    <div className="text-accent text-xl" title="Running Waddle Dev Build">
                         <i className="fa fa-brands fa-dev fa-fw" />
                     </div>
                 ) : null}
                 <div className="text-sm font-medium">
-                    WaveApp Builder{!isBlank(builderAppId) && ` (${builderAppId})`}
+                    WaddleApp Builder{!isBlank(builderAppId) && ` (${builderAppId})`}
                 </div>
             </div>
             <DndProvider backend={HTML5Backend}>
@@ -62,16 +62,16 @@ function BuilderAppInner() {
 }
 
 export function BuilderApp({ initOpts, onFirstRender }: BuilderAppProps) {
-    const waveEnvRef = useRef(makeWaveEnvImpl());
+    const waveEnvRef = useRef(makeWaddleEnvImpl());
     useEffect(() => {
         onFirstRender();
     }, []);
 
     return (
         <Provider store={globalStore}>
-            <WaveEnvContext.Provider value={waveEnvRef.current}>
+            <WaddleEnvContext.Provider value={waveEnvRef.current}>
                 <BuilderAppInner />
-            </WaveEnvContext.Provider>
+            </WaddleEnvContext.Provider>
         </Provider>
     );
 }

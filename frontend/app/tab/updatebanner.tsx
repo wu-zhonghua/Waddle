@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tooltip } from "@/element/tooltip";
-import { WaveEnv, WaveEnvSubset, useWaveEnv } from "@/app/waveenv/waveenv";
+import { WaddleEnv, WaddleEnvSubset, useWaddleEnv } from "@/app/waveenv/waveenv";
 import { useAtomValue } from "jotai";
 import { memo, useCallback } from "react";
 
-type UpdateBannerEnv = WaveEnvSubset<{
+type UpdateBannerEnv = WaddleEnvSubset<{
     electron: {
-        installAppUpdate: WaveEnv["electron"]["installAppUpdate"];
+        installAppUpdate: WaddleEnv["electron"]["installAppUpdate"];
     };
     atoms: {
-        updaterStatusAtom: WaveEnv["atoms"]["updaterStatusAtom"];
+        updaterStatusAtom: WaddleEnv["atoms"]["updaterStatusAtom"];
     };
 }>;
 
@@ -29,7 +29,7 @@ function getUpdateStatusMessage(status: string): string {
 }
 
 const UpdateStatusBannerComponent = () => {
-    const env = useWaveEnv<UpdateBannerEnv>();
+    const env = useWaddleEnv<UpdateBannerEnv>();
     const appUpdateStatus = useAtomValue(env.atoms.updaterStatusAtom);
     const updateStatusMessage = getUpdateStatusMessage(appUpdateStatus);
 

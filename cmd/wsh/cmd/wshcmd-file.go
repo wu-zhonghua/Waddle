@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 	"golang.org/x/term"
 )
 
@@ -34,12 +34,12 @@ URI format: [profile]:[uri-scheme]://[connection]/[path]
 Supported URI schemes:
   wsh:
     Used to access files on remote hosts over SSH via the WSH helper. Allows
-    for file streaming to Wave and other remotes.
+    for file streaming to Waddle and other remotes.
 
     Profiles are optional for WSH URIs, provided that you have configured the
     remote host in your "connections.json" or "~/.ssh/config" file.
 
-    If a profile is provided, it must be defined in "profiles.json" in the Wave
+    If a profile is provided, it must be defined in "profiles.json" in the Waddle
     configuration directory.
 
     Format: wsh://[remote]/[path]
@@ -56,7 +56,7 @@ var fileCmd = &cobra.Command{
 	Short: "manage files across local and remote systems",
 	Long: `Manage files across local and remote systems.
     
-Wave Terminal is capable of managing files from remote SSH hosts and your local
+Waddle is capable of managing files from remote SSH hosts and your local
 computer. Files are addressed via URIs.` + UriHelpText}
 
 var fileTimeout int64

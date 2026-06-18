@@ -11,11 +11,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
 )
 
-const DumpFilePath = "/tmp/waveterm-usr1-dump.log"
+const DumpFilePath = "/tmp/waddle-usr1-dump.log"
 
 func InstallSIGUSR1Handler() {
 	sigCh := make(chan os.Signal, 1)

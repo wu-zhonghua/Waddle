@@ -33,26 +33,26 @@ import {
     checkIfRunningUnderARM64Translation,
     getElectronAppBasePath,
     getElectronAppUnpackedBasePath,
-    getWaveConfigDir,
-    getWaveDataDir,
+    getWaddleConfigDir,
+    getWaddleDataDir,
     isDev,
     unameArch,
     unamePlatform,
 } from "./emain-platform";
 import { ensureHotSpareTab, setMaxTabCacheSize } from "./emain-tabview";
-import { getIsWaveSrvDead, getWaveSrvProc, getWaveSrvReady, runWaveSrv } from "./emain-wavesrv";
+import { getIsWaddleSrvDead, getWaddleSrvProc, getWaddleSrvReady, runWaddleSrv } from "./emain-wavesrv";
 import {
     createBrowserWindow,
-    createNewWaveWindow,
-    focusedWaveWindow,
-    getAllWaveWindows,
+    createNewWaddleWindow,
+    focusedWaddleWindow,
+    getAllWaddleWindows,
     getQuakeWindow,
-    getWaveWindowById,
-    getWaveWindowByWorkspaceId,
+    getWaddleWindowById,
+    getWaddleWindowByWorkspaceId,
     initGlobalHotkeyEventSubscription,
     registerGlobalHotkey,
     relaunchBrowserWindows,
-    WaveBrowserWindow,
+    WaddleBrowserWindow,
 } from "./emain-window";
 import { ElectronWshClient, initElectronWshClient } from "./emain-wsh";
 import { getLaunchSettings } from "./launchsettings";
@@ -62,15 +62,15 @@ const electronApp = electron.app;
 
 let confirmQuit = true;
 
-const waveDataDir = getWaveDataDir();
-const waveConfigDir = getWaveConfigDir();
+const waveDataDir = getWaddleDataDir();
+const waveConfigDir = getWaddleConfigDir();
 
 electron.nativeTheme.themeSource = "dark";
 
 console.log = log;
 console.log(
     sprintf(
-        "waveterm-app starting, data_dir=%s, config_dir=%s electronpath=%s gopath=%s arch=%s/%s electron=%s",
+        "waddle-app starting, data_dir=%s, config_dir=%s electronpath=%s gopath=%s arch=%s/%s electron=%s",
         waveDataDir,
         waveConfigDir,
         getElectronAppBasePath(),
@@ -81,7 +81,7 @@ console.log(
     )
 );
 if (isDev) {
-    console.log("waveterm-app WAVETERM_DEV set");
+    console.log("waddle-app WADDLE_DEV set");
 }
 
 function handleWSEvent(evtMsg: WSEventType) {
@@ -90,7 +90,7 @@ function handleWSEvent(evtMsg: WSEventType) {
         if (evtMsg.eventtype == "electron:newwindow") {
             console.log("electron:newwindow", evtMsg.data);
             const windowId: string = evtMsg.data;
-            const windowData: WaveWindow = (await services.ObjectService.GetObject("window:" + windowId)) as WaveWindow;
+            const windowData: WaddleWindow = (await services.ObjectService.GetObject("window:" + windowId)) as WaddleWindow;
             if (windowData == null) {
                 return;
             }
@@ -103,14 +103,14 @@ function handleWSEvent(evtMsg: WSEventType) {
         } else if (evtMsg.eventtype == "electron:closewindow") {
             console.log("electron:closewindow", evtMsg.data);
             if (evtMsg.data === undefined) return;
-            const ww = getWaveWindowById(evtMsg.data);
+            const ww = getWaddleWindowById(evtMsg.data);
             if (ww != null) {
                 ww.destroy(); // bypass the "are you sure?" dialog
             }
         } else if (evtMsg.eventtype == "electron:updateactivetab") {
             const activeTabUpdate: { workspaceid: string; newactivetabid: string } = evtMsg.data;
             console.log("electron:updateactivetab", activeTabUpdate);
-            const ww = getWaveWindowByWorkspaceId(activeTabUpdate.workspaceid);
+            const ww = getWaddleWindowByWorkspaceId(activeTabUpdate.workspaceid);
             if (ww == null) {
                 return;
             }
@@ -171,9 +171,9 @@ function logActiveState() {
     fireAndForget(async () => {
         const astate = getActivityState();
         const activity: ActivityUpdate = { openminutes: 1 };
-        const ww = focusedWaveWindow;
+        const ww = focusedWaddleWindow;
         const activeTabView = ww?.activeTabView;
-        const isWaveAIOpen = activeTabView?.isWaveAIOpen ?? false;
+        const isWaddleAIOpen = activeTabView?.isWaddleAIOpen ?? false;
 
         if (astate.wasInFg) {
             activity.fgminutes = 1;
@@ -208,10 +208,10 @@ function logActiveState() {
         if (termCmdDurableCount > 0) {
             props["activity:termcommands:durable"] = termCmdDurableCount;
         }
-        if (astate.wasActive && isWaveAIOpen) {
+        if (astate.wasActive && isWaddleAIOpen) {
             props["activity:waveaiactiveminutes"] = 1;
         }
-        if (astate.wasInFg && isWaveAIOpen) {
+        if (astate.wasInFg && isWaddleAIOpen) {
             props["activity:waveaifgminutes"] = 1;
         }
 
@@ -240,7 +240,7 @@ function runActiveTimer() {
     setTimeout(runActiveTimer, 60000);
 }
 
-function hideWindowWithCatch(window: WaveBrowserWindow) {
+function hideWindowWithCatch(window: WaddleBrowserWindow) {
     if (window == null) {
         return;
     }
@@ -264,22 +264,22 @@ electronApp.on("window-all-closed", () => {
     }
 });
 electronApp.on("before-quit", (e) => {
-    const allWindows = getAllWaveWindows();
+    const allWindows = getAllWaddleWindows();
     const allBuilders = getAllBuilderWindows();
     if (
         confirmQuit &&
         !getForceQuit() &&
         !getUserConfirmedQuit() &&
         (allWindows.length > 0 || allBuilders.length > 0) &&
-        !getIsWaveSrvDead() &&
-        !process.env.WAVETERM_NOCONFIRMQUIT
+        !getIsWaddleSrvDead() &&
+        !process.env.WADDLE_NOCONFIRMQUIT
     ) {
         e.preventDefault();
         const choice = electron.dialog.showMessageBoxSync(null, {
             type: "question",
             buttons: ["Cancel", "Quit"],
             title: "Confirm Quit",
-            message: "Are you sure you want to quit Wave Terminal?",
+            message: "Are you sure you want to quit Waddle?",
             defaultId: 0,
             cancelId: 0,
         });
@@ -297,7 +297,7 @@ electronApp.on("before-quit", (e) => {
         // ends up killing wavesrv via closing it's stdin.
         return;
     }
-    getWaveSrvProc()?.kill("SIGINT");
+    getWaddleSrvProc()?.kill("SIGINT");
     shutdownWshrpc();
     if (getForceQuit()) {
         return;
@@ -309,7 +309,7 @@ electronApp.on("before-quit", (e) => {
     for (const builder of allBuilders) {
         builder.hide();
     }
-    if (getIsWaveSrvDead()) {
+    if (getIsWaddleSrvDead()) {
         console.log("wavesrv is dead, quitting immediately");
         setForceQuit(true);
         electronApp.quit();
@@ -357,15 +357,15 @@ process.on("uncaughtException", (error) => {
     electronApp.quit();
 });
 
-let lastWaveWindowCount = 0;
+let lastWaddleWindowCount = 0;
 let lastIsBuilderWindowActive = false;
 globalEvents.on("windows-updated", () => {
-    const wwCount = getAllWaveWindows().length;
+    const wwCount = getAllWaddleWindows().length;
     const isBuilderActive = focusedBuilderWindow != null;
-    if (wwCount == lastWaveWindowCount && isBuilderActive == lastIsBuilderWindowActive) {
+    if (wwCount == lastWaddleWindowCount && isBuilderActive == lastIsBuilderWindowActive) {
         return;
     }
-    lastWaveWindowCount = wwCount;
+    lastWaddleWindowCount = wwCount;
     lastIsBuilderWindowActive = isBuilderActive;
     console.log("windows-updated", wwCount, "builder-active:", isBuilderActive);
     makeAndSetAppMenu();
@@ -381,21 +381,21 @@ async function appMain() {
     const startTs = Date.now();
     const instanceLock = electronApp.requestSingleInstanceLock();
     if (!instanceLock) {
-        console.log("waveterm-app could not get single-instance-lock, shutting down");
+        console.log("waddle-app could not get single-instance-lock, shutting down");
         setUserConfirmedQuit(true);
         electronApp.quit();
         return;
     }
     electronApp.on("second-instance", (_event, argv, workingDirectory) => {
         console.log("second-instance event, argv:", argv, "workingDirectory:", workingDirectory);
-        fireAndForget(createNewWaveWindow);
+        fireAndForget(createNewWaddleWindow);
     });
     try {
-        await runWaveSrv(handleWSEvent);
+        await runWaddleSrv(handleWSEvent);
     } catch (e) {
         console.log(e.toString());
     }
-    const ready = await getWaveSrvReady();
+    const ready = await getWaddleSrvReady();
     console.log("wavesrv ready signal received", ready, Date.now() - startTs, "ms");
     await electronApp.whenReady();
     configureAuthKeyRequestInjection(electron.session.defaultSession);
@@ -428,7 +428,7 @@ async function appMain() {
     }
 
     electronApp.on("activate", () => {
-        const allWindows = getAllWaveWindows();
+        const allWindows = getAllWaddleWindows();
         const anyVisible = allWindows.some((w) => !w.isDestroyed() && w.isVisible());
         if (anyVisible) {
             return;
@@ -440,7 +440,7 @@ async function appMain() {
             return;
         }
         if (allWindows.length === 0) {
-            fireAndForget(createNewWaveWindow);
+            fireAndForget(createNewWaddleWindow);
         }
     });
     electron.powerMonitor.on("resume", () => {

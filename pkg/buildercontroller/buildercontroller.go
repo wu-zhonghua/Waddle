@@ -16,17 +16,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/tsunamiutil"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/waveappstore"
-	"github.com/wavetermdev/waveterm/pkg/waveapputil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/tsunami/build"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/tsunamiutil"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/waveappstore"
+	"github.com/waddledev/waddle/pkg/waveapputil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/tsunami/build"
 )
 
 const (
@@ -209,7 +209,7 @@ func (bc *BuilderController) buildAndRun(ctx context.Context, appId string, buil
 		return
 	}
 
-	nodePath := wavebase.GetWaveAppElectronExecPath()
+	nodePath := wavebase.GetWaddleAppElectronExecPath()
 	if nodePath == "" {
 		bc.handleBuildError(fmt.Errorf("electron executable path not set"), resultCh)
 		return
@@ -573,7 +573,7 @@ func (bc *BuilderController) setStatus_nolock(status string, port int, exitCode 
 
 func (bc *BuilderController) publishStatus() {
 	status := bc.GetStatus()
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event:  wps.Event_BuilderStatus,
 		Scopes: []string{waveobj.MakeORef(waveobj.OType_Builder, bc.builderId).String()},
 		Data:   status,
@@ -581,7 +581,7 @@ func (bc *BuilderController) publishStatus() {
 }
 
 func (bc *BuilderController) publishOutputLine(line string, reset bool) {
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event:  wps.Event_BuilderOutput,
 		Scopes: []string{waveobj.MakeORef(waveobj.OType_Builder, bc.builderId).String()},
 		Data: map[string]any{

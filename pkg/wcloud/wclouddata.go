@@ -4,7 +4,7 @@
 package wcloud
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry"
 )
 
 type NoTelemetryInputType struct {

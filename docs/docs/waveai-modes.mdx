@@ -1,23 +1,23 @@
 ---
 sidebar_position: 1.6
 id: "waveai-modes"
-title: "Wave AI (Local Models + BYOK)"
+title: "Waddle AI (Local Models + BYOK)"
 ---
 
 import { VersionBadge } from "@site/src/components/versionbadge";
 
 <VersionBadge version="v0.13" noLeftMargin={true}/>
 
-Wave AI supports custom AI modes that allow you to use local models, custom API endpoints, and alternative AI providers. This gives you complete control over which models and providers you use with Wave's AI features.
+Waddle AI supports custom AI modes that allow you to use local models, custom API endpoints, and alternative AI providers. This gives you complete control over which models and providers you use with Waddle's AI features.
 
 ## Configuration Overview
 
-AI modes are configured in `~/.config/waveterm/waveai.json`.
+AI modes are configured in `~/.config/waddle/waveai.json`.
 
 **To edit using the UI:**
 1. Click the settings (gear) icon in the widget bar
 2. Select "Settings" from the menu
-3. Choose "Wave AI Modes" from the settings sidebar
+3. Choose "Waddle AI Modes" from the settings sidebar
 
 **Or launch from the command line:**
 ```bash
@@ -28,7 +28,7 @@ Each mode defines a complete AI configuration including the model, API endpoint,
 
 ## Provider-Based Configuration
 
-Wave AI now supports provider-based configuration which automatically applies sensible defaults for common providers. By specifying the `ai:provider` field, you can significantly simplify your configuration as the system will automatically set up endpoints, API types, and secret names.
+Waddle AI now supports provider-based configuration which automatically applies sensible defaults for common providers. By specifying the `ai:provider` field, you can significantly simplify your configuration as the system will automatically set up endpoints, API types, and secret names.
 
 ### Supported Providers
 
@@ -43,19 +43,19 @@ Wave AI now supports provider-based configuration which automatically applies se
 
 ### Supported API Types
 
-Wave AI supports the following API types:
+Waddle AI supports the following API types:
 
 - **`openai-chat`**: Uses the `/v1/chat/completions` endpoint (most common)
 - **`openai-responses`**: Uses the `/v1/responses` endpoint (modern API for GPT-5+ models)
 - **`google-gemini`**: Google's Gemini API format (automatically set when using `ai:provider: "google"`, not typically used directly)
 
-## Global Wave AI Settings
+## Global Waddle AI Settings
 
-You can configure global Wave AI behavior in your Wave Terminal settings (separate from the mode configurations in `waveai.json`).
+You can configure global Waddle AI behavior in your Waddle settings (separate from the mode configurations in `waveai.json`).
 
 ### Setting a Default AI Mode
 
-After configuring a local model or custom mode, you can make it the default by setting `waveai:defaultmode` in your Wave Terminal settings.
+After configuring a local model or custom mode, you can make it the default by setting `waveai:defaultmode` in your Waddle settings.
 
 :::important
 Use the **mode key** (the key in your `waveai.json` configuration), not the display name. For example, use `"ollama-llama"` (the key), not `"Ollama - Llama 3.3"` (the display name).
@@ -74,15 +74,15 @@ wsh setconfig waveai:defaultmode="ollama-llama"
   "waveai:defaultmode": "ollama-llama"
 ```
 
-This will make the specified mode the default selection when opening Wave AI features.
+This will make the specified mode the default selection when opening Waddle AI features.
 
 :::note
-Wave AI normally requires telemetry to be enabled. However, if you configure your own custom model (local or BYOK) and set `waveai:defaultmode` to that custom mode's key, you will not receive telemetry requirement messages. This allows you to use Wave AI features completely privately with your own models. <VersionBadge version="v0.13.1"/>
+Waddle AI normally requires telemetry to be enabled. However, if you configure your own custom model (local or BYOK) and set `waveai:defaultmode` to that custom mode's key, you will not receive telemetry requirement messages. This allows you to use Waddle AI features completely privately with your own models. <VersionBadge version="v0.13.1"/>
 :::
 
-### Hiding Wave Cloud Modes
+### Hiding Waddle Cloud Modes
 
-If you prefer to use only your local or custom models and want to hide Wave's cloud AI modes from the mode dropdown, set `waveai:showcloudmodes` to `false`:
+If you prefer to use only your local or custom models and want to hide Waddle's cloud AI modes from the mode dropdown, set `waveai:showcloudmodes` to `false`:
 
 **Using the settings command:**
 ```bash
@@ -97,7 +97,7 @@ wsh setconfig waveai:showcloudmodes=false
   "waveai:showcloudmodes": false
 ```
 
-This will hide Wave's built-in cloud AI modes, showing only your custom configured modes.
+This will hide Waddle's built-in cloud AI modes, showing only your custom configured modes.
 
 ## Local Model Examples
 
@@ -226,7 +226,7 @@ If you provide only the baseurl, you are likely to get a 404 message.
 }
 ```
 
-The `ai:apitokensecretname` should be the name of an environment variable that contains your API key. Set this environment variable before running Wave Terminal.
+The `ai:apitokensecretname` should be the name of an environment variable that contains your API key. Set this environment variable before running Waddle.
 
 
 ### OpenRouter
@@ -397,7 +397,7 @@ For Azure Legacy provider, you must manually specify `ai:capabilities` based on 
 
 ## Using Secrets for API Keys
 
-Instead of storing API keys directly in the configuration, you should use Wave's secret store to keep your credentials secure. Secrets are stored encrypted using your system's native keychain.
+Instead of storing API keys directly in the configuration, you should use Waddle's secret store to keep your credentials secure. Secrets are stored encrypted using your system's native keychain.
 
 ### Storing an API Key
 
@@ -428,7 +428,7 @@ When using providers like `openai` or `openrouter`, the secret name is automatic
 }
 ```
 
-The `openai` provider automatically looks for the `OPENAI_KEY` secret. See the [Secrets documentation](./secrets.mdx) for more information on managing secrets securely in Wave.
+The `openai` provider automatically looks for the `OPENAI_KEY` secret. See the [Secrets documentation](./secrets.mdx) for more information on managing secrets securely in Waddle.
 
 ## Multiple Modes Example
 
@@ -463,7 +463,7 @@ You can define multiple AI modes and switch between them easily:
 
 ### Connection Issues
 
-If Wave can't connect to your model server:
+If Waddle can't connect to your model server:
 
 1. **For cloud providers with `ai:provider` set**: Ensure you have the correct secret stored (e.g., `OPENAI_KEY`, `OPENROUTER_KEY`)
 2. **For local/custom endpoints**: Verify the server is running (`curl http://localhost:11434/v1/models` for Ollama)
@@ -543,8 +543,8 @@ If you get "model not found" errors:
 | `ai:azureresourcename` | No | Azure resource name (for Azure providers) |
 | `ai:azuredeployment` | No | Azure deployment name (for `azure-legacy` provider) |
 | `ai:capabilities` | No | Array of supported capabilities: `"tools"`, `"images"`, `"pdfs"` |
-| `waveai:cloud` | No | Internal - for Wave Cloud AI configuration only |
-| `waveai:premium` | No | Internal - for Wave Cloud AI configuration only |
+| `waveai:cloud` | No | Internal - for Waddle Cloud AI configuration only |
+| `waveai:premium` | No | Internal - for Waddle Cloud AI configuration only |
 
 ### AI Capabilities
 
@@ -559,7 +559,7 @@ The `ai:capabilities` field specifies what features the AI mode supports:
 - **OpenRouter, NanoGPT, Groq, Azure, Azure-Legacy, and Custom providers**: You must manually specify capabilities based on your model's features.
 
 :::warning
-If you don't include `"tools"` in the `ai:capabilities` array, the AI model will not be able to interact with your Wave terminal widgets, read/write files, or execute commands. Most AI modes should include `"tools"` for the best Wave experience.
+If you don't include `"tools"` in the `ai:capabilities` array, the AI model will not be able to interact with your Waddle terminal widgets, read/write files, or execute commands. Most AI modes should include `"tools"` for the best Waddle experience.
 :::
 
 Most models support `tools` and can benefit from it. Vision-capable models should include `images`. Not all models support PDFs, so only include `pdfs` if your model can process them.

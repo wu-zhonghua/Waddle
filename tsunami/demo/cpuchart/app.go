@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
-	"github.com/wavetermdev/waveterm/tsunami/app"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/waddledev/waddle/tsunami/app"
+	"github.com/waddledev/waddle/tsunami/vdom"
 )
 
 var AppMeta = app.AppMeta{
@@ -370,7 +370,7 @@ var App = app.DefineComponent("App", func(_ struct{}) any {
 						vdom.H("span", map[string]any{
 							"className": "text-blue-400 mt-1",
 						}, "•"),
-						"Dark theme optimized for Wave Terminal",
+						"Dark theme optimized for Waddle",
 					),
 				),
 			),

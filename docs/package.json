@@ -1,5 +1,5 @@
 {
-    "name": "waveterm-docs",
+    "name": "waddle-docs",
     "version": "0.0.0",
     "scripts": {
         "docusaurus": "docusaurus",

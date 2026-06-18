@@ -14,15 +14,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/suggestion"
-	"github.com/wavetermdev/waveterm/pkg/util/unixutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/suggestion"
+	"github.com/waddledev/waddle/pkg/util/unixutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 type JobManagerConnection struct {
@@ -129,9 +129,9 @@ func (impl *ServerImpl) ConnServerInitCommand(ctx context.Context, data wshrpc.C
 
 func (impl *ServerImpl) getWshPath() (string, error) {
 	if impl.IsLocal {
-		return filepath.Join(wavebase.GetWaveDataDir(), "bin", "wsh"), nil
+		return filepath.Join(wavebase.GetWaddleDataDir(), "bin", "wsh"), nil
 	}
-	wshPath, err := wavebase.ExpandHomeDir("~/.waveterm/bin/wsh")
+	wshPath, err := wavebase.ExpandHomeDir("~/.waddle/bin/wsh")
 	if err != nil {
 		return "", fmt.Errorf("cannot expand wsh path: %w", err)
 	}
@@ -158,7 +158,7 @@ func (impl *ServerImpl) BadgeWatchPidCommand(ctx context.Context, data wshrpc.Co
 				continue
 			}
 			orefStr := data.ORef.String()
-			event := wps.WaveEvent{
+			event := wps.WaddleEvent{
 				Event:  wps.Event_Badge,
 				Scopes: []string{orefStr},
 				Data: baseds.BadgeEvent{

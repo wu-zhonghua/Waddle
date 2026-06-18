@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 // secretNameRegex must match the validation in pkg/wconfig/secretstore.go
@@ -22,7 +22,7 @@ var secretUiMagnified bool
 var secretCmd = &cobra.Command{
 	Use:   "secret",
 	Short: "manage secrets",
-	Long:  "Manage secrets for Wave Terminal",
+	Long:  "Manage secrets for Waddle",
 }
 
 var secretGetCmd = &cobra.Command{
@@ -178,7 +178,7 @@ func secretUiRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no WADDLE_TABID env var set")
 	}
 
 	wshCmd := &wshrpc.CommandCreateBlockData{

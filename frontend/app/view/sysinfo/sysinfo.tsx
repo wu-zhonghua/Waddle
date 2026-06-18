@@ -14,18 +14,18 @@ import * as React from "react";
 import { useDimensionsWithExistingRef } from "@/app/hook/useDimensions";
 import { waveEventSubscribeSingle } from "@/app/store/wps";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import type { MetaKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import type { MetaKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import { OverlayScrollbarsComponent, OverlayScrollbarsComponentRef } from "overlayscrollbars-react";
 
-export type SysinfoEnv = WaveEnvSubset<{
+export type SysinfoEnv = WaddleEnvSubset<{
     rpc: {
-        EventReadHistoryCommand: WaveEnv["rpc"]["EventReadHistoryCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
+        EventReadHistoryCommand: WaddleEnv["rpc"]["EventReadHistoryCommand"];
+        SetMetaCommand: WaddleEnv["rpc"]["SetMetaCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
+        fullConfigAtom: WaddleEnv["atoms"]["fullConfigAtom"];
     };
-    getConnStatusAtom: WaveEnv["getConnStatusAtom"];
+    getConnStatusAtom: WaddleEnv["getConnStatusAtom"];
     getBlockMetaKeyAtom: MetaKeyAtomFnType<"graph:numpoints" | "sysinfo:type" | "connection" | "count">;
 }>;
 
@@ -90,7 +90,7 @@ for (let i = 0; i < 32; i++) {
     DefaultPlotMeta[`cpu:${i}`] = defaultCpuMeta(`Core ${i}`);
 }
 
-function convertWaveEventToDataItem(event: Extract<WaveEvent, { event: "sysinfo" }>): DataItem {
+function convertWaddleEventToDataItem(event: Extract<WaddleEvent, { event: "sysinfo" }>): DataItem {
     const eventData = event.data;
     if (eventData == null || eventData.ts == null || eventData.values == null) {
         return null;
@@ -264,7 +264,7 @@ class SysinfoViewModel implements ViewModel {
                 return;
             }
             this.getDefaultData();
-            const initialDataItems: DataItem[] = initialData.map(convertWaveEventToDataItem);
+            const initialDataItems: DataItem[] = initialData.map(convertWaddleEventToDataItem);
             // splice the initial data into the default data (replacing the newest points)
             //newData.splice(newData.length - initialDataItems.length, initialDataItems.length, ...initialDataItems);
             globalStore.set(this.addInitialDataAtom, initialDataItems);
@@ -369,7 +369,7 @@ function SysinfoView({ model, blockId }: SysinfoViewProps) {
                 if (loading) {
                     return;
                 }
-                const dataItem = convertWaveEventToDataItem(event);
+                const dataItem = convertWaddleEventToDataItem(event);
                 const prevData = globalStore.get(model.dataAtom);
                 const prevLastTs = prevData[prevData.length - 1]?.ts ?? 0;
                 if (dataItem.ts - prevLastTs > 2000) {

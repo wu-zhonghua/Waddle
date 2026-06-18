@@ -102,15 +102,15 @@ type MetaTSType struct {
 	BgActiveBorderColor string  `json:"bg:activebordercolor,omitempty"` // frame:activebordercolor
 
 	// for workspace
-	LayoutVTabBarWidth      int  `json:"layout:vtabbarwidth,omitempty"`
-	LayoutWidgetsVisible    *bool `json:"layout:widgetsvisible,omitempty"`
+	LayoutVTabBarWidth   int   `json:"layout:vtabbarwidth,omitempty"`
+	LayoutWidgetsVisible *bool `json:"layout:widgetsvisible,omitempty"`
 
 	// for tabs+waveai
-	WaveAiPanelOpen     bool   `json:"waveai:panelopen,omitempty"`
-	WaveAiPanelWidth    int    `json:"waveai:panelwidth,omitempty"`
-	WaveAiModel         string `json:"waveai:model,omitempty"`
-	WaveAiChatId        string `json:"waveai:chatid,omitempty"`
-	WaveAiWidgetContext *bool  `json:"waveai:widgetcontext,omitempty"` // default is true
+	WaddleAiPanelOpen     bool   `json:"waveai:panelopen,omitempty"`
+	WaddleAiPanelWidth    int    `json:"waveai:panelwidth,omitempty"`
+	WaddleAiModel         string `json:"waveai:model,omitempty"`
+	WaddleAiChatId        string `json:"waveai:chatid,omitempty"`
+	WaddleAiWidgetContext *bool  `json:"waveai:widgetcontext,omitempty"` // default is true
 
 	TermClear               bool     `json:"term:*,omitempty"`
 	TermFontSize            int      `json:"term:fontsize,omitempty"`

@@ -17,10 +17,10 @@ import {
 } from "@/app/store/global";
 import { AllServiceImpls } from "@/app/store/services";
 import { RpcApi } from "@/app/store/wshclientapi";
-import { WaveEnv } from "@/app/waveenv/waveenv";
+import { WaddleEnv } from "@/app/waveenv/waveenv";
 import { isMacOS, isWindows, PLATFORM } from "@/util/platformutil";
 
-export function makeWaveEnvImpl(): WaveEnv {
+export function makeWaddleEnvImpl(): WaddleEnv {
     return {
         isMock: false,
         electron: (window as any).api,
@@ -40,18 +40,18 @@ export function makeWaveEnvImpl(): WaveEnv {
         getConnStatusAtom,
         getLocalHostDisplayNameAtom,
         wos: {
-            getWaveObjectAtom: WOS.getWaveObjectAtom,
-            getWaveObjectLoadingAtom: WOS.getWaveObjectLoadingAtom,
-            isWaveObjectNullAtom: WOS.isWaveObjectNullAtom,
-            useWaveObjectValue: WOS.useWaveObjectValue,
+            getWaddleObjectAtom: WOS.getWaddleObjectAtom,
+            getWaddleObjectLoadingAtom: WOS.getWaddleObjectLoadingAtom,
+            isWaddleObjectNullAtom: WOS.isWaddleObjectNullAtom,
+            useWaddleObjectValue: WOS.useWaddleObjectValue,
         },
         getBlockMetaKeyAtom,
         getTabMetaKeyAtom,
         getConfigBackgroundAtom,
         getConnConfigKeyAtom,
 
-        mockSetWaveObj: <T extends WaveObj>(_oref: string, _obj: T) => {
-            throw new Error("mockSetWaveObj is only available in the preview server");
+        mockSetWaddleObj: <T extends WaddleObj>(_oref: string, _obj: T) => {
+            throw new Error("mockSetWaddleObj is only available in the preview server");
         },
         mockModels: new Map<any, any>(),
     };

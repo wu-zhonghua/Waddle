@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { WaveEnv } from "@/app/waveenv/waveenv";
+import type { WaddleEnv } from "@/app/waveenv/waveenv";
 import { type Placement } from "@floating-ui/react";
 import type * as jotai from "jotai";
 import type * as rxjs from "rxjs";
@@ -63,7 +63,7 @@ declare global {
         isPreview?: boolean;
     };
 
-    type WaveInitOpts = {
+    type WaddleInitOpts = {
         tabId: string;
         clientId: string;
         windowId: string;
@@ -107,7 +107,7 @@ declare global {
         installAppUpdate: () => void; // install-app-update
         onMenuItemAbout: (callback: () => void) => void; // menu-item-about
         updateWindowControlsOverlay: (rect: Dimensions) => void; // update-window-controls-overlay
-        onReinjectKey: (callback: (waveEvent: WaveKeyboardEvent) => void) => void; // reinject-key
+        onReinjectKey: (callback: (waveEvent: WaddleKeyboardEvent) => void) => void; // reinject-key
         setWebviewFocus: (focusedId: number) => void; // webview-focus, focusedId is the getWebContentsId of the webview
         registerGlobalWebviewKeys: (keys: string[]) => void; // register-global-webview-keys
         onControlShiftStateUpdate: (callback: (state: boolean) => void) => void; // control-shift-state-update
@@ -118,7 +118,7 @@ declare global {
         createTab: () => void; // create-tab
         closeTab: (workspaceId: string, tabId: string, confirmClose: boolean) => Promise<boolean>; // close-tab
         setWindowInitStatus: (status: "ready" | "wave-ready") => void; // set-window-init-status
-        onWaveInit: (callback: (initOpts: WaveInitOpts) => void) => void; // wave-init
+        onWaddleInit: (callback: (initOpts: WaddleInitOpts) => void) => void; // wave-init
         onBuilderInit: (callback: (initOpts: BuilderInitOpts) => void) => void; // builder-init
         sendLog: (log: string) => void; // fe-log
         onQuicklook: (filePath: string) => void; // quicklook
@@ -126,7 +126,7 @@ declare global {
         captureScreenshot(rect: Electron.Rectangle): Promise<string>; // capture-screenshot
         setKeyboardChordMode: () => void; // set-keyboard-chord-mode
         clearWebviewStorage: (webContentsId: number) => Promise<void>; // clear-webview-storage
-        setWaveAIOpen: (isOpen: boolean) => void; // set-waveai-open
+        setWaddleAIOpen: (isOpen: boolean) => void; // set-waveai-open
         closeBuilderWindow: () => void; // close-builder-window
         incrementTermCommands: (opts?: { isRemote?: boolean; isWsl?: boolean; isDurable?: boolean }) => void; // increment-term-commands
         nativePaste: () => void; // native-paste
@@ -298,7 +298,7 @@ declare global {
         blockId: string;
         nodeModel: BlockNodeModel;
         tabModel: TabModel;
-        waveEnv: WaveEnv;
+        waveEnv: WaddleEnv;
     };
 
     type ViewModelClass = new (initOpts: ViewModelInitType) => ViewModel;
@@ -359,7 +359,7 @@ declare global {
         giveFocus?: () => boolean;
 
         // Handles keydown events within the block.
-        keyDownHandler?: (e: WaveKeyboardEvent) => boolean;
+        keyDownHandler?: (e: WaddleKeyboardEvent) => boolean;
 
         // Cleans up resources when the block is disposed.
         dispose?: () => void;

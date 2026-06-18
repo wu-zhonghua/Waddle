@@ -138,7 +138,7 @@ declare global {
     };
 
     // waveobj.Block
-    type Block = WaveObj & {
+    type Block = WaddleObj & {
         parentoref?: string;
         runtimeopts?: RuntimeOpts;
         stickers?: StickerType[];
@@ -168,7 +168,7 @@ declare global {
         tabid: string;
         workspaceid: string;
         block: Block;
-        files: WaveFileInfo[];
+        files: WaddleFileInfo[];
     };
 
     // wshrpc.BlockJobStatusData
@@ -212,7 +212,7 @@ declare global {
     };
 
     // waveobj.Client
-    type Client = WaveObj & {
+    type Client = WaddleObj & {
         windowids: string[];
         tosagreed?: number;
         hasoldhistory?: boolean;
@@ -413,8 +413,8 @@ declare global {
         filename?: string;
     };
 
-    // wshrpc.CommandGetWaveAIChatData
-    type CommandGetWaveAIChatData = {
+    // wshrpc.CommandGetWaddleAIChatData
+    type CommandGetWaddleAIChatData = {
         chatid: string;
     };
 
@@ -721,43 +721,43 @@ declare global {
         exists: boolean;
     };
 
-    // wshrpc.CommandWaitForRouteData
-    type CommandWaitForRouteData = {
-        routeid: string;
-        waitms: number;
-    };
-
-    // wshrpc.CommandWaveAIAddContextData
-    type CommandWaveAIAddContextData = {
+    // wshrpc.CommandWaddleAIAddContextData
+    type CommandWaddleAIAddContextData = {
         files?: AIAttachedFile[];
         text?: string;
         submit?: boolean;
         newchat?: boolean;
     };
 
-    // wshrpc.CommandWaveAIGetToolDiffData
-    type CommandWaveAIGetToolDiffData = {
+    // wshrpc.CommandWaddleAIGetToolDiffData
+    type CommandWaddleAIGetToolDiffData = {
         chatid: string;
         toolcallid: string;
     };
 
-    // wshrpc.CommandWaveAIGetToolDiffRtnData
-    type CommandWaveAIGetToolDiffRtnData = {
+    // wshrpc.CommandWaddleAIGetToolDiffRtnData
+    type CommandWaddleAIGetToolDiffRtnData = {
         originalcontents64: string;
         modifiedcontents64: string;
     };
 
-    // wshrpc.CommandWaveAIToolApproveData
-    type CommandWaveAIToolApproveData = {
+    // wshrpc.CommandWaddleAIToolApproveData
+    type CommandWaddleAIToolApproveData = {
         toolcallid: string;
         approval?: string;
     };
 
-    // wshrpc.CommandWaveFileReadStreamData
-    type CommandWaveFileReadStreamData = {
+    // wshrpc.CommandWaddleFileReadStreamData
+    type CommandWaddleFileReadStreamData = {
         zoneid: string;
         name: string;
         streammeta: StreamMeta;
+    };
+
+    // wshrpc.CommandWaitForRouteData
+    type CommandWaitForRouteData = {
+        routeid: string;
+        waitms: number;
     };
 
     // wshrpc.CommandWebSelectorData
@@ -1025,7 +1025,7 @@ declare global {
     };
 
     // waveobj.Job
-    type Job = WaveObj & {
+    type Job = WaddleObj & {
         connection: string;
         jobkind: string;
         cmd: string;
@@ -1072,7 +1072,7 @@ declare global {
     };
 
     // waveobj.LayoutState
-    type LayoutState = WaveObj & {
+    type LayoutState = WaddleObj & {
         rootnode?: any;
         magnifiednodeid?: string;
         focusednodeid?: string;
@@ -1444,6 +1444,7 @@ declare global {
         "markdown:fixedfontsize"?: number;
         "preview:showhiddenfiles"?: boolean;
         "preview:defaultsort"?: string;
+        "preview:directoryviewmode"?: string;
         "tab:preset"?: string;
         "tab:confirmclose"?: boolean;
         "tab:background"?: string;
@@ -1589,6 +1590,7 @@ declare global {
         "debug:panictype"?: string;
         "block:view"?: string;
         "block:controller"?: string;
+        "block:subblock"?: boolean;
         "ai:backendtype"?: string;
         "ai:local"?: boolean;
         "wsh:cmd"?: string;
@@ -1677,7 +1679,7 @@ declare global {
     };
 
     // waveobj.Tab
-    type Tab = WaveObj & {
+    type Tab = WaddleObj & {
         name: string;
         layoutstate: string;
         blockids: string[];
@@ -1851,8 +1853,8 @@ declare global {
         targetchecked?: boolean;
         targetname?: string;
         targetid?: string;
-        keydata?: WaveKeyboardEvent;
-        mousedata?: WavePointerData;
+        keydata?: WaddleKeyboardEvent;
+        mousedata?: WaddlePointerData;
     };
 
     // vdom.VDomFrontendUpdate
@@ -2008,14 +2010,9 @@ declare global {
         message: RpcMessage;
     };
 
-    // wconfig.WatcherUpdate
-    type WatcherUpdate = {
-        fullconfig: FullConfigType;
-    };
 
-
-    // filestore.WaveFile
-    type WaveFile = {
+    // filestore.WaddleFile
+    type WaddleFile = {
         zoneid: string;
         name: string;
         opts: FileOpts;
@@ -2025,8 +2022,8 @@ declare global {
         meta: {[key: string]: any};
     };
 
-    // wshrpc.WaveFileInfo
-    type WaveFileInfo = {
+    // wshrpc.WaddleFileInfo
+    type WaddleFileInfo = {
         zoneid: string;
         name: string;
         opts: FileOpts;
@@ -2036,8 +2033,8 @@ declare global {
         meta: {[key: string]: any};
     };
 
-    // wshrpc.WaveInfoData
-    type WaveInfoData = {
+    // wshrpc.WaddleInfoData
+    type WaddleInfoData = {
         version: string;
         clientid: string;
         buildtime: string;
@@ -2045,8 +2042,8 @@ declare global {
         datadir: string;
     };
 
-    // vdom.WaveKeyboardEvent
-    type WaveKeyboardEvent = {
+    // vdom.WaddleKeyboardEvent
+    type WaddleKeyboardEvent = {
         type: "keydown"|"keyup"|"keypress"|"unknown";
         key: string;
         code: string;
@@ -2060,31 +2057,31 @@ declare global {
         option?: boolean;
     };
 
-    // wshrpc.WaveNotificationOptions
-    type WaveNotificationOptions = {
+    // wshrpc.WaddleNotificationOptions
+    type WaddleNotificationOptions = {
         title?: string;
         body?: string;
         silent?: boolean;
     };
 
-    // waveobj.WaveObj
-    type WaveObj = {
+    // waveobj.WaddleObj
+    type WaddleObj = {
         otype: string;
         oid: string;
         version: number;
         meta: MetaType;
     };
 
-    // waveobj.WaveObjUpdate
-    type WaveObjUpdate = {
+    // waveobj.WaddleObjUpdate
+    type WaddleObjUpdate = {
         updatetype: string;
         otype: string;
         oid: string;
-        obj?: WaveObj;
+        obj?: WaddleObj;
     };
 
-    // vdom.WavePointerData
-    type WavePointerData = {
+    // vdom.WaddlePointerData
+    type WaddlePointerData = {
         button: number;
         buttons: number;
         clientx?: number;
@@ -2104,12 +2101,17 @@ declare global {
     };
 
     // waveobj.Window
-    type WaveWindow = WaveObj & {
+    type WaddleWindow = WaddleObj & {
         workspaceid: string;
         isnew?: boolean;
         pos: Point;
         winsize: WinSize;
         lastfocusts: number;
+    };
+
+    // wconfig.WatcherUpdate
+    type WatcherUpdate = {
+        fullconfig: FullConfigType;
     };
 
     // wconfig.WebBookmark
@@ -2135,7 +2137,7 @@ declare global {
         success?: boolean;
         error?: string;
         data?: any;
-        updates?: WaveObjUpdate[];
+        updates?: WaddleObjUpdate[];
     };
 
     // wshrpc.WebSelectorOpts
@@ -2164,7 +2166,7 @@ declare global {
     };
 
     // waveobj.Workspace
-    type Workspace = WaveObj & {
+    type Workspace = WaddleObj & {
         name?: string;
         icon?: string;
         color?: string;

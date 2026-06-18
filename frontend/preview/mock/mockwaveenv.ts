@@ -4,9 +4,9 @@
 import { makeDefaultConnStatus } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { AllServiceTypes } from "@/app/store/services";
-import { handleWaveEvent } from "@/app/store/wps";
+import { handleWaddleEvent } from "@/app/store/wps";
 import { RpcApiType } from "@/app/store/wshclientapi";
-import { WaveEnv } from "@/app/waveenv/waveenv";
+import { WaddleEnv } from "@/app/waveenv/waveenv";
 import { PlatformLinux, PlatformMacOS, PlatformWindows } from "@/util/platformutil";
 import { NullAtom } from "@/util/util";
 import { Atom, atom, PrimitiveAtom, useAtomValue } from "jotai";
@@ -27,7 +27,7 @@ export const ProcessViewerBlockId = crypto.randomUUID();
 // What works "out of the box" in the mock environment (no MockEnv overrides needed):
 //
 // RPC calls (handled in makeMockRpc):
-//   - rpc.EventPublishCommand           -- dispatches to handleWaveEvent(); works when the subscriber
+//   - rpc.EventPublishCommand           -- dispatches to handleWaddleEvent(); works when the subscriber
 //                                          is purely FE-based (registered via WPS on the frontend)
 //   - rpc.GetMetaCommand                -- reads .meta from the mock WOS atom for the given oref
 //   - rpc.GetSecretsCommand             -- reads secrets from an in-memory mock secret store
@@ -37,8 +37,8 @@ export const ProcessViewerBlockId = crypto.randomUUID();
 //   - rpc.SetMetaCommand                -- writes .meta to the mock WOS atom (null values delete keys)
 //   - rpc.SetConfigCommand              -- merges settings into fullConfigAtom (null values delete keys)
 //   - rpc.SetSecretsCommand             -- writes/deletes secrets in the in-memory mock secret store
-//   - rpc.UpdateTabNameCommand          -- updates .name on the Tab WaveObj in the mock WOS
-//   - rpc.UpdateWorkspaceTabIdsCommand  -- updates .tabids on the Workspace WaveObj in the mock WOS
+//   - rpc.UpdateTabNameCommand          -- updates .name on the Tab WaddleObj in the mock WOS
+//   - rpc.UpdateWorkspaceTabIdsCommand  -- updates .tabids on the Workspace WaddleObj in the mock WOS
 //
 // Any other RPC call falls through to a console.log and resolves null.
 // Override specific calls via MockEnv.rpc (keys are Command method names, e.g. "GetMetaCommand").
@@ -76,13 +76,13 @@ export type MockEnv = {
     services?: ServiceOverrides;
     atoms?: Partial<GlobalAtomsType>;
     electron?: Partial<ElectronApi>;
-    createBlock?: WaveEnv["createBlock"];
-    showContextMenu?: WaveEnv["showContextMenu"];
+    createBlock?: WaddleEnv["createBlock"];
+    showContextMenu?: WaddleEnv["showContextMenu"];
     connStatus?: Record<string, ConnStatus>;
-    mockWaveObjs?: Record<string, WaveObj>;
+    mockWaddleObjs?: Record<string, WaddleObj>;
 };
 
-export type MockWaveEnv = WaveEnv & {
+export type MockWaddleEnv = WaddleEnv & {
     mockEnv: MockEnv;
     addRpcOverride: <K extends keyof RpcOverrides>(command: K, handler: RpcHandlerType) => void;
     addRpcStreamOverride: <K extends keyof RpcStreamOverrides>(command: K, handler: RpcStreamHandlerType) => void;
@@ -122,11 +122,11 @@ export function mergeMockEnv(base: MockEnv, overrides: MockEnv): MockEnv {
         createBlock: overrides.createBlock ?? base.createBlock,
         showContextMenu: overrides.showContextMenu ?? base.showContextMenu,
         connStatus: mergeRecords(base.connStatus, overrides.connStatus),
-        mockWaveObjs: mergeRecords(base.mockWaveObjs, overrides.mockWaveObjs),
+        mockWaddleObjs: mergeRecords(base.mockWaddleObjs, overrides.mockWaddleObjs),
     };
 }
 
-function makeMockSettingsKeyAtom(settingsAtom: Atom<SettingsType>): WaveEnv["getSettingsKeyAtom"] {
+function makeMockSettingsKeyAtom(settingsAtom: Atom<SettingsType>): WaddleEnv["getSettingsKeyAtom"] {
     const keyAtomCache = new Map<keyof SettingsType, Atom<any>>();
     return <T extends keyof SettingsType>(key: T) => {
         if (!keyAtomCache.has(key)) {
@@ -143,7 +143,7 @@ function makeMockGlobalAtoms(
     settingsOverrides: Partial<SettingsType>,
     atomOverrides: Partial<GlobalAtomsType>,
     tabId: string,
-    getWaveObjectAtom: <T extends WaveObj>(oref: string) => PrimitiveAtom<T>
+    getWaddleObjectAtom: <T extends WaddleObj>(oref: string) => PrimitiveAtom<T>
 ): GlobalAtomsType {
     let fullConfig = DefaultFullConfig;
     if (settingsOverrides) {
@@ -160,7 +160,7 @@ function makeMockGlobalAtoms(
         if (wsId == null) {
             return null;
         }
-        return get(getWaveObjectAtom<Workspace>("workspace:" + wsId));
+        return get(getWaddleObjectAtom<Workspace>("workspace:" + wsId));
     });
     const defaults: GlobalAtomsType = {
         builderId: atom(""),
@@ -199,8 +199,8 @@ function makeMockGlobalAtoms(
 }
 
 type MockWosFns = {
-    getWaveObjectAtom: <T extends WaveObj>(oref: string) => PrimitiveAtom<T>;
-    mockSetWaveObj: <T extends WaveObj>(oref: string, obj: T) => void;
+    getWaddleObjectAtom: <T extends WaddleObj>(oref: string) => PrimitiveAtom<T>;
+    mockSetWaddleObj: <T extends WaddleObj>(oref: string, obj: T) => void;
     fullConfigAtom: PrimitiveAtom<FullConfigType>;
     platform: NodeJS.Platform;
 };
@@ -223,19 +223,19 @@ export function makeMockRpc(
     const setStreamHandler = (command: string, fn: (...args: any[]) => AsyncGenerator<any, void, boolean>) => {
         streamDispatchMap.set(command, fn);
     };
-    setCallHandler("eventpublish", async (_client, data: WaveEvent) => {
+    setCallHandler("eventpublish", async (_client, data: WaddleEvent) => {
         console.log("[mock eventpublish]", data);
-        handleWaveEvent(data);
+        handleWaddleEvent(data);
         return null;
     });
     setCallHandler("getmeta", async (_client, data: CommandGetMetaData) => {
-        const objAtom = wos.getWaveObjectAtom(data.oref);
-        const current = globalStore.get(objAtom) as WaveObj & { meta?: MetaType };
+        const objAtom = wos.getWaddleObjectAtom(data.oref);
+        const current = globalStore.get(objAtom) as WaddleObj & { meta?: MetaType };
         return current?.meta ?? {};
     });
     setCallHandler("setmeta", async (_client, data: CommandSetMetaData) => {
-        const objAtom = wos.getWaveObjectAtom(data.oref);
-        const current = globalStore.get(objAtom) as WaveObj & { meta?: MetaType };
+        const objAtom = wos.getWaddleObjectAtom(data.oref);
+        const current = globalStore.get(objAtom) as WaddleObj & { meta?: MetaType };
         const updatedMeta = { ...(current?.meta ?? {}) };
         for (const [key, value] of Object.entries(data.meta)) {
             if (value === null) {
@@ -245,16 +245,16 @@ export function makeMockRpc(
             }
         }
         const updated = { ...current, meta: updatedMeta };
-        wos.mockSetWaveObj(data.oref, updated);
+        wos.mockSetWaddleObj(data.oref, updated);
         return null;
     });
     setCallHandler("updatetabname", async (_client, data: { args: [string, string] }) => {
         const [tabId, newName] = data.args;
         const tabORef = "tab:" + tabId;
-        const objAtom = wos.getWaveObjectAtom(tabORef);
+        const objAtom = wos.getWaddleObjectAtom(tabORef);
         const current = globalStore.get(objAtom) as Tab;
         const updated = { ...current, name: newName };
-        wos.mockSetWaveObj(tabORef, updated);
+        wos.mockSetWaddleObj(tabORef, updated);
         return null;
     });
     setCallHandler("setconfig", async (_client, data: SettingsType) => {
@@ -302,10 +302,10 @@ export function makeMockRpc(
     setCallHandler("updateworkspacetabids", async (_client, data: { args: [string, string[]] }) => {
         const [workspaceId, tabIds] = data.args;
         const wsORef = "workspace:" + workspaceId;
-        const objAtom = wos.getWaveObjectAtom(wsORef);
+        const objAtom = wos.getWaddleObjectAtom(wsORef);
         const current = globalStore.get(objAtom) as Workspace;
         const updated = { ...current, tabids: tabIds };
-        wos.mockSetWaveObj(wsORef, updated);
+        wos.mockSetWaddleObj(wsORef, updated);
         return null;
     });
     setCallHandler("fileinfo", async (_client, data: FileData) => DefaultMockFilesystem.fileInfo(data));
@@ -365,16 +365,16 @@ export function makeMockRpc(
     };
 }
 
-export function applyMockEnvOverrides(env: WaveEnv, newOverrides: MockEnv): MockWaveEnv {
-    const existing = (env as MockWaveEnv).mockEnv;
+export function applyMockEnvOverrides(env: WaddleEnv, newOverrides: MockEnv): MockWaddleEnv {
+    const existing = (env as MockWaddleEnv).mockEnv;
     const merged = existing != null ? mergeMockEnv(existing, newOverrides) : newOverrides;
-    return makeMockWaveEnv(merged);
+    return makeMockWaddleEnv(merged);
 }
 
-export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
+export function makeMockWaddleEnv(mockEnv?: MockEnv): MockWaddleEnv {
     const overrides: MockEnv = mockEnv ?? {};
     const tabId = overrides.tabId ?? PreviewTabId;
-    const defaultMockWaveObjs: Record<string, WaveObj> = {
+    const defaultMockWaddleObjs: Record<string, WaddleObj> = {
         [`workspace:${PreviewWorkspaceId}`]: {
             otype: "workspace",
             oid: PreviewWorkspaceId,
@@ -428,7 +428,7 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
     const mergedOverrides: MockEnv = {
         ...overrides,
         tabId,
-        mockWaveObjs: { ...defaultMockWaveObjs, ...(overrides.mockWaveObjs ?? {}) },
+        mockWaddleObjs: { ...defaultMockWaddleObjs, ...(overrides.mockWaddleObjs ?? {}) },
         atoms: { ...defaultAtoms, ...(overrides.atoms ?? {}) },
     };
     const platform = mergedOverrides.platform ?? PlatformMacOS;
@@ -438,9 +438,9 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
     const orefMetaKeyAtomCache = new Map<string, Atom<any>>();
     const connConfigKeyAtomCache = new Map<string, Atom<any>>();
     const configBackgroundAtomCache = new Map<string, Atom<BackgroundConfigType>>();
-    const getWaveObjectAtom = <T extends WaveObj>(oref: string): PrimitiveAtom<T> => {
+    const getWaddleObjectAtom = <T extends WaddleObj>(oref: string): PrimitiveAtom<T> => {
         if (!waveObjectValueAtomCache.has(oref)) {
-            const obj = (mergedOverrides.mockWaveObjs?.[oref] ?? null) as T;
+            const obj = (mergedOverrides.mockWaddleObjs?.[oref] ?? null) as T;
             waveObjectValueAtomCache.set(oref, atom(obj) as PrimitiveAtom<T>);
         }
         return waveObjectValueAtomCache.get(oref) as PrimitiveAtom<T>;
@@ -449,7 +449,7 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
         mergedOverrides.settings,
         mergedOverrides.atoms,
         mergedOverrides.tabId,
-        getWaveObjectAtom
+        getWaddleObjectAtom
     );
     const localHostDisplayNameAtom = atom<string>((get) => {
         const configValue = get(atoms.settingsAtom)?.["conn:localhostdisplayname"];
@@ -459,12 +459,12 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
         return "user@localhost";
     });
     const mockWosFns: MockWosFns = {
-        getWaveObjectAtom,
+        getWaddleObjectAtom,
         fullConfigAtom: atoms.fullConfigAtom,
         platform,
-        mockSetWaveObj: <T extends WaveObj>(oref: string, obj: T) => {
+        mockSetWaddleObj: <T extends WaddleObj>(oref: string, obj: T) => {
             if (!waveObjectValueAtomCache.has(oref)) {
-                waveObjectValueAtomCache.set(oref, atom(null as WaveObj));
+                waveObjectValueAtomCache.set(oref, atom(null as WaddleObj));
             }
             globalStore.set(waveObjectValueAtomCache.get(oref), obj);
         },
@@ -503,12 +503,12 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
                     version: 1,
                     meta: blockDef.meta ?? {},
                 };
-                mockWosFns.mockSetWaveObj(`block:${newBlockId}`, newBlock);
+                mockWosFns.mockSetWaddleObj(`block:${newBlockId}`, newBlock);
                 const tabORef = `tab:${tabId}`;
-                const tabAtom = getWaveObjectAtom<Tab>(tabORef);
+                const tabAtom = getWaddleObjectAtom<Tab>(tabORef);
                 const currentTab = globalStore.get(tabAtom);
                 if (currentTab != null) {
-                    mockWosFns.mockSetWaveObj(tabORef, {
+                    mockWosFns.mockSetWaddleObj(tabORef, {
                         ...currentTab,
                         blockids: [...(currentTab.blockids ?? []), newBlockId],
                     });
@@ -527,26 +527,26 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
             return connStatusAtomCache.get(conn);
         },
         wos: {
-            getWaveObjectAtom: mockWosFns.getWaveObjectAtom,
-            getWaveObjectLoadingAtom: (oref: string) => {
+            getWaddleObjectAtom: mockWosFns.getWaddleObjectAtom,
+            getWaddleObjectLoadingAtom: (oref: string) => {
                 const cacheKey = oref + ":loading";
                 if (!waveObjectDerivedAtomCache.has(cacheKey)) {
                     waveObjectDerivedAtomCache.set(cacheKey, atom(false));
                 }
                 return waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
             },
-            isWaveObjectNullAtom: (oref: string) => {
+            isWaddleObjectNullAtom: (oref: string) => {
                 const cacheKey = oref + ":isnull";
                 if (!waveObjectDerivedAtomCache.has(cacheKey)) {
                     waveObjectDerivedAtomCache.set(
                         cacheKey,
-                        atom((get) => get(env.wos.getWaveObjectAtom(oref)) == null)
+                        atom((get) => get(env.wos.getWaddleObjectAtom(oref)) == null)
                     );
                 }
                 return waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
             },
-            useWaveObjectValue: <T extends WaveObj>(oref: string): [T, boolean] => {
-                const objAtom = env.wos.getWaveObjectAtom<T>(oref);
+            useWaddleObjectValue: <T extends WaddleObj>(oref: string): [T, boolean] => {
+                const objAtom = env.wos.getWaddleObjectAtom<T>(oref);
                 return [useAtomValue(objAtom), false];
             },
         },
@@ -558,7 +558,7 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
             const cacheKey = oref + "#meta-" + key;
             if (!orefMetaKeyAtomCache.has(cacheKey)) {
                 const metaAtom = atom<MetaType[T]>((get) => {
-                    const blockAtom = env.wos.getWaveObjectAtom<Block>(oref);
+                    const blockAtom = env.wos.getWaddleObjectAtom<Block>(oref);
                     const blockData = get(blockAtom);
                     return blockData?.meta?.[key] as MetaType[T];
                 });
@@ -574,7 +574,7 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
             const cacheKey = oref + "#meta-" + key;
             if (!orefMetaKeyAtomCache.has(cacheKey)) {
                 const metaAtom = atom<MetaType[T]>((get) => {
-                    const tabAtom = env.wos.getWaveObjectAtom<Tab>(oref);
+                    const tabAtom = env.wos.getWaddleObjectAtom<Tab>(oref);
                     const tabData = get(tabAtom);
                     return tabData?.meta?.[key] as MetaType[T];
                 });
@@ -615,7 +615,7 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
             console.log("[mock callBackendService]", service, method, args, noUIContext);
             return Promise.resolve(null);
         },
-        mockSetWaveObj: mockWosFns.mockSetWaveObj,
+        mockSetWaddleObj: mockWosFns.mockSetWaddleObj,
         mockModels: new Map<any, any>(),
         addRpcOverride: <K extends keyof RpcOverrides>(command: K, handler: RpcHandlerType) => {
             setRpcHandler(command as string, handler);
@@ -623,7 +623,7 @@ export function makeMockWaveEnv(mockEnv?: MockEnv): MockWaveEnv {
         addRpcStreamOverride: <K extends keyof RpcStreamOverrides>(command: K, handler: RpcStreamHandlerType) => {
             setRpcStreamHandler(command as string, handler);
         },
-    } as MockWaveEnv;
+    } as MockWaddleEnv;
     env.services = Object.fromEntries(
         Object.entries(AllServiceTypes).map(([key, ServiceClass]) => [key, new ServiceClass(env)])
     ) as any;

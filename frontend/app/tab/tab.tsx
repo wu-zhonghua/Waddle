@@ -5,7 +5,7 @@ import { getTabBadgeAtom } from "@/app/store/badge";
 import { refocusNode } from "@/app/store/global";
 import { getTabModelByTabId } from "@/app/store/tab-model";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WaveEnv, WaveEnvSubset, useWaveEnv } from "@/app/waveenv/waveenv";
+import { WaddleEnv, WaddleEnvSubset, useWaddleEnv } from "@/app/waveenv/waveenv";
 import { Button } from "@/element/button";
 import { validateCssColor } from "@/util/color-validator";
 import { fireAndForget } from "@/util/util";
@@ -17,19 +17,19 @@ import { TabBadges } from "./tabbadges";
 import "./tab.scss";
 import { buildTabContextMenu } from "./tabcontextmenu";
 
-export type TabEnv = WaveEnvSubset<{
+export type TabEnv = WaddleEnvSubset<{
     rpc: {
-        ActivityCommand: WaveEnv["rpc"]["ActivityCommand"];
-        SetConfigCommand: WaveEnv["rpc"]["SetConfigCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
-        UpdateTabNameCommand: WaveEnv["rpc"]["UpdateTabNameCommand"];
+        ActivityCommand: WaddleEnv["rpc"]["ActivityCommand"];
+        SetConfigCommand: WaddleEnv["rpc"]["SetConfigCommand"];
+        SetMetaCommand: WaddleEnv["rpc"]["SetMetaCommand"];
+        UpdateTabNameCommand: WaddleEnv["rpc"]["UpdateTabNameCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
+        fullConfigAtom: WaddleEnv["atoms"]["fullConfigAtom"];
     };
-    wos: WaveEnv["wos"];
-    getSettingsKeyAtom: WaveEnv["getSettingsKeyAtom"];
-    showContextMenu: WaveEnv["showContextMenu"];
+    wos: WaddleEnv["wos"];
+    getSettingsKeyAtom: WaddleEnv["getSettingsKeyAtom"];
+    showContextMenu: WaddleEnv["showContextMenu"];
 }>;
 
 interface TabVProps {
@@ -235,8 +235,8 @@ interface TabProps {
 
 const TabInner = forwardRef<HTMLDivElement, TabProps>((props, ref) => {
     const { id, active, showDivider, isDragging, tabWidth, isNew, onLoaded, onSelect, onClose, onDragStart } = props;
-    const env = useWaveEnv<TabEnv>();
-    const [tabData, _] = env.wos.useWaveObjectValue<Tab>(makeORef("tab", id));
+    const env = useWaddleEnv<TabEnv>();
+    const [tabData, _] = env.wos.useWaddleObjectValue<Tab>(makeORef("tab", id));
     const badges = useAtomValue(getTabBadgeAtom(id, env));
 
     const rawFlagColor = tabData?.meta?.["tab:flagcolor"];

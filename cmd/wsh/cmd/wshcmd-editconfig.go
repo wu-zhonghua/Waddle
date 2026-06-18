@@ -7,17 +7,17 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 var editConfigMagnified bool
 
 var editConfigCmd = &cobra.Command{
 	Use:     "editconfig [configfile]",
-	Short:   "edit Wave configuration files",
-	Long:    "Edit Wave configuration files. Defaults to settings.json if no file specified. Common files: settings.json, presets.json, widgets.json",
+	Short:   "edit Waddle configuration files",
+	Long:    "Edit Waddle configuration files. Defaults to settings.json if no file specified. Common files: settings.json, presets.json, widgets.json",
 	Args:    cobra.MaximumNArgs(1),
 	RunE:    editConfigRun,
 	PreRunE: preRunSetupRpcClient,
@@ -40,7 +40,7 @@ func editConfigRun(cmd *cobra.Command, args []string) (rtnErr error) {
 
 	tabId := getTabIdFromEnv()
 	if tabId == "" {
-		return fmt.Errorf("no WAVETERM_TABID env var set")
+		return fmt.Errorf("no WADDLE_TABID env var set")
 	}
 
 	wshCmd := &wshrpc.CommandCreateBlockData{

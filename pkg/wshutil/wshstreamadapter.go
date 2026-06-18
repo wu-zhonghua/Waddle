@@ -4,7 +4,7 @@
 package wshutil
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
 type WshRpcStreamClientAdapter struct {

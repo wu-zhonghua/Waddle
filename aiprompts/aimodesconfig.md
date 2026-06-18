@@ -1,8 +1,8 @@
-# Wave AI Modes Configuration - Visual Editor Architecture
+# Waddle AI Modes Configuration - Visual Editor Architecture
 
 ## Overview
 
-Wave Terminal's AI modes configuration system allows users to define custom AI assistants with different providers, models, and capabilities. The configuration is stored in `~/.waveterm/config/waveai.json` and provides a flexible way to configure multiple AI modes that appear in the Wave AI panel.
+Waddle's AI modes configuration system allows users to define custom AI assistants with different providers, models, and capabilities. The configuration is stored in `~/.waddle/config/waveai.json` and provides a flexible way to configure multiple AI modes that appear in the Waddle AI panel.
 
 **Key Design Decisions:**
 - Visual editor works on **valid JSON only** - if JSON is invalid, fall back to JSON editor
@@ -46,13 +46,13 @@ type AIModeConfigType struct {
     AzureResourceName  string   `json:"ai:azureresourcename,omitempty"`
     AzureDeployment    string   `json:"ai:azuredeployment,omitempty"`
     
-    // Wave AI Specific
-    WaveAICloud        bool     `json:"waveai:cloud,omitempty"`
-    WaveAIPremium      bool     `json:"waveai:premium,omitempty"`
+    // Waddle AI Specific
+    WaddleAICloud        bool     `json:"waveai:cloud,omitempty"`
+    WaddleAIPremium      bool     `json:"waveai:premium,omitempty"`
 }
 ```
 
-**Storage:** `FullConfigType.WaveAIModes` - `map[string]AIModeConfigType`
+**Storage:** `FullConfigType.WaddleAIModes` - `map[string]AIModeConfigType`
 
 Keys follow pattern: `provider@modename` (e.g., `waveai@quick`, `openai@gpt4`)
 
@@ -60,10 +60,10 @@ Keys follow pattern: `provider@modename` (e.g., `waveai@quick`, `openai@gpt4`)
 
 **Defined in:** `pkg/aiusechat/uctypes/uctypes.go:27-35`
 
-1. **wave** - Wave AI Cloud service
+1. **wave** - Waddle AI Cloud service
    - Auto-sets: `waveai:cloud = true`, endpoint from env or default
-   - Default endpoint: `https://cfapi.waveterm.dev/api/waveai`
-   - Used for Wave's hosted AI modes
+   - Default endpoint: `https://cfapi.waddle.dev/api/waveai`
+   - Used for Waddle's hosted AI modes
 
 2. **openai** - OpenAI API
    - Auto-sets: endpoint `https://api.openai.com/v1`
@@ -95,7 +95,7 @@ Keys follow pattern: `provider@modename` (e.g., `waveai@quick`, `openai@gpt4`)
 
 **Location:** `pkg/wconfig/defaultconfig/waveai.json`
 
-Ships with three Wave AI modes:
+Ships with three Waddle AI modes:
 - `waveai@quick` - Fast responses (gpt-5-mini, low thinking)
 - `waveai@balanced` - Balanced (gpt-5.1, low thinking) [premium]
 - `waveai@deep` - Maximum capability (gpt-5.1, medium thinking) [premium]
@@ -107,7 +107,7 @@ Ships with three Wave AI modes:
 Currently shows placeholder: "Visual editor coming soon..."
 
 The component receives:
-- `model: WaveConfigViewModel` - Access to config file operations
+- `model: WaddleConfigViewModel` - Access to config file operations
 - Existing patterns from `SecretsContent` for list/detail views
 
 ## Visual Editor Design Plan
@@ -116,7 +116,7 @@ The component receives:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Wave AI Modes Configuration                            │
+│  Waddle AI Modes Configuration                            │
 │  ┌───────────────┐  ┌──────────────────────────────┐   │
 │  │               │  │                              │   │
 │  │  Mode List    │  │    Mode Editor/Viewer        │   │
@@ -139,7 +139,7 @@ The component receives:
 ### Component Structure
 
 ```typescript
-WaveAIVisualContent
+WaddleAIVisualContent
 ├─ ModeList (left panel)
 │  ├─ Header with "Add New Mode" button
 │  ├─ List of existing modes (sorted by display:order)
@@ -163,11 +163,11 @@ WaveAIVisualContent
 
 ### Provider-Specific Form Fields
 
-#### 1. Wave Provider (`wave`)
+#### 1. Waddle Provider (`wave`)
 **Read-only/Auto-managed:**
 - Endpoint (shows default or env override)
 - Cloud flag (always true)
-- Secret: Not applicable (managed by Wave)
+- Secret: Not applicable (managed by Waddle)
 
 **User-configurable:**
 - Model (required, text input with suggestions: gpt-5-mini, gpt-5.1)
@@ -364,7 +364,7 @@ Display next to API Key field for providers that need one:
 - Display modes sorted by `display:order` (ascending)
 - Show icon, name, short description
 - Badge showing provider type
-- Highlight Wave AI premium modes
+- Highlight Waddle AI premium modes
 - Click to edit
 
 #### 2. Add New Mode Flow
@@ -430,7 +430,7 @@ When provider changes or model changes:
 #### New Components
 ```typescript
 // Main container
-WaveAIVisualContent
+WaddleAIVisualContent
 
 // Left panel
 ModeList
@@ -449,7 +449,7 @@ ModeEditor
 ├─ ProviderSelector (dropdown, only for new modes)
 ├─ DisplayFieldsForm
 ├─ ProviderFieldsForm (dynamic based on provider)
-│   ├─ WaveProviderForm
+│   ├─ WaddleProviderForm
 │   ├─ OpenAIProviderForm
 │   ├─ OpenRouterProviderForm
 │   ├─ AzureProviderForm
@@ -504,7 +504,7 @@ function handleModeReorder(draggedKey: string, targetKey: string) {
 **No new atoms needed!** Visual editor uses existing `fileContentAtom`:
 
 ```typescript
-// Use existing atoms from WaveConfigViewModel:
+// Use existing atoms from WaddleConfigViewModel:
 // - fileContentAtom (contains JSON string)
 // - hasEditedAtom (tracks if modified)
 // - errorMessageAtom (for errors)
@@ -537,7 +537,7 @@ function updateMode(key: string, mode: AIModeConfigType) {
 
 **Component State (useState):**
 ```typescript
-// In WaveAIVisualContent component:
+// In WaddleAIVisualContent component:
 const [selectedModeKey, setSelectedModeKey] = useState<string | null>(null);
 const [isAddingMode, setIsAddingMode] = useState(false);
 const [showSecretModal, setShowSecretModal] = useState(false);

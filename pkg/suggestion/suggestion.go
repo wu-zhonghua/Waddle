@@ -16,12 +16,12 @@ import (
 
 	"github.com/junegunn/fzf/src/algo"
 	"github.com/junegunn/fzf/src/util"
-	"github.com/wavetermdev/waveterm/pkg/faviconcache"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/faviconcache"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
 const MaxSuggestions = 50
@@ -106,7 +106,7 @@ func resolveFileQuery(cwd string, query string) (string, string, string, error) 
 	}
 
 	// For relative queries:
-	// If the query ends with a slash (e.g. "./" or "waveterm/"), then treat it
+	// If the query ends with a slash (e.g. "./" or "waddle/"), then treat it
 	// as a directory listing.
 	if strings.HasSuffix(query, PathSepStr) {
 		fullPath := filepath.Join(cwd, query)

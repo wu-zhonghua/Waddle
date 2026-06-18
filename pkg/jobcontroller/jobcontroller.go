@@ -15,28 +15,28 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/streamclient"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wcore"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/streamclient"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/util/ds"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wcore"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wstore"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -223,7 +223,7 @@ func SendBlockJobStatusEvent(ctx context.Context, blockId string) {
 		log.Printf("[block:%s] error getting block job status: %v", blockId, err)
 		return
 	}
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event:  wps.Event_BlockJobStatus,
 		Scopes: []string{fmt.Sprintf("block:%s", blockId)},
 		Data:   data,
@@ -346,15 +346,15 @@ func pruneUnusedJobs(previousCandidates []string) []string {
 	return currentCandidates
 }
 
-func handleRouteUpEvent(event *wps.WaveEvent) {
+func handleRouteUpEvent(event *wps.WaddleEvent) {
 	handleRouteEvent(event, JobConnStatus_Connected)
 }
 
-func handleRouteDownEvent(event *wps.WaveEvent) {
+func handleRouteDownEvent(event *wps.WaddleEvent) {
 	handleRouteEvent(event, JobConnStatus_Disconnected)
 }
 
-func handleRouteEvent(event *wps.WaveEvent, newStatus string) {
+func handleRouteEvent(event *wps.WaddleEvent, newStatus string) {
 	ctx := context.Background()
 	for _, scope := range event.Scopes {
 		if strings.HasPrefix(scope, "job:") {
@@ -420,7 +420,7 @@ func attemptAutoReconnect(jobId string, connName string) {
 	}
 }
 
-func handleConnChangeEvent(event *wps.WaveEvent) {
+func handleConnChangeEvent(event *wps.WaddleEvent) {
 	var connStatus wshrpc.ConnStatus
 	err := utilfn.ReUnmarshal(&connStatus, event.Data)
 	if err != nil {
@@ -454,7 +454,7 @@ func handleConnChangeEvent(event *wps.WaveEvent) {
 	}
 }
 
-func handleBlockCloseEvent(event *wps.WaveEvent) {
+func handleBlockCloseEvent(event *wps.WaddleEvent) {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
 	blockId, ok := event.Data.(string)
@@ -638,7 +638,7 @@ func StartJob(ctx context.Context, params StartJobParams) (string, error) {
 		return "", fmt.Errorf("failed to generate job auth token: %w", err)
 	}
 
-	jobAccessClaims := &wavejwt.WaveJwtClaims{
+	jobAccessClaims := &wavejwt.WaddleJwtClaims{
 		MainServer: true,
 		JobId:      jobId,
 	}
@@ -658,7 +658,7 @@ func StartJob(ctx context.Context, params StartJobParams) (string, error) {
 		JobAuthToken:     jobAuthToken,
 		JobManagerStatus: JobManagerStatus_Init,
 		AttachedBlockId:  params.BlockId,
-		WaveVersion:      wavebase.WaveVersion,
+		WaddleVersion:    wavebase.WaddleVersion,
 		Meta:             make(waveobj.MetaMapType),
 	}
 
@@ -686,13 +686,13 @@ func StartJob(ctx context.Context, params StartJobParams) (string, error) {
 	}
 	err = filestore.WFS.MakeFile(ctx, jobId, JobOutputFileName, wshrpc.FileMeta{}, fileOpts)
 	if err != nil {
-		return "", fmt.Errorf("failed to create WaveFS file: %w", err)
+		return "", fmt.Errorf("failed to create WaddleFS file: %w", err)
 	}
 
 	clientId := wstore.GetClientId()
 	publicKey := wavejwt.GetPublicKey()
 	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKey)
-	jobEnv := envutil.CopyAndAddToEnvMap(params.Env, "WAVETERM_JOBID", jobId)
+	jobEnv := envutil.CopyAndAddToEnvMap(params.Env, "WADDLE_JOBID", jobId)
 	startJobData := wshrpc.CommandRemoteStartJobData{
 		Cmd:                params.Cmd,
 		Args:               params.Args,
@@ -776,7 +776,7 @@ func doWFSAppend(ctx context.Context, oref waveobj.ORef, fileName string, data [
 	if err != nil {
 		return err
 	}
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_BlockFile,
 		Scopes: []string{
 			oref.String(),
@@ -829,7 +829,7 @@ func runOutputLoop(ctx context.Context, jobId string, streamId string, reader *s
 		if n > 0 {
 			appendErr := handleAppendJobFile(ctx, jobId, JobOutputFileName, buf[:n])
 			if appendErr != nil {
-				log.Printf("[job:%s] error appending data to WaveFS: %v", jobId, appendErr)
+				log.Printf("[job:%s] error appending data to WaddleFS: %v", jobId, appendErr)
 			}
 		}
 
@@ -1089,7 +1089,7 @@ func doReconnectJob(ctx context.Context, jobId string, rtOpts *waveobj.RuntimeOp
 
 	bareRpc := wshclient.GetBareRpcClient()
 
-	jobAccessClaims := &wavejwt.WaveJwtClaims{
+	jobAccessClaims := &wavejwt.WaddleJwtClaims{
 		MainServer: true,
 		JobId:      jobId,
 	}
@@ -1403,7 +1403,7 @@ func DeleteJob(ctx context.Context, jobId string) error {
 	jobTerminationMessageWritten.Delete(jobId)
 	err := filestore.WFS.DeleteZone(ctx, jobId)
 	if err != nil {
-		log.Printf("[job:%s] warning: error deleting WaveFS zone: %v", jobId, err)
+		log.Printf("[job:%s] warning: error deleting WaddleFS zone: %v", jobId, err)
 	}
 	return wstore.DBDelete(ctx, waveobj.OType_Job, jobId)
 }
@@ -1450,7 +1450,7 @@ func AttachJobToBlock(ctx context.Context, jobId string, blockId string) error {
 	}
 
 	SendBlockJobStatusEvent(ctx, blockId)
-	wcore.SendWaveObjUpdate(waveobj.MakeORef(waveobj.OType_Block, blockId))
+	wcore.SendWaddleObjUpdate(waveobj.MakeORef(waveobj.OType_Block, blockId))
 	return nil
 }
 
@@ -1499,7 +1499,7 @@ func DetachJobFromBlock(ctx context.Context, jobId string, updateBlock bool) err
 	if blockId != "" {
 		SendBlockJobStatusEvent(ctx, blockId)
 		if blockUpdated {
-			wcore.SendWaveObjUpdate(waveobj.MakeORef(waveobj.OType_Block, blockId))
+			wcore.SendWaddleObjUpdate(waveobj.MakeORef(waveobj.OType_Block, blockId))
 		}
 	}
 

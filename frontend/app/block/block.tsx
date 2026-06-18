@@ -9,7 +9,7 @@ import {
     SubBlockProps,
 } from "@/app/block/blocktypes";
 import { useTabModel } from "@/app/store/tab-model";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { ErrorBoundary } from "@/element/errorboundary";
 import { CenteredDiv } from "@/element/quickelems";
 import { useDebouncedNodeInnerRect } from "@/layout/index";
@@ -44,8 +44,8 @@ function getViewElem(
 }
 
 const BlockPreview = memo(({ nodeModel, viewModel }: FullBlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const blockIsNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", nodeModel.blockId)));
+    const waveEnv = useWaddleEnv<BlockEnv>();
+    const blockIsNull = useAtomValue(waveEnv.wos.isWaddleObjectNullAtom(makeORef("block", nodeModel.blockId)));
     if (blockIsNull) {
         return null;
     }
@@ -61,8 +61,8 @@ const BlockPreview = memo(({ nodeModel, viewModel }: FullBlockProps) => {
 });
 
 const BlockSubBlock = memo(({ nodeModel, viewModel }: FullSubBlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const blockIsNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", nodeModel.blockId)));
+    const waveEnv = useWaddleEnv<BlockEnv>();
+    const blockIsNull = useAtomValue(waveEnv.wos.isWaddleObjectNullAtom(makeORef("block", nodeModel.blockId)));
     const blockView = useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "view")) ?? "";
     const blockRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
@@ -85,7 +85,7 @@ const BlockSubBlock = memo(({ nodeModel, viewModel }: FullSubBlockProps) => {
 
 const BlockFull = memo(({ nodeModel, viewModel }: FullBlockProps) => {
     counterInc("render-BlockFull");
-    const waveEnv = useWaveEnv<BlockEnv>();
+    const waveEnv = useWaddleEnv<BlockEnv>();
     const focusElemRef = useRef<HTMLInputElement>(null);
     const blockRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
@@ -270,7 +270,7 @@ const BlockInner = memo((props: BlockProps & { viewType: string }) => {
     counterInc("render-Block");
     counterInc("render-Block-" + props.nodeModel?.blockId?.substring(0, 8));
     const tabModel = useTabModel();
-    const waveEnv = useWaveEnv();
+    const waveEnv = useWaddleEnv();
     const bcm = getBlockComponentModel(props.nodeModel.blockId);
     let viewModel = bcm?.viewModel;
     if (viewModel == null) {
@@ -292,8 +292,8 @@ const BlockInner = memo((props: BlockProps & { viewType: string }) => {
 BlockInner.displayName = "BlockInner";
 
 const Block = memo((props: BlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const isNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
+    const waveEnv = useWaddleEnv<BlockEnv>();
+    const isNull = useAtomValue(waveEnv.wos.isWaddleObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
     const viewType = useAtomValue(waveEnv.getBlockMetaKeyAtom(props.nodeModel.blockId, "view")) ?? "";
     if (isNull || isBlank(props.nodeModel.blockId)) {
         return null;
@@ -305,7 +305,7 @@ const SubBlockInner = memo((props: SubBlockProps & { viewType: string }) => {
     counterInc("render-Block");
     counterInc("render-Block-" + props.nodeModel.blockId?.substring(0, 8));
     const tabModel = useTabModel();
-    const waveEnv = useWaveEnv();
+    const waveEnv = useWaddleEnv();
     const bcm = getBlockComponentModel(props.nodeModel.blockId);
     let viewModel = bcm?.viewModel;
     if (viewModel == null) {
@@ -324,8 +324,8 @@ const SubBlockInner = memo((props: SubBlockProps & { viewType: string }) => {
 SubBlockInner.displayName = "SubBlockInner";
 
 const SubBlock = memo((props: SubBlockProps) => {
-    const waveEnv = useWaveEnv<BlockEnv>();
-    const isNull = useAtomValue(waveEnv.wos.isWaveObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
+    const waveEnv = useWaddleEnv<BlockEnv>();
+    const isNull = useAtomValue(waveEnv.wos.isWaddleObjectNullAtom(makeORef("block", props.nodeModel.blockId)));
     const viewType = useAtomValue(waveEnv.getBlockMetaKeyAtom(props.nodeModel.blockId, "view")) ?? "";
     if (isNull || isBlank(props.nodeModel.blockId)) {
         return null;

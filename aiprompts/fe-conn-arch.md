@@ -1,4 +1,4 @@
-# Wave Terminal Frontend Connection Architecture
+# Waddle Frontend Connection Architecture
 
 ## Overview
 
@@ -396,7 +396,7 @@ sendDataToController(data: string) {
 
 ### Hierarchical Configuration System
 
-Wave uses a three-level config hierarchy for connections:
+Waddle uses a three-level config hierarchy for connections:
 
 1. **Global Settings** (`settings`)
 2. **Connection-Level Config** (`connections[connName]`)
@@ -517,7 +517,7 @@ ConnDisconnectCommand(
 SetMetaCommand(
     client: RpcClient,
     data: {
-        oref: string,           // WaveObject reference
+        oref: string,           // WaddleObject reference
         meta: MetaType          // Metadata updates
     }
 ): Promise<void>
@@ -590,7 +590,7 @@ ControllerRestartCommand(
 
 ## Event-Driven Updates
 
-### Wave Event Subscriptions
+### Waddle Event Subscriptions
 
 **Connection Status Updates:**
 ```typescript

@@ -7,13 +7,13 @@ import { isDev } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
-export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boolean): Promise<void> {
+export async function handleWaddleAIContextMenu(e: React.MouseEvent, showCopy: boolean): Promise<void> {
     e.preventDefault();
     e.stopPropagation();
 
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const menu: ContextMenuItem[] = [];
 
     if (showCopy) {
@@ -140,17 +140,17 @@ export async function handleWaveAIContextMenu(e: React.MouseEvent, showCopy: boo
                 },
                 { noresponse: true }
             );
-            model.openWaveAIConfig();
+            model.openWaddleAIConfig();
         },
     });
 
-    if (model.canCloseWaveAIPanel()) {
+    if (model.canCloseWaddleAIPanel()) {
         menu.push({ type: "separator" });
 
         menu.push({
-            label: "Hide Wave AI",
+            label: "Hide Waddle AI",
             click: () => {
-                model.closeWaveAIPanel();
+                model.closeWaddleAIPanel();
             },
         });
     }

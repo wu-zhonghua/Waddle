@@ -10,15 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/buildercontroller"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveappstore"
-	"github.com/wavetermdev/waveterm/pkg/waveapputil"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/buildercontroller"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveappstore"
+	"github.com/waddledev/waddle/pkg/waveapputil"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 const BuilderAppFileName = "app.go"
@@ -126,8 +126,8 @@ func GetBuilderWriteAppFileToolDefinition(appId string, builderId string) uctype
 				return nil, err
 			}
 
-			wps.Broker.Publish(wps.WaveEvent{
-				Event:  wps.Event_WaveAppAppGoUpdated,
+			wps.Broker.Publish(wps.WaddleEvent{
+				Event:  wps.Event_WaddleAppAppGoUpdated,
 				Scopes: []string{appId},
 			})
 
@@ -258,8 +258,8 @@ func GetBuilderEditAppFileToolDefinition(appId string, builderId string) uctypes
 			// ignore format errors; gofmt can fail due to compilation errors which will be caught in the build step
 			waveappstore.FormatGoFile(appId, BuilderAppFileName)
 
-			wps.Broker.Publish(wps.WaveEvent{
-				Event:  wps.Event_WaveAppAppGoUpdated,
+			wps.Broker.Publish(wps.WaddleEvent{
+				Event:  wps.Event_WaddleAppAppGoUpdated,
 				Scopes: []string{appId},
 			})
 

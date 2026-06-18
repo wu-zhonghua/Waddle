@@ -5,34 +5,34 @@ import * as electron from "electron";
 import * as child_process from "node:child_process";
 import * as readline from "readline";
 import { WebServerEndpointVarName, WSServerEndpointVarName } from "../frontend/util/endpoints";
-import { AuthKey, WaveAuthKeyEnv } from "./authkey";
+import { AuthKey, WaddleAuthKeyEnv } from "./authkey";
 import { setForceQuit, setUserConfirmedQuit } from "./emain-activity";
 import {
     getElectronAppResourcesPath,
     getElectronAppUnpackedBasePath,
-    getWaveConfigDir,
-    getWaveDataDir,
-    getWaveSrvCwd,
-    getWaveSrvPath,
+    getWaddleConfigDir,
+    getWaddleDataDir,
+    getWaddleSrvCwd,
+    getWaddleSrvPath,
     getXdgCurrentDesktop,
-    WaveConfigHomeVarName,
-    WaveDataHomeVarName,
+    WaddleConfigHomeVarName,
+    WaddleDataHomeVarName,
 } from "./emain-platform";
 import {
     getElectronExecPath,
-    WaveAppElectronExecPath,
-    WaveAppPathVarName,
-    WaveAppResourcesPathVarName,
+    WaddleAppElectronExecPath,
+    WaddleAppPathVarName,
+    WaddleAppResourcesPathVarName,
 } from "./emain-util";
 import { updater } from "./updater";
 
-let isWaveSrvDead = false;
+let isWaddleSrvDead = false;
 let waveSrvProc: child_process.ChildProcessWithoutNullStreams | null = null;
-let WaveVersion = "unknown"; // set by WAVESRV-ESTART
-let WaveBuildTime = 0; // set by WAVESRV-ESTART
+let WaddleVersion = "unknown"; // set by WAVESRV-ESTART
+let WaddleBuildTime = 0; // set by WAVESRV-ESTART
 
-export function getWaveVersion(): { version: string; buildTime: number } {
-    return { version: WaveVersion, buildTime: WaveBuildTime };
+export function getWaddleVersion(): { version: string; buildTime: number } {
+    return { version: WaddleVersion, buildTime: WaddleBuildTime };
 }
 
 let waveSrvReadyResolve = (value: boolean) => {};
@@ -40,19 +40,19 @@ const waveSrvReady: Promise<boolean> = new Promise((resolve, _) => {
     waveSrvReadyResolve = resolve;
 });
 
-export function getWaveSrvReady(): Promise<boolean> {
+export function getWaddleSrvReady(): Promise<boolean> {
     return waveSrvReady;
 }
 
-export function getWaveSrvProc(): child_process.ChildProcessWithoutNullStreams | null {
+export function getWaddleSrvProc(): child_process.ChildProcessWithoutNullStreams | null {
     return waveSrvProc;
 }
 
-export function getIsWaveSrvDead(): boolean {
-    return isWaveSrvDead;
+export function getIsWaddleSrvDead(): boolean {
+    return isWaddleSrvDead;
 }
 
-export function runWaveSrv(handleWSEvent: (evtMsg: WSEventType) => void): Promise<boolean> {
+export function runWaddleSrv(handleWSEvent: (evtMsg: WSEventType) => void): Promise<boolean> {
     let pResolve: (value: boolean) => void;
     let pReject: (reason?: any) => void;
     const rtnPromise = new Promise<boolean>((argResolve, argReject) => {
@@ -64,16 +64,16 @@ export function runWaveSrv(handleWSEvent: (evtMsg: WSEventType) => void): Promis
     if (xdgCurrentDesktop != null) {
         envCopy["XDG_CURRENT_DESKTOP"] = xdgCurrentDesktop;
     }
-    envCopy[WaveAppPathVarName] = getElectronAppUnpackedBasePath();
-    envCopy[WaveAppResourcesPathVarName] = getElectronAppResourcesPath();
-    envCopy[WaveAppElectronExecPath] = getElectronExecPath();
-    envCopy[WaveAuthKeyEnv] = AuthKey;
-    envCopy[WaveDataHomeVarName] = getWaveDataDir();
-    envCopy[WaveConfigHomeVarName] = getWaveConfigDir();
-    const waveSrvCmd = getWaveSrvPath();
+    envCopy[WaddleAppPathVarName] = getElectronAppUnpackedBasePath();
+    envCopy[WaddleAppResourcesPathVarName] = getElectronAppResourcesPath();
+    envCopy[WaddleAppElectronExecPath] = getElectronExecPath();
+    envCopy[WaddleAuthKeyEnv] = AuthKey;
+    envCopy[WaddleDataHomeVarName] = getWaddleDataDir();
+    envCopy[WaddleConfigHomeVarName] = getWaddleConfigDir();
+    const waveSrvCmd = getWaddleSrvPath();
     console.log("trying to run local server", waveSrvCmd);
-    const proc = child_process.spawn(getWaveSrvPath(), {
-        cwd: getWaveSrvCwd(),
+    const proc = child_process.spawn(getWaddleSrvPath(), {
+        cwd: getWaddleSrvCwd(),
         env: envCopy,
     });
     proc.on("exit", (e) => {
@@ -82,7 +82,7 @@ export function runWaveSrv(handleWSEvent: (evtMsg: WSEventType) => void): Promis
         }
         console.log("wavesrv exited, shutting down");
         setForceQuit(true);
-        isWaveSrvDead = true;
+        isWaddleSrvDead = true;
         electron.app.quit();
     });
     proc.on("spawn", (e) => {
@@ -118,8 +118,8 @@ export function runWaveSrv(handleWSEvent: (evtMsg: WSEventType) => void): Promis
             }
             process.env[WSServerEndpointVarName] = startParams[1];
             process.env[WebServerEndpointVarName] = startParams[2];
-            WaveVersion = startParams[3];
-            WaveBuildTime = parseInt(startParams[4]);
+            WaddleVersion = startParams[3];
+            WaddleBuildTime = parseInt(startParams[4]);
             waveSrvReadyResolve(true);
             return;
         }

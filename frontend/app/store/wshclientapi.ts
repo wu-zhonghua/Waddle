@@ -259,19 +259,19 @@ export class RpcApiType {
     }
 
     // command "eventpublish" [call]
-    EventPublishCommand(client: WshClient, data: WaveEvent, opts?: RpcOpts): Promise<void> {
+    EventPublishCommand(client: WshClient, data: WaddleEvent, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "eventpublish", data, opts);
         return client.wshRpcCall("eventpublish", data, opts);
     }
 
     // command "eventreadhistory" [call]
-    EventReadHistoryCommand(client: WshClient, data: CommandEventReadHistoryData, opts?: RpcOpts): Promise<WaveEvent[]> {
+    EventReadHistoryCommand(client: WshClient, data: CommandEventReadHistoryData, opts?: RpcOpts): Promise<WaddleEvent[]> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "eventreadhistory", data, opts);
         return client.wshRpcCall("eventreadhistory", data, opts);
     }
 
     // command "eventrecv" [call]
-    EventRecvCommand(client: WshClient, data: WaveEvent, opts?: RpcOpts): Promise<void> {
+    EventRecvCommand(client: WshClient, data: WaddleEvent, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "eventrecv", data, opts);
         return client.wshRpcCall("eventrecv", data, opts);
     }
@@ -492,22 +492,22 @@ export class RpcApiType {
         return client.wshRpcCall("getvar", data, opts);
     }
 
-    // command "getwaveaichat" [call]
-    GetWaveAIChatCommand(client: WshClient, data: CommandGetWaveAIChatData, opts?: RpcOpts): Promise<UIChat> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getwaveaichat", data, opts);
-        return client.wshRpcCall("getwaveaichat", data, opts);
+    // command "getwaddleaichat" [call]
+    GetWaddleAIChatCommand(client: WshClient, data: CommandGetWaddleAIChatData, opts?: RpcOpts): Promise<UIChat> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getwaddleaichat", data, opts);
+        return client.wshRpcCall("getwaddleaichat", data, opts);
     }
 
-    // command "getwaveaimodeconfig" [call]
-    GetWaveAIModeConfigCommand(client: WshClient, opts?: RpcOpts): Promise<AIModeConfigUpdate> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getwaveaimodeconfig", null, opts);
-        return client.wshRpcCall("getwaveaimodeconfig", null, opts);
+    // command "getwaddleaimodeconfig" [call]
+    GetWaddleAIModeConfigCommand(client: WshClient, opts?: RpcOpts): Promise<AIModeConfigUpdate> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getwaddleaimodeconfig", null, opts);
+        return client.wshRpcCall("getwaddleaimodeconfig", null, opts);
     }
 
-    // command "getwaveairatelimit" [call]
-    GetWaveAIRateLimitCommand(client: WshClient, opts?: RpcOpts): Promise<RateLimitInfo> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getwaveairatelimit", null, opts);
-        return client.wshRpcCall("getwaveairatelimit", null, opts);
+    // command "getwaddleairatelimit" [call]
+    GetWaddleAIRateLimitCommand(client: WshClient, opts?: RpcOpts): Promise<RateLimitInfo> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "getwaddleairatelimit", null, opts);
+        return client.wshRpcCall("getwaddleairatelimit", null, opts);
     }
 
     // command "jobcmdexited" [call]
@@ -643,7 +643,7 @@ export class RpcApiType {
     }
 
     // command "notify" [call]
-    NotifyCommand(client: WshClient, data: WaveNotificationOptions, opts?: RpcOpts): Promise<void> {
+    NotifyCommand(client: WshClient, data: WaddleNotificationOptions, opts?: RpcOpts): Promise<void> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "notify", data, opts);
         return client.wshRpcCall("notify", data, opts);
     }
@@ -978,46 +978,46 @@ export class RpcApiType {
         return client.wshRpcStream("vdomurlrequest", data, opts);
     }
 
+    // command "waddleaiaddcontext" [call]
+    WaddleAIAddContextCommand(client: WshClient, data: CommandWaddleAIAddContextData, opts?: RpcOpts): Promise<void> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waddleaiaddcontext", data, opts);
+        return client.wshRpcCall("waddleaiaddcontext", data, opts);
+    }
+
+    // command "waddleaienabletelemetry" [call]
+    WaddleAIEnableTelemetryCommand(client: WshClient, opts?: RpcOpts): Promise<void> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waddleaienabletelemetry", null, opts);
+        return client.wshRpcCall("waddleaienabletelemetry", null, opts);
+    }
+
+    // command "waddleaigettooldiff" [call]
+    WaddleAIGetToolDiffCommand(client: WshClient, data: CommandWaddleAIGetToolDiffData, opts?: RpcOpts): Promise<CommandWaddleAIGetToolDiffRtnData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waddleaigettooldiff", data, opts);
+        return client.wshRpcCall("waddleaigettooldiff", data, opts);
+    }
+
+    // command "waddleaitoolapprove" [call]
+    WaddleAIToolApproveCommand(client: WshClient, data: CommandWaddleAIToolApproveData, opts?: RpcOpts): Promise<void> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waddleaitoolapprove", data, opts);
+        return client.wshRpcCall("waddleaitoolapprove", data, opts);
+    }
+
+    // command "waddlefilereadstream" [call]
+    WaddleFileReadStreamCommand(client: WshClient, data: CommandWaddleFileReadStreamData, opts?: RpcOpts): Promise<WaddleFileInfo> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waddlefilereadstream", data, opts);
+        return client.wshRpcCall("waddlefilereadstream", data, opts);
+    }
+
+    // command "waddleinfo" [call]
+    WaddleInfoCommand(client: WshClient, opts?: RpcOpts): Promise<WaddleInfoData> {
+        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waddleinfo", null, opts);
+        return client.wshRpcCall("waddleinfo", null, opts);
+    }
+
     // command "waitforroute" [call]
     WaitForRouteCommand(client: WshClient, data: CommandWaitForRouteData, opts?: RpcOpts): Promise<boolean> {
         if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waitforroute", data, opts);
         return client.wshRpcCall("waitforroute", data, opts);
-    }
-
-    // command "waveaiaddcontext" [call]
-    WaveAIAddContextCommand(client: WshClient, data: CommandWaveAIAddContextData, opts?: RpcOpts): Promise<void> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waveaiaddcontext", data, opts);
-        return client.wshRpcCall("waveaiaddcontext", data, opts);
-    }
-
-    // command "waveaienabletelemetry" [call]
-    WaveAIEnableTelemetryCommand(client: WshClient, opts?: RpcOpts): Promise<void> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waveaienabletelemetry", null, opts);
-        return client.wshRpcCall("waveaienabletelemetry", null, opts);
-    }
-
-    // command "waveaigettooldiff" [call]
-    WaveAIGetToolDiffCommand(client: WshClient, data: CommandWaveAIGetToolDiffData, opts?: RpcOpts): Promise<CommandWaveAIGetToolDiffRtnData> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waveaigettooldiff", data, opts);
-        return client.wshRpcCall("waveaigettooldiff", data, opts);
-    }
-
-    // command "waveaitoolapprove" [call]
-    WaveAIToolApproveCommand(client: WshClient, data: CommandWaveAIToolApproveData, opts?: RpcOpts): Promise<void> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waveaitoolapprove", data, opts);
-        return client.wshRpcCall("waveaitoolapprove", data, opts);
-    }
-
-    // command "wavefilereadstream" [call]
-    WaveFileReadStreamCommand(client: WshClient, data: CommandWaveFileReadStreamData, opts?: RpcOpts): Promise<WaveFileInfo> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "wavefilereadstream", data, opts);
-        return client.wshRpcCall("wavefilereadstream", data, opts);
-    }
-
-    // command "waveinfo" [call]
-    WaveInfoCommand(client: WshClient, opts?: RpcOpts): Promise<WaveInfoData> {
-        if (this.mockClient) return this.mockClient.mockWshRpcCall(client, "waveinfo", null, opts);
-        return client.wshRpcCall("waveinfo", null, opts);
     }
 
     // command "webselector" [call]

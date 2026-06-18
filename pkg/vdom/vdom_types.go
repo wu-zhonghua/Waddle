@@ -6,12 +6,12 @@ package vdom
 import (
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/waveobj"
 )
 
 const TextTag = "#text"
-const WaveTextTag = "wave:text"
-const WaveNullTag = "wave:null"
+const WaddleTextTag = "wave:text"
+const WaddleNullTag = "wave:null"
 const FragmentTag = "#fragment"
 const BindTag = "#bind"
 
@@ -24,7 +24,7 @@ const ObjectType_Func = "func"
 
 // vdom element
 type VDomElem struct {
-	WaveId   string         `json:"waveid,omitempty"` // required, except for #text nodes
+	WaddleId string         `json:"waveid,omitempty"` // required, except for #text nodes
 	Tag      string         `json:"tag"`
 	Props    map[string]any `json:"props,omitempty"`
 	Children []VDomElem     `json:"children,omitempty"`
@@ -33,7 +33,7 @@ type VDomElem struct {
 
 // the over the wire format for a vdom element
 type VDomTransferElem struct {
-	WaveId   string         `json:"waveid,omitempty"` // required, except for #text nodes
+	WaddleId string         `json:"waveid,omitempty"` // required, except for #text nodes
 	Tag      string         `json:"tag"`
 	Props    map[string]any `json:"props,omitempty"`
 	Children []string       `json:"children,omitempty"`
@@ -143,15 +143,15 @@ type VDomRefPosition struct {
 ///// subbordinate protocol types
 
 type VDomEvent struct {
-	WaveId          string             `json:"waveid"`
-	EventType       string             `json:"eventtype"` // usually the prop name (e.g. onClick, onKeyDown)
-	GlobalEventType string             `json:"globaleventtype,omitempty"`
-	TargetValue     string             `json:"targetvalue,omitempty"`
-	TargetChecked   bool               `json:"targetchecked,omitempty"`
-	TargetName      string             `json:"targetname,omitempty"`
-	TargetId        string             `json:"targetid,omitempty"`
-	KeyData         *WaveKeyboardEvent `json:"keydata,omitempty"`
-	MouseData       *WavePointerData   `json:"mousedata,omitempty"`
+	WaddleId        string               `json:"waveid"`
+	EventType       string               `json:"eventtype"` // usually the prop name (e.g. onClick, onKeyDown)
+	GlobalEventType string               `json:"globaleventtype,omitempty"`
+	TargetValue     string               `json:"targetvalue,omitempty"`
+	TargetChecked   bool                 `json:"targetchecked,omitempty"`
+	TargetName      string               `json:"targetname,omitempty"`
+	TargetId        string               `json:"targetid,omitempty"`
+	KeyData         *WaddleKeyboardEvent `json:"keydata,omitempty"`
+	MouseData       *WaddlePointerData   `json:"mousedata,omitempty"`
 }
 
 type VDomRenderContext struct {
@@ -181,11 +181,11 @@ type VDomBackendOpts struct {
 }
 
 type VDomRenderUpdate struct {
-	UpdateType string    `json:"updatetype" tstype:"\"root\"|\"append\"|\"replace\"|\"remove\"|\"insert\""`
-	WaveId     string    `json:"waveid,omitempty"`
-	VDomWaveId string    `json:"vdomwaveid,omitempty"`
-	VDom       *VDomElem `json:"vdom,omitempty"` // these get removed for transfer (encoded to transferelems)
-	Index      *int      `json:"index,omitempty"`
+	UpdateType   string    `json:"updatetype" tstype:"\"root\"|\"append\"|\"replace\"|\"remove\"|\"insert\""`
+	WaddleId     string    `json:"waveid,omitempty"`
+	VDomWaddleId string    `json:"vdomwaveid,omitempty"`
+	VDom         *VDomElem `json:"vdom,omitempty"` // these get removed for transfer (encoded to transferelems)
+	Index        *int      `json:"index,omitempty"`
 }
 
 type VDomRefOperation struct {
@@ -215,7 +215,7 @@ type VDomTargetToolbar struct {
 	Height  string `json:"height,omitempty"`
 }
 
-// matches WaveKeyboardEvent
+// matches WaddleKeyboardEvent
 type VDomKeyboardEvent struct {
 	Type     string `json:"type"`
 	Key      string `json:"key"`
@@ -230,7 +230,7 @@ type VDomKeyboardEvent struct {
 	Location int    `json:"location,omitempty"`
 }
 
-type WaveKeyboardEvent struct {
+type WaddleKeyboardEvent struct {
 	Type     string `json:"type" tstype:"\"keydown\"|\"keyup\"|\"keypress\"|\"unknown\""`
 	Key      string `json:"key"`  // KeyboardEvent.key
 	Code     string `json:"code"` // KeyboardEvent.code
@@ -246,7 +246,7 @@ type WaveKeyboardEvent struct {
 	Option  bool `json:"option,omitempty"` // special (on mac it is alt, on windows/linux it is meta)
 }
 
-type WavePointerData struct {
+type WaddlePointerData struct {
 	Button  int `json:"button"`
 	Buttons int `json:"buttons"`
 

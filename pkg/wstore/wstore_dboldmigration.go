@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
 )
 
-const OldDBName = "~/.waveterm/waveterm.db"
+const OldDBName = "~/.waddle/waddle.db"
 
 func GetOldDBName() string {
 	return wavebase.ExpandHomeDirSafe(OldDBName)

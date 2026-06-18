@@ -13,9 +13,9 @@ import (
 	"github.com/alexflint/go-filemutex"
 )
 
-func AcquireWaveLock() (FDLock, error) {
-	dataHomeDir := GetWaveDataDir()
-	lockFileName := filepath.Join(dataHomeDir, WaveLockFile)
+func AcquireWaddleLock() (FDLock, error) {
+	dataHomeDir := GetWaddleDataDir()
+	lockFileName := filepath.Join(dataHomeDir, WaddleLockFile)
 	log.Printf("[base] acquiring lock on %s\n", lockFileName)
 	m, err := filemutex.New(lockFileName)
 	if err != nil {

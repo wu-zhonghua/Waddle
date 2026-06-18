@@ -18,10 +18,10 @@ import {
 
 const TextTag = "#text";
 const FragmentTag = "#fragment";
-const WaveTextTag = "wave:text";
-const WaveNullTag = "wave:null";
+const WaddleTextTag = "wave:text";
+const WaddleNullTag = "wave:null";
 const StyleTagName = "style";
-const WaveStyleTagName = "wave:style";
+const WaddleStyleTagName = "wave:style";
 
 const VDomObjType_Ref = "ref";
 const VDomObjType_Binding = "binding";
@@ -31,8 +31,8 @@ const dlog = debug("wave:vdom");
 
 type VDomReactTagType = (props: { elem: VDomElem; model: VDomModel }) => React.ReactElement;
 
-const WaveTagMap: Record<string, VDomReactTagType> = {
-    "wave:markdown": WaveMarkdown,
+const WaddleTagMap: Record<string, VDomReactTagType> = {
+    "wave:markdown": WaddleMarkdown,
 };
 
 const AllowedSimpleTags: { [tagName: string]: boolean } = {
@@ -342,7 +342,7 @@ function useVDom(model: VDomModel, elem: VDomElem): GenericPropsType {
     return props;
 }
 
-function WaveMarkdown({ elem, model }: { elem: VDomElem; model: VDomModel }) {
+function WaddleMarkdown({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     const props = useVDom(model, elem);
     return (
         <Markdown
@@ -369,7 +369,7 @@ function StyleTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     return <style>{sanitizedCss}</style>;
 }
 
-function WaveStyle({ src, model, onMount }: { src: string; model: VDomModel; onMount?: () => void }) {
+function WaddleStyle({ src, model, onMount }: { src: string; model: VDomModel; onMount?: () => void }) {
     const [styleContent, setStyleContent] = React.useState<string | null>(null);
     React.useEffect(() => {
         async function fetchAndSanitizeCss() {
@@ -409,21 +409,21 @@ function WaveStyle({ src, model, onMount }: { src: string; model: VDomModel; onM
 
 function VDomTag({ elem, model }: { elem: VDomElem; model: VDomModel }) {
     const props = useVDom(model, elem);
-    if (elem.tag == WaveNullTag) {
+    if (elem.tag == WaddleNullTag) {
         return null;
     }
-    if (elem.tag == WaveTextTag) {
+    if (elem.tag == WaddleTextTag) {
         return props.text;
     }
-    const waveTag = WaveTagMap[elem.tag];
+    const waveTag = WaddleTagMap[elem.tag];
     if (waveTag) {
         return waveTag({ elem, model });
     }
     if (elem.tag == StyleTagName) {
         return <StyleTag elem={elem} model={model} />;
     }
-    if (elem.tag == WaveStyleTagName) {
-        return <WaveStyle src={props.src} model={model} />;
+    if (elem.tag == WaddleStyleTagName) {
+        return <WaddleStyle src={props.src} model={model} />;
     }
     if (!AllowedSimpleTags[elem.tag] && !AllowedSvgTags[elem.tag]) {
         return <div>{"Invalid Tag <" + elem.tag + ">"}</div>;
@@ -487,7 +487,7 @@ function VDomInnerView({ blockId, model }: VDomViewProps) {
     return (
         <>
             {model.backendOpts?.globalstyles ? (
-                <WaveStyle src={model.makeVDomUrl("/wave/global.css")} model={model} onMount={handleStylesMounted} />
+                <WaddleStyle src={model.makeVDomUrl("/wave/global.css")} model={model} onMount={handleStylesMounted} />
             ) : null}
             {styleMounted ? <VDomRoot model={model} /> : null}
         </>

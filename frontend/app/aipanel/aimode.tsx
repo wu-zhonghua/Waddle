@@ -9,7 +9,7 @@ import { cn, fireAndForget, makeIconClass } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useRef, useState } from "react";
 import { getFilteredAIModeConfigs, getModeDisplayName } from "./ai-utils";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
 interface AIModeMenuItemProps {
     config: AIModeConfigWithMode;
@@ -111,7 +111,7 @@ function computeCompatibleSections(
     return sections;
 }
 
-function computeWaveCloudSections(
+function computeWaddleCloudSections(
     waveProviderConfigs: AIModeConfigWithMode[],
     otherProviderConfigs: AIModeConfigWithMode[],
     telemetryEnabled: boolean
@@ -120,7 +120,7 @@ function computeWaveCloudSections(
 
     if (waveProviderConfigs.length > 0) {
         sections.push({
-            sectionName: "Wave AI Cloud",
+            sectionName: "Waddle AI Cloud",
             configs: waveProviderConfigs,
             noTelemetry: !telemetryEnabled,
         });
@@ -137,7 +137,7 @@ interface AIModeDropdownProps {
 }
 
 export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdownProps) => {
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const currentMode = useAtomValue(model.currentAIMode);
     const aiModeConfigs = useAtomValue(model.aiModeConfigs);
     const waveaiModeConfigs = useAtomValue(atoms.waveaiModeConfigAtom);
@@ -158,7 +158,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
 
     const sections: ConfigSection[] = compatibilityMode
         ? computeCompatibleSections(currentMode, aiModeConfigs, waveProviderConfigs, otherProviderConfigs)
-        : computeWaveCloudSections(waveProviderConfigs, otherProviderConfigs, telemetryEnabled);
+        : computeWaddleCloudSections(waveProviderConfigs, otherProviderConfigs, telemetryEnabled);
 
     const showSectionHeaders = compatibilityMode || sections.length > 1;
 
@@ -196,14 +196,14 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                 },
                 { noresponse: true }
             );
-            await model.openWaveAIConfig();
+            await model.openWaddleAIConfig();
             setIsOpen(false);
         });
     };
 
     const handleEnableTelemetry = () => {
         fireAndForget(async () => {
-            await RpcApi.WaveAIEnableTelemetryCommand(TabRpcClient);
+            await RpcApi.WaddleAIEnableTelemetryCommand(TabRpcClient);
             setTimeout(() => {
                 model.focusInput();
             }, 100);
@@ -230,7 +230,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                     content={
                         <div className="max-w-xs">
                             Warning: This custom mode was configured without the "tools" capability in the
-                            "ai:capabilities" array. Without tool support, Wave AI will not be able to interact with
+                            "ai:capabilities" array. Without tool support, Waddle AI will not be able to interact with
                             widgets or files.
                         </div>
                     }
@@ -274,7 +274,7 @@ export const AIModeDropdown = memo(({ compatibilityMode = false }: AIModeDropdow
                                                     onClick={handleEnableTelemetry}
                                                     className="text-center text-[11px] text-green-300 hover:text-green-200 pb-1 cursor-pointer transition-colors w-full"
                                                 >
-                                                    (enable telemetry to unlock Wave AI Cloud)
+                                                    (enable telemetry to unlock Waddle AI Cloud)
                                                 </button>
                                             )}
                                         </>

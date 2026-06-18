@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/wavetermdev/waveterm/pkg/wconfig/settings-type",
+  "$id": "https://github.com/waddledev/waddle/pkg/wconfig/settings-type",
   "$ref": "#/$defs/SettingsType",
   "$defs": {
     "SettingsType": {
@@ -230,6 +230,13 @@
           "enum": [
             "name",
             "modtime"
+          ]
+        },
+        "preview:directoryviewmode": {
+          "type": "string",
+          "enum": [
+            "folder",
+            "tree"
           ]
         },
         "tab:preset": {

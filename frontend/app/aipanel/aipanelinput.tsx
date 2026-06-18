@@ -3,7 +3,7 @@
 
 import { formatFileSizeError, isAcceptableFile, validateFileSize } from "@/app/aipanel/ai-utils";
 import { waveAIHasFocusWithin } from "@/app/aipanel/waveai-focus-utils";
-import { type WaveAIModel } from "@/app/aipanel/waveai-model";
+import { type WaddleAIModel } from "@/app/aipanel/waveai-model";
 import { Tooltip } from "@/element/tooltip";
 import { cn } from "@/util/util";
 import { useAtom, useAtomValue } from "jotai";
@@ -12,7 +12,7 @@ import { memo, useCallback, useEffect, useRef } from "react";
 interface AIPanelInputProps {
     onSubmit: (e: React.FormEvent) => void;
     status: string;
-    model: WaveAIModel;
+    model: WaddleAIModel;
 }
 
 export interface AIPanelInputRef {
@@ -23,7 +23,7 @@ export interface AIPanelInputRef {
 
 export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps) => {
     const [input, setInput] = useAtom(model.inputAtom);
-    const isFocused = useAtomValue(model.isWaveAIFocusedAtom);
+    const isFocused = useAtomValue(model.isWaddleAIFocusedAtom);
     const isChatEmpty = useAtomValue(model.isChatEmptyAtom);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +35,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     } else if (model.inBuilder) {
         placeholder = "What would you like to build...";
     } else {
-        placeholder = "Ask Wave AI anything...";
+        placeholder = "Ask Waddle AI anything...";
     }
 
     const resizeTextarea = useCallback(() => {
@@ -75,7 +75,7 @@ export const AIPanelInput = memo(({ onSubmit, status, model }: AIPanelInputProps
     };
 
     const handleFocus = useCallback(() => {
-        model.requestWaveAIFocus();
+        model.requestWaddleAIFocus();
     }, [model]);
 
     const handleBlur = useCallback(

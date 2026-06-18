@@ -1,4 +1,4 @@
-# Wave Terminal Focus System - Layout State Flow
+# Waddle Focus System - Layout State Flow
 
 This document explains how focus state changes in the layout system propagate through the application to update both the visual focus ring and physical DOM focus.
 
@@ -121,7 +121,7 @@ private persistToBackend() {
 }
 ```
 
-The WaveObject is used purely for persistence (tab restore, uncaching).
+The WaddleObject is used purely for persistence (tab restore, uncaching).
 
 ## The Complete Chain
 

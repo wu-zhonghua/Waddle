@@ -1,7 +1,7 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-// WaveObjectStore
+// WaddleObjectStore
 
 import { isPreviewWindow } from "@/app/store/windowtype";
 import { waveEventSubscribeSingle } from "@/app/store/wps";
@@ -12,14 +12,14 @@ import { atom, Atom, Getter, PrimitiveAtom, Setter, useAtomValue } from "jotai";
 import { globalStore } from "./jotaiStore";
 import { ObjectService } from "./services";
 
-type WaveObjectDataItemType<T extends WaveObj> = {
+type WaddleObjectDataItemType<T extends WaddleObj> = {
     value: T;
     loading: boolean;
 };
 
-type WaveObjectValue<T extends WaveObj> = {
+type WaddleObjectValue<T extends WaddleObj> = {
     pendingPromise: Promise<T>;
-    dataAtom: PrimitiveAtom<WaveObjectDataItemType<T>>;
+    dataAtom: PrimitiveAtom<WaddleObjectDataItemType<T>>;
 };
 
 function splitORef(oref: string): [string, string] {
@@ -38,7 +38,7 @@ function isBlankNum(num: number): boolean {
     return num == null || isNaN(num) || num == 0;
 }
 
-function isValidWaveObj(val: WaveObj): boolean {
+function isValidWaddleObj(val: WaddleObj): boolean {
     if (val == null) {
         return false;
     }
@@ -55,9 +55,9 @@ function makeORef(otype: string, oid: string): string {
     return `${otype}:${oid}`;
 }
 
-const previewMockObjects: Map<string, WaveObj> = new Map();
+const previewMockObjects: Map<string, WaddleObj> = new Map();
 
-function mockObjectForPreview<T extends WaveObj>(oref: string, obj: T): void {
+function mockObjectForPreview<T extends WaddleObj>(oref: string, obj: T): void {
     if (!isPreviewWindow()) {
         throw new Error("mockObjectForPreview can only be called in a preview window");
     }
@@ -93,7 +93,7 @@ function wpsSubscribeToObject(oref: string): () => void {
         eventType: "waveobj:update",
         scope: oref,
         handler: (event) => {
-            updateWaveObject(event.data);
+            updateWaddleObject(event.data);
         },
     });
 }
@@ -134,7 +134,7 @@ function callBackendService(service: string, method: string, args: any[], noUICo
                 return null;
             }
             if (respData.updates != null) {
-                updateWaveObjects(respData.updates);
+                updateWaddleObjects(respData.updates);
             }
             if (respData.error != null) {
                 throw new Error(`call ${methodName} error: ${respData.error}`);
@@ -146,12 +146,12 @@ function callBackendService(service: string, method: string, args: any[], noUICo
     return prtn;
 }
 
-const waveObjectValueCache = new Map<string, WaveObjectValue<any>>();
+const waveObjectValueCache = new Map<string, WaddleObjectValue<any>>();
 
-function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
+function reloadWaddleObject<T extends WaddleObj>(oref: string): Promise<T> {
     let wov = waveObjectValueCache.get(oref);
     if (wov === undefined) {
-        wov = getWaveObjectValue<T>(oref, true);
+        wov = getWaddleObjectValue<T>(oref, true);
         return wov.pendingPromise;
     }
     const prtn = GetObject<T>(oref);
@@ -161,7 +161,7 @@ function reloadWaveObject<T extends WaveObj>(oref: string): Promise<T> {
     return prtn;
 }
 
-function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boolean): WaveObjectValue<T> {
+function createWaddleValueObject<T extends WaddleObj>(oref: string, shouldFetch: boolean): WaddleObjectValue<T> {
     const wov = { pendingPromise: null, dataAtom: null };
     wov.dataAtom = atom({ value: null, loading: true });
     if (!shouldFetch) {
@@ -185,22 +185,22 @@ function createWaveValueObject<T extends WaveObj>(oref: string, shouldFetch: boo
         }
         wov.pendingPromise = null;
         globalStore.set(wov.dataAtom, { value: val, loading: false });
-        console.log("WaveObj resolved", oref, Date.now() - startTs + "ms");
+        console.log("WaddleObj resolved", oref, Date.now() - startTs + "ms");
     });
     return wov;
 }
 
-function getWaveObjectValue<T extends WaveObj>(oref: string, createIfMissing = true): WaveObjectValue<T> {
+function getWaddleObjectValue<T extends WaddleObj>(oref: string, createIfMissing = true): WaddleObjectValue<T> {
     let wov = waveObjectValueCache.get(oref);
     if (wov === undefined && createIfMissing) {
-        wov = createWaveValueObject(oref, true);
+        wov = createWaddleValueObject(oref, true);
         waveObjectValueCache.set(oref, wov);
     }
     return wov;
 }
 
-function loadAndPinWaveObject<T extends WaveObj>(oref: string): Promise<T> {
-    const wov = getWaveObjectValue<T>(oref);
+function loadAndPinWaddleObject<T extends WaddleObj>(oref: string): Promise<T> {
+    const wov = getWaddleObjectValue<T>(oref);
     if (wov.pendingPromise == null) {
         const dataValue = globalStore.get(wov.dataAtom);
         return Promise.resolve(dataValue.value);
@@ -210,25 +210,25 @@ function loadAndPinWaveObject<T extends WaveObj>(oref: string): Promise<T> {
 
 const waveObjectDerivedAtomCache = new Map<string, Atom<any>>();
 
-function getWaveObjectAtom<T extends WaveObj>(oref: string): Atom<T> {
+function getWaddleObjectAtom<T extends WaddleObj>(oref: string): Atom<T> {
     const cacheKey = oref + ":value";
     let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<T>;
     if (cachedAtom != null) {
         return cachedAtom;
     }
-    const wov = getWaveObjectValue<T>(oref);
+    const wov = getWaddleObjectValue<T>(oref);
     cachedAtom = atom((get) => get(wov.dataAtom).value);
     waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
     return cachedAtom;
 }
 
-function getWaveObjectLoadingAtom(oref: string): Atom<boolean> {
+function getWaddleObjectLoadingAtom(oref: string): Atom<boolean> {
     const cacheKey = oref + ":loading";
     let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
     if (cachedAtom != null) {
         return cachedAtom;
     }
-    const wov = getWaveObjectValue(oref);
+    const wov = getWaddleObjectValue(oref);
     cachedAtom = atom((get) => {
         const dataValue = get(wov.dataAtom);
         return dataValue.loading;
@@ -237,58 +237,58 @@ function getWaveObjectLoadingAtom(oref: string): Atom<boolean> {
     return cachedAtom;
 }
 
-function isWaveObjectNullAtom(oref: string): Atom<boolean> {
+function isWaddleObjectNullAtom(oref: string): Atom<boolean> {
     const cacheKey = oref + ":isnull";
     let cachedAtom = waveObjectDerivedAtomCache.get(cacheKey) as Atom<boolean>;
     if (cachedAtom != null) {
         return cachedAtom;
     }
-    cachedAtom = atom((get) => get(getWaveObjectAtom(oref)) == null);
+    cachedAtom = atom((get) => get(getWaddleObjectAtom(oref)) == null);
     waveObjectDerivedAtomCache.set(cacheKey, cachedAtom);
     return cachedAtom;
 }
 
-function useWaveObjectValue<T extends WaveObj>(oref: string): [T, boolean] {
-    const wov = getWaveObjectValue<T>(oref);
+function useWaddleObjectValue<T extends WaddleObj>(oref: string): [T, boolean] {
+    const wov = getWaddleObjectValue<T>(oref);
     const atomVal = useAtomValue(wov.dataAtom);
     return [atomVal.value, atomVal.loading];
 }
 
-function updateWaveObject(update: WaveObjUpdate) {
+function updateWaddleObject(update: WaddleObjUpdate) {
     if (update == null) {
         return;
     }
     const oref = makeORef(update.otype, update.oid);
-    const wov = getWaveObjectValue(oref);
+    const wov = getWaddleObjectValue(oref);
     if (update.updatetype == "delete") {
-        console.log("WaveObj deleted", oref);
+        console.log("WaddleObj deleted", oref);
         globalStore.set(wov.dataAtom, { value: null, loading: false });
     } else {
-        if (!isValidWaveObj(update.obj)) {
+        if (!isValidWaddleObj(update.obj)) {
             console.log("invalid wave object update", update);
             return;
         }
-        const curValue: WaveObjectDataItemType<WaveObj> = globalStore.get(wov.dataAtom);
+        const curValue: WaddleObjectDataItemType<WaddleObj> = globalStore.get(wov.dataAtom);
         if (curValue.value != null && curValue.value.version >= update.obj.version) {
             return;
         }
-        console.log("WaveObj updated", oref);
+        console.log("WaddleObj updated", oref);
         globalStore.set(wov.dataAtom, { value: update.obj, loading: false });
     }
     return;
 }
 
-function updateWaveObjects(vals: WaveObjUpdate[]) {
+function updateWaddleObjects(vals: WaddleObjUpdate[]) {
     for (const val of vals) {
-        updateWaveObject(val);
+        updateWaddleObject(val);
     }
 }
 
-// gets the value of a WaveObject from the cache.
+// gets the value of a WaddleObject from the cache.
 // should provide getFn if it is available (e.g. inside of a jotai atom)
 // otherwise it will use the globalStore.get function
-function getObjectValue<T extends WaveObj>(oref: string, getFn?: Getter): T {
-    const wov = getWaveObjectValue<T>(oref);
+function getObjectValue<T extends WaddleObj>(oref: string, getFn?: Getter): T {
+    const wov = getWaddleObjectValue<T>(oref);
     if (getFn == null) {
         getFn = globalStore.get;
     }
@@ -296,12 +296,12 @@ function getObjectValue<T extends WaveObj>(oref: string, getFn?: Getter): T {
     return atomVal.value;
 }
 
-// sets the value of a WaveObject in the cache.
+// sets the value of a WaddleObject in the cache.
 // should provide setFn if it is available (e.g. inside of a jotai atom)
 // otherwise it will use the globalStore.set function
-function setObjectValue<T extends WaveObj>(value: T, setFn?: Setter, pushToServer?: boolean) {
+function setObjectValue<T extends WaddleObj>(value: T, setFn?: Setter, pushToServer?: boolean) {
     const oref = makeORef(value.otype, value.oid);
-    const wov = getWaveObjectValue(oref, false);
+    const wov = getWaddleObjectValue(oref, false);
     if (wov === undefined) {
         return;
     }
@@ -317,17 +317,17 @@ function setObjectValue<T extends WaveObj>(value: T, setFn?: Setter, pushToServe
 export {
     callBackendService,
     getObjectValue,
-    getWaveObjectAtom,
-    getWaveObjectLoadingAtom,
-    isWaveObjectNullAtom,
-    loadAndPinWaveObject,
+    getWaddleObjectAtom,
+    getWaddleObjectLoadingAtom,
+    isWaddleObjectNullAtom,
+    loadAndPinWaddleObject,
     makeORef,
     mockObjectForPreview,
-    reloadWaveObject,
+    reloadWaddleObject,
     setObjectValue,
     splitORef,
-    updateWaveObject,
-    updateWaveObjects,
-    useWaveObjectValue,
+    updateWaddleObject,
+    updateWaddleObjects,
+    useWaddleObjectValue,
     wpsSubscribeToObject,
 };

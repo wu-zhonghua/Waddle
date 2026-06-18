@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-const DefaultAIEndpoint = "https://cfapi.waveterm.dev/api/waveai"
-const WaveAIEndpointEnvName = "WAVETERM_WAVEAI_ENDPOINT"
+const DefaultAIEndpoint = "https://cfapi.waddle.dev/api/waveai"
+const WaddleAIEndpointEnvName = "WADDLE_WAVEAI_ENDPOINT"
 const DefaultAnthropicModel = "claude-sonnet-4-5"
 const DefaultOpenAIModel = "gpt-5-mini"
 const PremiumOpenAIModel = "gpt-5.1"
@@ -24,7 +24,7 @@ const (
 )
 
 const (
-	AIProvider_Wave        = "wave"
+	AIProvider_Waddle      = "wave"
 	AIProvider_Google      = "google"
 	AIProvider_Groq        = "groq"
 	AIProvider_OpenRouter  = "openrouter"
@@ -89,7 +89,7 @@ type UIMessagePart struct {
 	ProviderMetadata map[string]any `json:"providerMetadata,omitempty"`
 }
 
-// when updating this struct, also modify frontend/app/aipanel/aitypes.ts WaveUIDataTypes.userfile
+// when updating this struct, also modify frontend/app/aipanel/aitypes.ts WaddleUIDataTypes.userfile
 type UIMessageDataUserFile struct {
 	FileName   string `json:"filename,omitempty"`
 	Size       int    `json:"size,omitempty"`
@@ -149,7 +149,7 @@ func (td *ToolDefinition) HasRequiredCapabilities(capabilities []string) bool {
 }
 
 //------------------
-// Wave specific types, stop reasons, tool calls, config
+// Waddle specific types, stop reasons, tool calls, config
 // these are used internally to coordinate the calls/steps
 
 const (
@@ -191,7 +191,7 @@ const (
 	ApprovalCanceled      = "canceled"
 )
 
-// when updating this struct, also modify frontend/app/aipanel/aitypes.ts WaveUIDataTypes.tooluse
+// when updating this struct, also modify frontend/app/aipanel/aitypes.ts WaddleUIDataTypes.tooluse
 type UIMessageDataToolUse struct {
 	ToolCallId          string `json:"toolcallid"`
 	ToolName            string `json:"toolname"`
@@ -209,7 +209,7 @@ func (d *UIMessageDataToolUse) IsApproved() bool {
 	return d.Approval == "" || d.Approval == ApprovalUserApproved || d.Approval == ApprovalAutoApproved
 }
 
-// when updating this struct, also modify frontend/app/aipanel/aitypes.ts WaveUIDataTypes.toolprogress
+// when updating this struct, also modify frontend/app/aipanel/aitypes.ts WaddleUIDataTypes.toolprogress
 type UIMessageDataToolProgress struct {
 	ToolCallId  string   `json:"toolcallid"`
 	ToolName    string   `json:"toolname"`
@@ -230,51 +230,51 @@ const (
 	StopKindRateLimit        StopReasonKind = "rate_limit"
 )
 
-type WaveToolCall struct {
+type WaddleToolCall struct {
 	ID          string                `json:"id"`                    // Anthropic tool_use.id
 	Name        string                `json:"name,omitempty"`        // tool name (if provided)
 	Input       any                   `json:"input,omitempty"`       // accumulated input JSON
 	ToolUseData *UIMessageDataToolUse `json:"toolusedata,omitempty"` // UI tool use data
 }
 
-type WaveStopReason struct {
-	Kind      StopReasonKind `json:"kind"`
-	RawReason string         `json:"raw_reason,omitempty"`
-	ToolCalls []WaveToolCall `json:"tool_calls,omitempty"`
-	ErrorType string         `json:"error_type,omitempty"`
-	ErrorText string         `json:"error_text,omitempty"`
+type WaddleStopReason struct {
+	Kind      StopReasonKind   `json:"kind"`
+	RawReason string           `json:"raw_reason,omitempty"`
+	ToolCalls []WaddleToolCall `json:"tool_calls,omitempty"`
+	ErrorType string           `json:"error_type,omitempty"`
+	ErrorText string           `json:"error_text,omitempty"`
 }
 
-// Wave Specific parameter used to signal to our step function that this is a continuation step, not an initial step
-type WaveContinueResponse struct {
+// Waddle Specific parameter used to signal to our step function that this is a continuation step, not an initial step
+type WaddleContinueResponse struct {
 	Model            string         `json:"model,omitempty"`
 	ContinueFromKind StopReasonKind `json:"continue_from_kind"`
 }
 
-// Wave Specific AI opts for configuration
+// Waddle Specific AI opts for configuration
 type AIOptsType struct {
-	Provider      string   `json:"provider,omitempty"`
-	APIType       string   `json:"apitype,omitempty"`
-	Model         string   `json:"model"`
-	APIToken      string   `json:"apitoken"`
-	APIVersion    string   `json:"apiversion,omitempty"`
-	Endpoint      string   `json:"endpoint,omitempty"`
-	ProxyURL      string   `json:"proxyurl,omitempty"`
-	MaxTokens     int      `json:"maxtokens,omitempty"`
-	TimeoutMs     int      `json:"timeoutms,omitempty"`
-	ThinkingLevel string   `json:"thinkinglevel,omitempty"` // ThinkingLevelLow, ThinkingLevelMedium, or ThinkingLevelHigh
-	Verbosity     string   `json:"verbosity,omitempty"`     // Text verbosity level (OpenAI Responses API only, ignored by other backends)
-	AIMode        string   `json:"aimode,omitempty"`
-	Capabilities  []string `json:"capabilities,omitempty"`
-	WaveAIPremium bool     `json:"waveaipremium,omitempty"`
+	Provider        string   `json:"provider,omitempty"`
+	APIType         string   `json:"apitype,omitempty"`
+	Model           string   `json:"model"`
+	APIToken        string   `json:"apitoken"`
+	APIVersion      string   `json:"apiversion,omitempty"`
+	Endpoint        string   `json:"endpoint,omitempty"`
+	ProxyURL        string   `json:"proxyurl,omitempty"`
+	MaxTokens       int      `json:"maxtokens,omitempty"`
+	TimeoutMs       int      `json:"timeoutms,omitempty"`
+	ThinkingLevel   string   `json:"thinkinglevel,omitempty"` // ThinkingLevelLow, ThinkingLevelMedium, or ThinkingLevelHigh
+	Verbosity       string   `json:"verbosity,omitempty"`     // Text verbosity level (OpenAI Responses API only, ignored by other backends)
+	AIMode          string   `json:"aimode,omitempty"`
+	Capabilities    []string `json:"capabilities,omitempty"`
+	WaddleAIPremium bool     `json:"waveaipremium,omitempty"`
 }
 
-func (opts AIOptsType) IsWaveProxy() bool {
-	return opts.Provider == AIProvider_Wave
+func (opts AIOptsType) IsWaddleProxy() bool {
+	return opts.Provider == AIProvider_Waddle
 }
 
 func (opts AIOptsType) IsPremiumModel() bool {
-	return opts.WaveAIPremium
+	return opts.WaddleAIPremium
 }
 
 func (opts AIOptsType) HasCapability(cap string) bool {
@@ -498,7 +498,7 @@ func (m *UIMessage) GetContent() string {
 	return ""
 }
 
-type WaveChatOpts struct {
+type WaddleChatOpts struct {
 	ChatId               string
 	ClientId             string
 	Config               AIOptsType
@@ -520,7 +520,7 @@ type WaveChatOpts struct {
 	PlatformInfo   string
 }
 
-func (opts *WaveChatOpts) GetToolDefinition(toolName string) *ToolDefinition {
+func (opts *WaddleChatOpts) GetToolDefinition(toolName string) *ToolDefinition {
 	for _, tool := range opts.Tools {
 		if tool.Name == toolName {
 			return &tool
@@ -534,7 +534,7 @@ func (opts *WaveChatOpts) GetToolDefinition(toolName string) *ToolDefinition {
 	return nil
 }
 
-func (opts *WaveChatOpts) GetWaveRequestType() string {
+func (opts *WaddleChatOpts) GetWaddleRequestType() string {
 	if opts.BuilderId != "" {
 		return "waveapps-builder"
 	} else {
@@ -556,9 +556,9 @@ type RateLimitInfo struct {
 	Unknown    bool  `json:"unknown,omitempty"`
 }
 
-// ParseRateLimitHeader parses the X-Wave-RateLimit header
-// Format: X-Wave-RateLimit: req=<remaining>, reqlimit=<max_requests>, preq=<premium_remaining>, preqlimit=<max_premium>, reset=<expiration_epoch_seconds>
-// Example: X-Wave-RateLimit: req=180, reqlimit=200, preq=45, preqlimit=50, reset=1727818382
+// ParseRateLimitHeader parses the X-Waddle-RateLimit header
+// Format: X-Waddle-RateLimit: req=<remaining>, reqlimit=<max_requests>, preq=<premium_remaining>, preqlimit=<max_premium>, reset=<expiration_epoch_seconds>
+// Example: X-Waddle-RateLimit: req=180, reqlimit=200, preq=45, preqlimit=50, reset=1727818382
 // - req: remaining regular requests in the current window
 // - reqlimit: maximum regular requests allowed in the window
 // - preq: remaining premium requests in the current window

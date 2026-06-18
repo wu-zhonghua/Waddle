@@ -1,15 +1,15 @@
 <p align="center">
-  <a href="https://www.waveterm.dev">
+  <a href="https://www.waddle.dev">
 	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="./assets/wave-dark.png">
-		<source media="(prefers-color-scheme: light)" srcset="./assets/wave-light.png">
-		<img alt="Wave Terminal Logo" src="./assets/wave-light.png" width="240">
+		<source media="(prefers-color-scheme: dark)" srcset="./assets/waddle-dark.png">
+		<source media="(prefers-color-scheme: light)" srcset="./assets/waddle-light.png">
+		<img alt="Waddle Logo" src="./assets/waddle-light.png" width="240">
 	</picture>
   </a>
   <br/>
 </p>
 
-# Wave Terminal
+# Waddle
 
 <div align="center">
 
@@ -17,18 +17,18 @@
 
 </div>
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwavetermdev%2Fwaveterm.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwavetermdev%2Fwaveterm?ref=badge_shield)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwaddledev%2Fwaddle.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwaddledev%2Fwaddle?ref=badge_shield)
 
-Wave is an open-source, AI-integrated terminal for macOS, Linux, and Windows. It works with any AI model. Bring your own API keys for OpenAI, Claude, or Gemini, or run local models via Ollama and LM Studio. No accounts required.
+Waddle is an open-source, AI-integrated terminal for macOS, Linux, and Windows. It works with any AI model. Bring your own API keys for OpenAI, Claude, or Gemini, or run local models via Ollama and LM Studio. No accounts required.
 
-Wave also supports durable SSH sessions that survive network interruptions and restarts, with automatic reconnection. Edit remote files with a built-in graphical editor and preview files inline without leaving the terminal.
+Waddle also supports durable SSH sessions that survive network interruptions and restarts, with automatic reconnection. Edit remote files with a built-in graphical editor and preview files inline without leaving the terminal.
 
-![WaveTerm Screenshot](./assets/wave-screenshot.webp)
+![Waddle Screenshot](./assets/waddle-screenshot.webp)
 
 ## Key Features
 
-- Wave AI - Context-aware terminal assistant that reads your terminal output, analyzes widgets, and performs file operations
-- Durable SSH Sessions - Remote terminal sessions survive connection interruptions, network changes, and Wave restarts with automatic reconnection
+- Waddle AI - Context-aware terminal assistant that reads your terminal output, analyzes widgets, and performs file operations
+- Durable SSH Sessions - Remote terminal sessions survive connection interruptions, network changes, and Waddle restarts with automatic reconnection
 - Flexible drag & drop interface to organize terminal blocks, editors, web browsers, and AI assistants
 - Built-in editor for editing remote files with syntax highlighting and modern editor features
 - Rich file preview system for remote files (markdown, images, video, PDFs, CSVs, directories)
@@ -41,9 +41,9 @@ Wave also supports durable SSH sessions that survive network interruptions and r
 - Powerful `wsh` command system for managing your workspace from the CLI and sharing data between terminal sessions
 - Connected file management with `wsh file` - seamlessly copy and sync files between local and remote SSH hosts
 
-## Wave AI
+## Waddle AI
 
-Wave AI is your context-aware terminal assistant with access to your workspace:
+Waddle AI is your context-aware terminal assistant with access to your workspace:
 
 - **Terminal Context**: Reads terminal output and scrollback for debugging and analysis
 - **File Operations**: Read, write, and edit files with automatic backups and user approval
@@ -53,19 +53,19 @@ Wave AI is your context-aware terminal assistant with access to your workspace:
 - **Free Beta**: Included AI credits while we refine the experience
 - **Coming Soon**: Command execution (with approval)
 
-Learn more in our [Wave AI documentation](https://docs.waveterm.dev/waveai) and [Wave AI Modes documentation](https://docs.waveterm.dev/waveai-modes).
+Learn more in our [Waddle AI documentation](https://docs.waddle.dev/waveai) and [Waddle AI Modes documentation](https://docs.waddle.dev/waveai-modes).
 
 ## Installation
 
-Wave Terminal works on macOS, Linux, and Windows.
+Waddle works on macOS, Linux, and Windows.
 
-Platform-specific installation instructions can be found [here](https://docs.waveterm.dev/gettingstarted).
+Platform-specific installation instructions can be found [here](https://docs.waddle.dev/gettingstarted).
 
-You can also install Wave Terminal directly from: [www.waveterm.dev/download](https://www.waveterm.dev/download).
+You can also install Waddle directly from: [www.waddle.dev/download](https://www.waddle.dev/download).
 
 ### Minimum requirements
 
-Wave Terminal runs on the following platforms:
+Waddle runs on the following platforms:
 
 - macOS 11 or later (arm64, x64)
 - Windows 10 1809 or later (x64)
@@ -79,39 +79,39 @@ The WSH helper runs on the following platforms:
 
 ## Roadmap
 
-Wave is constantly improving! Our roadmap will be continuously updated with our goals for each release. You can find it [here](./ROADMAP.md).
+Waddle is constantly improving! Our roadmap will be continuously updated with our goals for each release. You can find it [here](./ROADMAP.md).
 
-Want to provide input to our future releases? Connect with us on [Discord](https://discord.gg/XfvZ334gwU) or open a [Feature Request](https://github.com/wavetermdev/waveterm/issues/new/choose)!
+Want to provide input to our future releases? Connect with us on [Discord](https://discord.gg/XfvZ334gwU) or open a [Feature Request](https://github.com/waddledev/waddle/issues/new/choose)!
 
 ## Links
 
-- Homepage &mdash; https://www.waveterm.dev
-- Download Page &mdash; https://www.waveterm.dev/download
-- Documentation &mdash; https://docs.waveterm.dev
-- X &mdash; https://x.com/wavetermdev
+- Homepage &mdash; https://www.waddle.dev
+- Download Page &mdash; https://www.waddle.dev/download
+- Documentation &mdash; https://docs.waddle.dev
+- X &mdash; https://x.com/waddledev
 - Discord Community &mdash; https://discord.gg/XfvZ334gwU
 
 ## Building from Source
 
-See [Building Wave Terminal](BUILD.md).
+See [Building Waddle](BUILD.md).
 
 ## Contributing
 
-Wave uses GitHub Issues for issue tracking.
+Waddle uses GitHub Issues for issue tracking.
 
 Find more information in our [Contributions Guide](CONTRIBUTING.md), which includes:
 
 - [Ways to contribute](CONTRIBUTING.md#contributing-to-wave-terminal)
 - [Contribution guidelines](CONTRIBUTING.md#before-you-start)
 
-### Sponsoring Wave ❤️
+### Sponsoring Waddle ❤️
 
-If Wave Terminal is useful to you or your company, consider sponsoring development.
+If Waddle is useful to you or your company, consider sponsoring development.
 
 Sponsorship helps support the time spent building and maintaining the project.
 
-- https://github.com/sponsors/wavetermdev
+- https://github.com/sponsors/waddledev
 
 ## License
 
-Wave Terminal is licensed under the Apache-2.0 License. For more information on our dependencies, see [here](./ACKNOWLEDGEMENTS.md).
+Waddle is licensed under the Apache-2.0 License. For more information on our dependencies, see [here](./ACKNOWLEDGEMENTS.md).

@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
 )
 
 const (
@@ -305,13 +305,13 @@ func (r *RootElem) unmount(comp **ComponentImpl) {
 			r.unmount(&child)
 		}
 	}
-	delete(r.CompMap, (*comp).WaveId)
+	delete(r.CompMap, (*comp).WaddleId)
 	*comp = nil
 }
 
 func (r *RootElem) createComp(tag string, key string, comp **ComponentImpl) {
-	*comp = &ComponentImpl{WaveId: uuid.New().String(), Tag: tag, Key: key}
-	r.CompMap[(*comp).WaveId] = *comp
+	*comp = &ComponentImpl{WaddleId: uuid.New().String(), Tag: tag, Key: key}
+	r.CompMap[(*comp).WaddleId] = *comp
 }
 
 func (r *RootElem) renderText(text string, comp **ComponentImpl) {
@@ -495,7 +495,7 @@ func convertPropsToVDom(props map[string]any) map[string]any {
 }
 
 func convertBaseToVDom(c *ComponentImpl) *VDomElem {
-	elem := &VDomElem{WaveId: c.WaveId, Tag: c.Tag}
+	elem := &VDomElem{WaddleId: c.WaddleId, Tag: c.Tag}
 	if c.Elem != nil {
 		elem.Props = convertPropsToVDom(c.Elem.Props)
 	}
@@ -543,7 +543,7 @@ func ConvertElemsToTransferElems(elems []VDomElem) []VDomTransferElem {
 			textId := fmt.Sprintf("text-%d", textCounter)
 			textCounter++
 			transferElems = append(transferElems, VDomTransferElem{
-				WaveId:   textId,
+				WaddleId: textId,
 				Tag:      elem.Tag,
 				Text:     elem.Text,
 				Props:    nil,
@@ -552,7 +552,7 @@ func ConvertElemsToTransferElems(elems []VDomElem) []VDomTransferElem {
 			return textId
 		}
 
-		// Convert children to WaveId references, handling potential #text nodes
+		// Convert children to WaddleId references, handling potential #text nodes
 		childrenIds := make([]string, len(elem.Children))
 		for i, child := range elem.Children {
 			childrenIds[i] = processElem(child) // Children are not roots
@@ -560,7 +560,7 @@ func ConvertElemsToTransferElems(elems []VDomElem) []VDomTransferElem {
 
 		// Create the VDomTransferElem for the current element
 		transferElem := VDomTransferElem{
-			WaveId:   elem.WaveId,
+			WaddleId: elem.WaddleId,
 			Tag:      elem.Tag,
 			Props:    elem.Props,
 			Children: childrenIds,
@@ -568,7 +568,7 @@ func ConvertElemsToTransferElems(elems []VDomElem) []VDomTransferElem {
 		}
 		transferElems = append(transferElems, transferElem)
 
-		return elem.WaveId
+		return elem.WaddleId
 	}
 
 	// Start processing each top-level element, marking them as roots
@@ -580,16 +580,16 @@ func ConvertElemsToTransferElems(elems []VDomElem) []VDomTransferElem {
 }
 
 func DedupTransferElems(elems []VDomTransferElem) []VDomTransferElem {
-	seen := make(map[string]int) // maps WaveId to its index in the result slice
+	seen := make(map[string]int) // maps WaddleId to its index in the result slice
 	var result []VDomTransferElem
 
 	for _, elem := range elems {
-		if idx, exists := seen[elem.WaveId]; exists {
+		if idx, exists := seen[elem.WaddleId]; exists {
 			// Overwrite the previous element with the latest one
 			result[idx] = elem
 		} else {
 			// Add new element and store its index
-			seen[elem.WaveId] = len(result)
+			seen[elem.WaddleId] = len(result)
 			result = append(result, elem)
 		}
 	}
@@ -604,7 +604,7 @@ func (beUpdate *VDomBackendUpdate) CreateTransferElems() {
 			continue
 		}
 		vdomElems = append(vdomElems, *reUpdate.VDom)
-		beUpdate.RenderUpdates[idx].VDomWaveId = reUpdate.VDom.WaveId
+		beUpdate.RenderUpdates[idx].VDomWaddleId = reUpdate.VDom.WaddleId
 		beUpdate.RenderUpdates[idx].VDom = nil
 	}
 	transferElems := ConvertElemsToTransferElems(vdomElems)

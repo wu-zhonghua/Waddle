@@ -5,8 +5,8 @@
 
 declare global {
 
-    // wps.WaveEvent
-    type WaveEventName =
+    // wps.WaddleEvent
+    type WaddleEventName =
         | "blockclose"
         | "connchange"
         | "sysinfo"
@@ -28,8 +28,8 @@ declare global {
         | "badge"
     ;
 
-    type WaveEvent = {
-        event: WaveEventName;
+    type WaddleEvent = {
+        event: WaddleEventName;
         scopes?: string[];
         sender?: string;
         persist?: number;
@@ -41,7 +41,7 @@ declare global {
         { event: "controllerstatus"; data?: BlockControllerRuntimeStatus; } | 
         { event: "builderstatus"; data?: BuilderStatusData; } | 
         { event: "builderoutput"; data?: {[key: string]: any}; } | 
-        { event: "waveobj:update"; data?: WaveObjUpdate; } | 
+        { event: "waveobj:update"; data?: WaddleObjUpdate; } | 
         { event: "blockfile"; data?: WSFileEventData; } | 
         { event: "config"; data?: WatcherUpdate; } | 
         { event: "userinput"; data?: UserInputRequest; } | 

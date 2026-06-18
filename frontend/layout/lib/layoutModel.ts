@@ -83,11 +83,11 @@ export class LayoutModel {
      */
     treeState: LayoutTreeState;
     /**
-     * Reference to the tab atom for accessing WaveObject
+     * Reference to the tab atom for accessing WaddleObject
      */
     private tabAtom: Atom<Tab>;
     /**
-     * WaveObject atom for persistence
+     * WaddleObject atom for persistence
      */
     private waveObjectAtom: Atom<LayoutState>;
     /**
@@ -351,10 +351,10 @@ export class LayoutModel {
             return this.getPlaceholderTransform(pendingAction);
         });
 
-        this.initializeFromWaveObject();
+        this.initializeFromWaddleObject();
     }
 
-    private initializeFromWaveObject() {
+    private initializeFromWaddleObject() {
         const waveObjState = this.getter(this.waveObjectAtom);
 
         const initialState: LayoutTreeState = {
@@ -1114,7 +1114,7 @@ export class LayoutModel {
      * Switch focus to the next node in the given direction in the layout.
      * @param direction The direction in which to switch focus.
      */
-    switchNodeFocusInDirection(direction: NavigateDirection, inWaveAI: boolean): NavigationResult {
+    switchNodeFocusInDirection(direction: NavigateDirection, inWaddleAI: boolean): NavigationResult {
         const curNodeId = this.focusedNodeId;
 
         // If no node is focused, set focus to the first leaf.
@@ -1134,11 +1134,11 @@ export class LayoutModel {
             }
         }
         let curNodePos: Dimensions;
-        if (inWaveAI) {
-            // For WaveAI, use a fake position to the left of all nodes
+        if (inWaddleAI) {
+            // For WaddleAI, use a fake position to the left of all nodes
             curNodePos = { left: -10, top: 10, width: 0, height: 0 };
 
-            // Only allow "right" navigation from WaveAI
+            // Only allow "right" navigation from WaddleAI
             if (direction !== NavigateDirection.Right) {
                 const result: NavigationResult = { success: false };
                 if (direction === NavigateDirection.Up) {

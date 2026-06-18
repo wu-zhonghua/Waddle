@@ -16,12 +16,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/genconn"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wsl"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/genconn"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wsl"
 )
 
 func hasBashInstalled(ctx context.Context, client *wsl.Distro) (bool, error) {
@@ -130,7 +130,7 @@ func makeCancellableCommand(ctx context.Context, client *wsl.Distro, cmdTemplate
 }
 
 func CpWshToRemote(ctx context.Context, client *wsl.Distro, clientOs string, clientArch string) error {
-	wshLocalPath, err := shellutil.GetLocalWshBinaryPath(wavebase.WaveVersion, clientOs, clientArch)
+	wshLocalPath, err := shellutil.GetLocalWshBinaryPath(wavebase.WaddleVersion, clientOs, clientArch)
 	if err != nil {
 		return err
 	}

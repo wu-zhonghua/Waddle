@@ -17,15 +17,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/daystr"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/util/daystr"
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
-const WCloudEndpoint = "https://api.waveterm.dev/central"
+const WCloudEndpoint = "https://api.waddle.dev/central"
 const WCloudEndpointVarName = "WCLOUD_ENDPOINT"
-const WCloudPingEndpoint = "https://ping.waveterm.dev/central"
+const WCloudPingEndpoint = "https://ping.waddle.dev/central"
 const WCloudPingEndpointVarName = "WCLOUD_PING_ENDPOINT"
 
 var WCloudEndpoint_VarCache string
@@ -307,7 +307,7 @@ func SendDiagnosticPing(ctx context.Context, clientId string, usageTelemetry boo
 	input := PingInputType{
 		ClientId:       clientId,
 		Arch:           wavebase.ClientArch(),
-		Version:        "v" + wavebase.WaveVersion,
+		Version:        "v" + wavebase.WaddleVersion,
 		LocalDate:      localDate,
 		UsageTelemetry: usageTelemetry,
 	}

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
 )
 
 var ValidEventNames = map[string]bool{
@@ -102,15 +102,15 @@ type TEventUserProps struct {
 type TEventProps struct {
 	TEventUserProps `tstype:"-"` // generally don't need to set these since they will be automatically copied over
 
-	ActiveMinutes       int `json:"activity:activeminutes,omitempty"`
-	FgMinutes           int `json:"activity:fgminutes,omitempty"`
-	OpenMinutes         int `json:"activity:openminutes,omitempty"`
-	WaveAIActiveMinutes int `json:"activity:waveaiactiveminutes,omitempty"`
-	WaveAIFgMinutes     int `json:"activity:waveaifgminutes,omitempty"`
-	TermCommandsRun     int `json:"activity:termcommandsrun,omitempty"`
-	TermCommandsRemote  int `json:"activity:termcommands:remote,omitempty"`
-	TermCommandsDurable int `json:"activity:termcommands:durable,omitempty"`
-	TermCommandsWsl     int `json:"activity:termcommands:wsl,omitempty"`
+	ActiveMinutes         int `json:"activity:activeminutes,omitempty"`
+	FgMinutes             int `json:"activity:fgminutes,omitempty"`
+	OpenMinutes           int `json:"activity:openminutes,omitempty"`
+	WaddleAIActiveMinutes int `json:"activity:waveaiactiveminutes,omitempty"`
+	WaddleAIFgMinutes     int `json:"activity:waveaifgminutes,omitempty"`
+	TermCommandsRun       int `json:"activity:termcommandsrun,omitempty"`
+	TermCommandsRemote    int `json:"activity:termcommands:remote,omitempty"`
+	TermCommandsDurable   int `json:"activity:termcommands:durable,omitempty"`
+	TermCommandsWsl       int `json:"activity:termcommands:wsl,omitempty"`
 
 	AppFirstDay    bool `json:"app:firstday,omitempty"`
 	AppFirstLaunch bool `json:"app:firstlaunch,omitempty"`
@@ -158,33 +158,33 @@ type TEventProps struct {
 	CountJobsConnected int            `json:"count:jobsconnected,omitempty"`
 	CountViews         map[string]int `json:"count:views,omitempty"`
 
-	WaveAIAPIType              string         `json:"waveai:apitype,omitempty"`
-	WaveAIModel                string         `json:"waveai:model,omitempty"`
-	WaveAIChatId               string         `json:"waveai:chatid,omitempty"`
-	WaveAIStepNum              int            `json:"waveai:stepnum,omitempty"`
-	WaveAIInputTokens          int            `json:"waveai:inputtokens,omitempty"`
-	WaveAIOutputTokens         int            `json:"waveai:outputtokens,omitempty"`
-	WaveAINativeWebSearchCount int            `json:"waveai:nativewebsearchcount,omitempty"`
-	WaveAIRequestCount         int            `json:"waveai:requestcount,omitempty"`
-	WaveAIToolUseCount         int            `json:"waveai:toolusecount,omitempty"`
-	WaveAIToolUseErrorCount    int            `json:"waveai:tooluseerrorcount,omitempty"`
-	WaveAIToolDetail           map[string]int `json:"waveai:tooldetail,omitempty"`
-	WaveAIPremiumReq           int            `json:"waveai:premiumreq,omitempty"`
-	WaveAIProxyReq             int            `json:"waveai:proxyreq,omitempty"`
-	WaveAIHadError             bool           `json:"waveai:haderror,omitempty"`
-	WaveAIImageCount           int            `json:"waveai:imagecount,omitempty"`
-	WaveAIPDFCount             int            `json:"waveai:pdfcount,omitempty"`
-	WaveAITextDocCount         int            `json:"waveai:textdoccount,omitempty"`
-	WaveAITextLen              int            `json:"waveai:textlen,omitempty"`
-	WaveAIFirstByteMs          int            `json:"waveai:firstbytems,omitempty"`  // ms
-	WaveAIRequestDurMs         int            `json:"waveai:requestdurms,omitempty"` // ms
-	WaveAIWidgetAccess         bool           `json:"waveai:widgetaccess,omitempty"`
-	WaveAIThinkingLevel        string         `json:"waveai:thinkinglevel,omitempty"`
-	WaveAIMode                 string         `json:"waveai:mode,omitempty"`
-	WaveAIProvider             string         `json:"waveai:provider,omitempty"`
-	WaveAIIsLocal              bool           `json:"waveai:islocal,omitempty"`
-	WaveAIFeedback             string         `json:"waveai:feedback,omitempty" tstype:"\"good\" | \"bad\""`
-	WaveAIAction               string         `json:"waveai:action,omitempty"`
+	WaddleAIAPIType              string         `json:"waveai:apitype,omitempty"`
+	WaddleAIModel                string         `json:"waveai:model,omitempty"`
+	WaddleAIChatId               string         `json:"waveai:chatid,omitempty"`
+	WaddleAIStepNum              int            `json:"waveai:stepnum,omitempty"`
+	WaddleAIInputTokens          int            `json:"waveai:inputtokens,omitempty"`
+	WaddleAIOutputTokens         int            `json:"waveai:outputtokens,omitempty"`
+	WaddleAINativeWebSearchCount int            `json:"waveai:nativewebsearchcount,omitempty"`
+	WaddleAIRequestCount         int            `json:"waveai:requestcount,omitempty"`
+	WaddleAIToolUseCount         int            `json:"waveai:toolusecount,omitempty"`
+	WaddleAIToolUseErrorCount    int            `json:"waveai:tooluseerrorcount,omitempty"`
+	WaddleAIToolDetail           map[string]int `json:"waveai:tooldetail,omitempty"`
+	WaddleAIPremiumReq           int            `json:"waveai:premiumreq,omitempty"`
+	WaddleAIProxyReq             int            `json:"waveai:proxyreq,omitempty"`
+	WaddleAIHadError             bool           `json:"waveai:haderror,omitempty"`
+	WaddleAIImageCount           int            `json:"waveai:imagecount,omitempty"`
+	WaddleAIPDFCount             int            `json:"waveai:pdfcount,omitempty"`
+	WaddleAITextDocCount         int            `json:"waveai:textdoccount,omitempty"`
+	WaddleAITextLen              int            `json:"waveai:textlen,omitempty"`
+	WaddleAIFirstByteMs          int            `json:"waveai:firstbytems,omitempty"`  // ms
+	WaddleAIRequestDurMs         int            `json:"waveai:requestdurms,omitempty"` // ms
+	WaddleAIWidgetAccess         bool           `json:"waveai:widgetaccess,omitempty"`
+	WaddleAIThinkingLevel        string         `json:"waveai:thinkinglevel,omitempty"`
+	WaddleAIMode                 string         `json:"waveai:mode,omitempty"`
+	WaddleAIProvider             string         `json:"waveai:provider,omitempty"`
+	WaddleAIIsLocal              bool           `json:"waveai:islocal,omitempty"`
+	WaddleAIFeedback             string         `json:"waveai:feedback,omitempty" tstype:"\"good\" | \"bad\""`
+	WaddleAIAction               string         `json:"waveai:action,omitempty"`
 
 	JobDoneReason string `json:"job:donereason,omitempty"`
 	JobKind       string `json:"job:kind,omitempty"`

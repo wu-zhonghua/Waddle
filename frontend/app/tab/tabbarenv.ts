@@ -1,36 +1,36 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SettingsKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { SettingsKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 
-export type TabBarEnv = WaveEnvSubset<{
+export type TabBarEnv = WaddleEnvSubset<{
     electron: {
-        createTab: WaveEnv["electron"]["createTab"];
-        closeTab: WaveEnv["electron"]["closeTab"];
-        setActiveTab: WaveEnv["electron"]["setActiveTab"];
-        showWorkspaceAppMenu: WaveEnv["electron"]["showWorkspaceAppMenu"];
-        installAppUpdate: WaveEnv["electron"]["installAppUpdate"];
+        createTab: WaddleEnv["electron"]["createTab"];
+        closeTab: WaddleEnv["electron"]["closeTab"];
+        setActiveTab: WaddleEnv["electron"]["setActiveTab"];
+        showWorkspaceAppMenu: WaddleEnv["electron"]["showWorkspaceAppMenu"];
+        installAppUpdate: WaddleEnv["electron"]["installAppUpdate"];
     };
     rpc: {
-        ActivityCommand: WaveEnv["rpc"]["ActivityCommand"];
-        SetConfigCommand: WaveEnv["rpc"]["SetConfigCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
-        UpdateTabNameCommand: WaveEnv["rpc"]["UpdateTabNameCommand"];
-        UpdateWorkspaceTabIdsCommand: WaveEnv["rpc"]["UpdateWorkspaceTabIdsCommand"];
+        ActivityCommand: WaddleEnv["rpc"]["ActivityCommand"];
+        SetConfigCommand: WaddleEnv["rpc"]["SetConfigCommand"];
+        SetMetaCommand: WaddleEnv["rpc"]["SetMetaCommand"];
+        UpdateTabNameCommand: WaddleEnv["rpc"]["UpdateTabNameCommand"];
+        UpdateWorkspaceTabIdsCommand: WaddleEnv["rpc"]["UpdateWorkspaceTabIdsCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
-        hasConfigErrors: WaveEnv["atoms"]["hasConfigErrors"];
-        staticTabId: WaveEnv["atoms"]["staticTabId"];
-        isFullScreen: WaveEnv["atoms"]["isFullScreen"];
-        zoomFactorAtom: WaveEnv["atoms"]["zoomFactorAtom"];
-        reinitVersion: WaveEnv["atoms"]["reinitVersion"];
-        updaterStatusAtom: WaveEnv["atoms"]["updaterStatusAtom"];
+        fullConfigAtom: WaddleEnv["atoms"]["fullConfigAtom"];
+        hasConfigErrors: WaddleEnv["atoms"]["hasConfigErrors"];
+        staticTabId: WaddleEnv["atoms"]["staticTabId"];
+        isFullScreen: WaddleEnv["atoms"]["isFullScreen"];
+        zoomFactorAtom: WaddleEnv["atoms"]["zoomFactorAtom"];
+        reinitVersion: WaddleEnv["atoms"]["reinitVersion"];
+        updaterStatusAtom: WaddleEnv["atoms"]["updaterStatusAtom"];
     };
-    wos: WaveEnv["wos"];
+    wos: WaddleEnv["wos"];
     getSettingsKeyAtom: SettingsKeyAtomFnType<"app:hideaibutton" | "app:tabbar" | "tab:confirmclose" | "window:showmenubar">;
-    showContextMenu: WaveEnv["showContextMenu"];
-    mockSetWaveObj: WaveEnv["mockSetWaveObj"];
-    isWindows: WaveEnv["isWindows"];
-    isMacOS: WaveEnv["isMacOS"];
+    showContextMenu: WaddleEnv["showContextMenu"];
+    mockSetWaddleObj: WaddleEnv["mockSetWaddleObj"];
+    isWindows: WaddleEnv["isWindows"];
+    isMacOS: WaddleEnv["isMacOS"];
 }>;

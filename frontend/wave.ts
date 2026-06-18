@@ -24,7 +24,7 @@ import {
     getApi,
     globalStore,
     initGlobal,
-    initGlobalWaveEventSubs,
+    initGlobalWaddleEventSubs,
     loadConnStatus,
     subscribeToConnEvents,
 } from "@/store/global";
@@ -37,8 +37,8 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
 const platform = getApi().getPlatform();
-document.title = `Wave Terminal`;
-let savedInitOpts: WaveInitOpts = null;
+document.title = `Waddle`;
+let savedInitOpts: WaddleInitOpts = null;
 
 (window as any).WOS = WOS;
 (window as any).globalStore = globalStore;
@@ -61,7 +61,7 @@ async function initBare() {
     document.body.style.visibility = "hidden";
     document.body.style.opacity = "0";
     document.body.classList.add("is-transparent");
-    getApi().onWaveInit(initWaveWrap);
+    getApi().onWaddleInit(initWaddleWrap);
     getApi().onBuilderInit(initBuilderWrap);
     setKeyUtilPlatform(platform);
     loadFonts();
@@ -77,17 +77,17 @@ async function initBare() {
 
 document.addEventListener("DOMContentLoaded", initBare);
 
-async function initWaveWrap(initOpts: WaveInitOpts) {
+async function initWaddleWrap(initOpts: WaddleInitOpts) {
     try {
         if (savedInitOpts) {
-            await reinitWave();
+            await reinitWaddle();
             return;
         }
         savedInitOpts = initOpts;
-        await initWave(initOpts);
+        await initWaddle(initOpts);
     } catch (e) {
-        getApi().sendLog("Error in initWave " + e.message + "\n" + e.stack);
-        console.error("Error in initWave", e);
+        getApi().sendLog("Error in initWaddle " + e.message + "\n" + e.stack);
+        console.error("Error in initWaddle", e);
     } finally {
         document.body.style.visibility = null;
         document.body.style.opacity = null;
@@ -95,9 +95,9 @@ async function initWaveWrap(initOpts: WaveInitOpts) {
     }
 }
 
-async function reinitWave() {
-    console.log("Reinit Wave");
-    getApi().sendLog("Reinit Wave");
+async function reinitWaddle() {
+    console.log("Reinit Waddle");
+    getApi().sendLog("Reinit Waddle");
 
     // We use this hack to prevent a flicker of the previously-hovered tab when this view was last active.
     document.body.classList.add("nohover");
@@ -107,13 +107,13 @@ async function reinitWave() {
         }, 100)
     );
 
-    await WOS.reloadWaveObject<Client>(WOS.makeORef("client", savedInitOpts.clientId));
-    const waveWindow = await WOS.reloadWaveObject<WaveWindow>(WOS.makeORef("window", savedInitOpts.windowId));
-    const ws = await WOS.reloadWaveObject<Workspace>(WOS.makeORef("workspace", waveWindow.workspaceid));
-    const initialTab = await WOS.reloadWaveObject<Tab>(WOS.makeORef("tab", savedInitOpts.tabId));
-    await WOS.reloadWaveObject<LayoutState>(WOS.makeORef("layout", initialTab.layoutstate));
+    await WOS.reloadWaddleObject<Client>(WOS.makeORef("client", savedInitOpts.clientId));
+    const waveWindow = await WOS.reloadWaddleObject<WaddleWindow>(WOS.makeORef("window", savedInitOpts.windowId));
+    const ws = await WOS.reloadWaddleObject<Workspace>(WOS.makeORef("workspace", waveWindow.workspaceid));
+    const initialTab = await WOS.reloadWaddleObject<Tab>(WOS.makeORef("tab", savedInitOpts.tabId));
+    await WOS.reloadWaddleObject<LayoutState>(WOS.makeORef("layout", initialTab.layoutstate));
     reloadAllWorkspaceTabs(ws);
-    document.title = `Wave Terminal - ${initialTab.name}`; // TODO update with tab name change
+    document.title = `Waddle - ${initialTab.name}`; // TODO update with tab name change
     getApi().setWindowInitStatus("wave-ready");
     globalStore.set(atoms.reinitVersion, globalStore.get(atoms.reinitVersion) + 1);
     globalStore.set(atoms.updaterStatusAtom, getApi().getUpdaterStatus());
@@ -127,7 +127,7 @@ function reloadAllWorkspaceTabs(ws: Workspace) {
         return;
     }
     ws.tabids?.forEach((tabid) => {
-        WOS.reloadWaveObject<Tab>(WOS.makeORef("tab", tabid));
+        WOS.reloadWaddleObject<Tab>(WOS.makeORef("tab", tabid));
     });
 }
 
@@ -140,8 +140,8 @@ function loadAllWorkspaceTabs(ws: Workspace) {
     });
 }
 
-async function initWave(initOpts: WaveInitOpts) {
-    getApi().sendLog("Init Wave " + JSON.stringify(initOpts));
+async function initWaddle(initOpts: WaddleInitOpts) {
+    getApi().sendLog("Init Waddle " + JSON.stringify(initOpts));
     const globalInitOpts: GlobalInitOptions = {
         tabId: initOpts.tabId,
         clientId: initOpts.clientId,
@@ -150,7 +150,7 @@ async function initWave(initOpts: WaveInitOpts) {
         environment: "renderer",
         primaryTabStartup: initOpts.primaryTabStartup,
     };
-    console.log("Wave Init", globalInitOpts);
+    console.log("Waddle Init", globalInitOpts);
     globalStore.set(activeTabIdAtom, initOpts.tabId);
     await GlobalModel.getInstance().initialize(globalInitOpts);
     initGlobal(globalInitOpts);
@@ -165,24 +165,24 @@ async function initWave(initOpts: WaveInitOpts) {
     try {
         await loadConnStatus();
         await loadBadges();
-        initGlobalWaveEventSubs(initOpts);
+        initGlobalWaddleEventSubs(initOpts);
         subscribeToConnEvents();
         if (isMacOS()) {
             const macOSVersion = await RpcApi.MacOSVersionCommand(TabRpcClient);
             setMacOSVersion(macOSVersion);
         }
         const [_client, waveWindow, initialTab] = await Promise.all([
-            WOS.loadAndPinWaveObject<Client>(WOS.makeORef("client", initOpts.clientId)),
-            WOS.loadAndPinWaveObject<WaveWindow>(WOS.makeORef("window", initOpts.windowId)),
-            WOS.loadAndPinWaveObject<Tab>(WOS.makeORef("tab", initOpts.tabId)),
+            WOS.loadAndPinWaddleObject<Client>(WOS.makeORef("client", initOpts.clientId)),
+            WOS.loadAndPinWaddleObject<WaddleWindow>(WOS.makeORef("window", initOpts.windowId)),
+            WOS.loadAndPinWaddleObject<Tab>(WOS.makeORef("tab", initOpts.tabId)),
         ]);
         const [ws, _layoutState] = await Promise.all([
-            WOS.loadAndPinWaveObject<Workspace>(WOS.makeORef("workspace", waveWindow.workspaceid)),
-            WOS.reloadWaveObject<LayoutState>(WOS.makeORef("layout", initialTab.layoutstate)),
+            WOS.loadAndPinWaddleObject<Workspace>(WOS.makeORef("workspace", waveWindow.workspaceid)),
+            WOS.reloadWaddleObject<LayoutState>(WOS.makeORef("layout", initialTab.layoutstate)),
         ]);
         loadAllWorkspaceTabs(ws);
         WOS.wpsSubscribeToObject(WOS.makeORef("workspace", waveWindow.workspaceid));
-        document.title = `Wave Terminal - ${initialTab.name}`; // TODO update with tab name change
+        document.title = `Waddle - ${initialTab.name}`; // TODO update with tab name change
     } catch (e) {
         console.error("Failed initialization error", e);
         getApi().sendLog("Error in initialization (wave.ts, loading required objects) " + e.message + "\n" + e.stack);
@@ -194,9 +194,9 @@ async function initWave(initOpts: WaveInitOpts) {
     const fullConfig = await RpcApi.GetFullConfigCommand(TabRpcClient);
     console.log("fullconfig", fullConfig);
     globalStore.set(atoms.fullConfigAtom, fullConfig);
-    const waveaiModeConfig = await RpcApi.GetWaveAIModeConfigCommand(TabRpcClient);
+    const waveaiModeConfig = await RpcApi.GetWaddleAIModeConfigCommand(TabRpcClient);
     globalStore.set(atoms.waveaiModeConfigAtom, waveaiModeConfig.configs);
-    console.log("Wave First Render");
+    console.log("Waddle First Render");
     let firstRenderResolveFn: () => void = null;
     const firstRenderPromise = new Promise<void>((resolve) => {
         firstRenderResolveFn = resolve;
@@ -206,7 +206,7 @@ async function initWave(initOpts: WaveInitOpts) {
     const root = createRoot(elem);
     root.render(reactElem);
     await firstRenderPromise;
-    console.log("Wave First Render Done");
+    console.log("Waddle First Render Done");
     getApi().setWindowInitStatus("wave-ready");
 }
 
@@ -253,11 +253,11 @@ async function initBuilder(initOpts: BuilderInitOpts) {
         console.log("Could not load saved builder appId from rtinfo:", e);
     }
 
-    document.title = appIdToUse ? `WaveApp Builder (${appIdToUse})` : "WaveApp Builder";
+    document.title = appIdToUse ? `WaddleApp Builder (${appIdToUse})` : "WaddleApp Builder";
 
     globalStore.set(atoms.builderAppId, appIdToUse);
 
-    const _client = await WOS.loadAndPinWaveObject<Client>(WOS.makeORef("client", initOpts.clientId));
+    const _client = await WOS.loadAndPinWaddleObject<Client>(WOS.makeORef("client", initOpts.clientId));
 
     registerBuilderGlobalKeys();
     registerElectronReinjectKeyHandler();
@@ -265,7 +265,7 @@ async function initBuilder(initOpts: BuilderInitOpts) {
     const fullConfig = await RpcApi.GetFullConfigCommand(TabRpcClient);
     console.log("fullconfig", fullConfig);
     globalStore.set(atoms.fullConfigAtom, fullConfig);
-    const waveaiModeConfig = await RpcApi.GetWaveAIModeConfigCommand(TabRpcClient);
+    const waveaiModeConfig = await RpcApi.GetWaddleAIModeConfigCommand(TabRpcClient);
     globalStore.set(atoms.waveaiModeConfigAtom, waveaiModeConfig.configs);
 
     console.log("Tsunami Builder First Render");

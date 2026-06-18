@@ -12,15 +12,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/eventbus"
-	"github.com/wavetermdev/waveterm/pkg/telemetry"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/eventbus"
+	"github.com/waddledev/waddle/pkg/telemetry"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 var WorkspaceColors = [...]string{
@@ -34,7 +34,7 @@ var WorkspaceColors = [...]string{
 }
 
 var WorkspaceIcons = [...]string{
-	"custom@wave-logo-solid",
+	"custom@waddle-logo-solid",
 	"triangle",
 	"star",
 	"heart",
@@ -67,7 +67,7 @@ func CreateWorkspace(ctx context.Context, name string, icon string, color string
 		return nil, fmt.Errorf("error creating tab: %w", err)
 	}
 
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_WorkspaceUpdate,
 	})
 
@@ -147,7 +147,7 @@ func DeleteWorkspace(ctx context.Context, workspaceId string, force bool) (bool,
 		return false, "", fmt.Errorf("error deleting workspace: %w", err)
 	}
 	log.Printf("deleted workspace %s\n", workspaceId)
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_WorkspaceUpdate,
 	})
 
@@ -256,7 +256,7 @@ func CreateTab(ctx context.Context, workspaceId string, tabName string, activate
 		}
 		tabBg := getTabBackground()
 		if tabBg != "" {
-			tabORef := waveobj.ORefFromWaveObj(tab)
+			tabORef := waveobj.ORefFromWaddleObj(tab)
 			wstore.UpdateObjectMeta(ctx, *tabORef, waveobj.MetaMapType{waveobj.MetaKey_TabBackground: tabBg}, false)
 		}
 	}

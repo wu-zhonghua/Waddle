@@ -4,16 +4,16 @@
 package main
 
 import (
-	"github.com/wavetermdev/waveterm/cmd/wsh/cmd"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/waddledev/waddle/cmd/wsh/cmd"
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
 // set by main-server.go
-var WaveVersion = "0.0.0"
+var WaddleVersion = "0.0.0"
 var BuildTime = "0"
 
 func main() {
-	wavebase.WaveVersion = WaveVersion
+	wavebase.WaddleVersion = WaddleVersion
 	wavebase.BuildTime = BuildTime
 	cmd.Execute()
 }

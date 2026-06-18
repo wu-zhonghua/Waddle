@@ -11,15 +11,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/waddledev/waddle/tsunami/rpctypes"
+	"github.com/waddledev/waddle/tsunami/util"
+	"github.com/waddledev/waddle/tsunami/vdom"
 )
 
 const ChildrenPropKey = "children"
 
 type EffectWorkElem struct {
-	WaveId      string
+	WaddleId    string
 	EffectIndex int
 	CompTag     string
 }
@@ -80,7 +80,7 @@ func (r *RootElem) getAndClearRenderWork() []string {
 }
 
 func (r *RootElem) addEffectWork(id string, effectIndex int, compTag string) {
-	r.EffectWorkQueue = append(r.EffectWorkQueue, &EffectWorkElem{WaveId: id, EffectIndex: effectIndex, CompTag: compTag})
+	r.EffectWorkQueue = append(r.EffectWorkQueue, &EffectWorkElem{WaddleId: id, EffectIndex: effectIndex, CompTag: compTag})
 }
 
 // getAtomsByPrefix extracts all atoms that match the given prefix from RootElem
@@ -144,7 +144,7 @@ func (r *RootElem) cleanupUsedByForUnmount(comp *ComponentImpl) {
 	// Use reverse mapping for efficient cleanup
 	for atomName := range comp.UsedAtoms {
 		if atom, ok := r.Atoms[atomName]; ok {
-			atom.SetUsedBy(comp.WaveId, false)
+			atom.SetUsedBy(comp.WaddleId, false)
 		}
 	}
 
@@ -162,7 +162,7 @@ func (r *RootElem) updateComponentAtomUsage(comp *ComponentImpl, newUsedAtoms ma
 	for atomName := range oldUsedAtoms {
 		if !newUsedAtoms[atomName] {
 			if atom, ok := r.Atoms[atomName]; ok {
-				atom.SetUsedBy(comp.WaveId, false)
+				atom.SetUsedBy(comp.WaddleId, false)
 			}
 		}
 	}
@@ -171,7 +171,7 @@ func (r *RootElem) updateComponentAtomUsage(comp *ComponentImpl, newUsedAtoms ma
 	for atomName := range newUsedAtoms {
 		if !oldUsedAtoms[atomName] {
 			if atom, ok := r.Atoms[atomName]; ok {
-				atom.SetUsedBy(comp.WaveId, true)
+				atom.SetUsedBy(comp.WaddleId, true)
 			}
 		}
 	}
@@ -304,7 +304,7 @@ func (r *RootElem) Event(event vdom.VDomEvent, globalEventHandler func(vdom.VDom
 		if event.GlobalEventType != "" {
 			util.PanicHandler(fmt.Sprintf("Global event handler - event:%s", event.GlobalEventType), recover())
 		} else {
-			comp := r.CompMap[event.WaveId]
+			comp := r.CompMap[event.WaddleId]
 			tag := ""
 			if comp != nil && comp.Elem != nil {
 				tag = comp.Elem.Tag
@@ -328,7 +328,7 @@ func (r *RootElem) Event(event vdom.VDomEvent, globalEventHandler func(vdom.VDom
 			return nil
 		}
 
-		comp := r.CompMap[event.WaveId]
+		comp := r.CompMap[event.WaddleId]
 		if comp == nil || comp.Elem == nil {
 			return nil
 		}
@@ -341,7 +341,7 @@ func (r *RootElem) Event(event vdom.VDomEvent, globalEventHandler func(vdom.VDom
 
 func (r *RootElem) runEffectUnmount(work *EffectWorkElem, hook *Hook) {
 	defer func() {
-		comp := r.CompMap[work.WaveId]
+		comp := r.CompMap[work.WaddleId]
 		compName := ""
 		if comp != nil {
 			compName = comp.ContainingComp
@@ -364,7 +364,7 @@ func (r *RootElem) runEffectUnmount(work *EffectWorkElem, hook *Hook) {
 
 func (r *RootElem) runEffect(work *EffectWorkElem, hook *Hook) {
 	defer func() {
-		comp := r.CompMap[work.WaveId]
+		comp := r.CompMap[work.WaddleId]
 		compName := ""
 		if comp != nil {
 			compName = comp.ContainingComp
@@ -392,7 +392,7 @@ func (r *RootElem) RunWork(opts *RenderOpts) {
 	r.EffectWorkQueue = nil
 	// first, run effect cleanups
 	for _, work := range workQueue {
-		comp := r.CompMap[work.WaveId]
+		comp := r.CompMap[work.WaddleId]
 		if comp == nil {
 			continue
 		}
@@ -401,7 +401,7 @@ func (r *RootElem) RunWork(opts *RenderOpts) {
 	}
 	// now run, new effects
 	for _, work := range workQueue {
-		comp := r.CompMap[work.WaveId]
+		comp := r.CompMap[work.WaddleId]
 		if comp == nil {
 			continue
 		}

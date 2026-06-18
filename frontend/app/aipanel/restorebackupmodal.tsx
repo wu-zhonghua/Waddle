@@ -5,15 +5,15 @@ import { Modal } from "@/app/modals/modal";
 import { recordTEvent } from "@/app/store/global";
 import { useAtomValue } from "jotai";
 import { memo } from "react";
-import { WaveUIMessagePart } from "./aitypes";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleUIMessagePart } from "./aitypes";
+import { WaddleAIModel } from "./waveai-model";
 
 interface RestoreBackupModalProps {
-    part: WaveUIMessagePart & { type: "data-tooluse" };
+    part: WaddleUIMessagePart & { type: "data-tooluse" };
 }
 
 export const RestoreBackupModal = memo(({ part }: RestoreBackupModalProps) => {
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const toolData = part.data;
     const status = useAtomValue(model.restoreBackupStatus);
     const error = useAtomValue(model.restoreBackupError);

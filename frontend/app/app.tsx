@@ -12,8 +12,8 @@ import { FocusManager } from "@/app/store/focusManager";
 import { GlobalModel } from "@/app/store/global-model";
 import { globalStore } from "@/app/store/jotaiStore";
 import { getTabModelByTabId, TabModelContext } from "@/app/store/tab-model";
-import { WaveEnvContext } from "@/app/waveenv/waveenv";
-import { makeWaveEnvImpl } from "@/app/waveenv/waveenvimpl";
+import { WaddleEnvContext } from "@/app/waveenv/waveenv";
+import { makeWaddleEnvImpl } from "@/app/waveenv/waveenvimpl";
 import { Workspace } from "@/app/workspace/workspace";
 import { getLayoutModelForStaticTab } from "@/layout/index";
 import { ContextMenuModel } from "@/store/contextmenu";
@@ -43,17 +43,17 @@ const focusLog = debug("wave:focus");
 
 const App = ({ onFirstRender }: { onFirstRender: () => void }) => {
     const tabId = useAtomValue(atoms.staticTabId);
-    const waveEnvRef = useRef(makeWaveEnvImpl());
+    const waveEnvRef = useRef(makeWaddleEnvImpl());
     useEffect(() => {
         onFirstRender();
     }, []);
     return (
         <Provider store={globalStore}>
-            <WaveEnvContext.Provider value={waveEnvRef.current}>
+            <WaddleEnvContext.Provider value={waveEnvRef.current}>
                 <TabModelContext.Provider value={getTabModelByTabId(tabId)}>
                     <AppInner />
                 </TabModelContext.Provider>
-            </WaveEnvContext.Provider>
+            </WaddleEnvContext.Provider>
         </Provider>
     );
 };
@@ -251,7 +251,7 @@ const MacOSFirstClickHandler = () => {
                 } else if (isAIPanelTarget(e.target)) {
                     setTimeout(() => {
                         console.log("macos first-click, focusing AI panel");
-                        FocusManager.getInstance().setWaveAIFocused(true);
+                        FocusManager.getInstance().setWaddleAIFocused(true);
                     }, 10);
                 }
                 console.log("macos first-click detected, canceled", timeDiff + "ms");

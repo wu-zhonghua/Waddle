@@ -18,8 +18,8 @@ import OptimisticInput from "./input";
 
 const TextTag = "#text";
 const FragmentTag = "#fragment";
-const WaveTextTag = "wave:text";
-const WaveNullTag = "wave:null";
+const WaddleTextTag = "wave:text";
+const WaddleNullTag = "wave:null";
 const StyleTagName = "style";
 
 const VDomObjType_Ref = "ref";
@@ -29,9 +29,9 @@ const dlog = debug("wave:vdom");
 
 type VDomReactTagType = (props: { elem: VDomElem; model: TsunamiModel }) => React.ReactElement;
 
-const WaveTagMap: Record<string, VDomReactTagType> = {
-    "wave:markdown": WaveMarkdown,
-    "wave:term": WaveTerm,
+const WaddleTagMap: Record<string, VDomReactTagType> = {
+    "wave:markdown": WaddleMarkdown,
+    "wave:term": Waddle,
 };
 
 const AllowedSimpleTags: { [tagName: string]: boolean } = {
@@ -291,7 +291,7 @@ function useVDom(model: TsunamiModel, elem: VDomElem): GenericPropsType {
     return props;
 }
 
-function WaveMarkdown({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
+function WaddleMarkdown({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
     const props = useVDom(model, elem);
     return (
         <Markdown text={props?.text} style={props?.style} className={props?.className} scrollable={props?.scrollable} />
@@ -311,7 +311,7 @@ async function sendTermInputEvent(event: VDomEvent) {
     }
 }
 
-function WaveTerm({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
+function Waddle({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
     const props = useVDom(model, elem);
     const hasOnData = props.onData != null;
     const onData = React.useCallback(
@@ -348,10 +348,10 @@ function StyleTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
 
 function VDomTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
     const props = useVDom(model, elem);
-    if (elem.tag == WaveNullTag) {
+    if (elem.tag == WaddleNullTag) {
         return null;
     }
-    if (elem.tag == WaveTextTag) {
+    if (elem.tag == WaddleTextTag) {
         return props.text;
     }
 
@@ -360,7 +360,7 @@ function VDomTag({ elem, model }: { elem: VDomElem; model: TsunamiModel }) {
         return <RechartsTag elem={elem} model={model} />;
     }
 
-    const waveTag = WaveTagMap[elem.tag];
+    const waveTag = WaddleTagMap[elem.tag];
     if (waveTag) {
         return waveTag({ elem, model });
     }

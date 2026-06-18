@@ -1,13 +1,13 @@
-# Wave Terminal - High Level Architecture Overview
+# Pengu - High Level Architecture Overview
 
 ## Project Description
 
-Wave Terminal is an open-source AI-native terminal built for seamless workflows. It's an Electron application that serves as a command line terminal host (it hosts CLI applications rather than running inside a CLI). The application combines a React frontend with a Go backend server to provide a modern terminal experience with advanced features.
+Pengu is an open-source AI-native terminal built for seamless workflows. It's an Electron application that serves as a command line terminal host (it hosts CLI applications rather than running inside a CLI). The application combines a React frontend with a Go backend server to provide a modern terminal experience with advanced features.
 
 ## Top-Level Directory Structure
 
 ```
-waveterm/
+pengu/
 ├── emain/              # Electron main process code
 ├── frontend/           # React application (renderer process)
 ├── cmd/                # Go command-line applications
@@ -31,10 +31,10 @@ The Electron main process handles the native desktop application layer:
 **Key Files:**
 
 - [`emain.ts`](emain/emain.ts) - Main entry point, application lifecycle management
-- [`emain-window.ts`](emain/emain-window.ts) - Window management (`WaveBrowserWindow` class)
-- [`emain-tabview.ts`](emain/emain-tabview.ts) - Tab view management (`WaveTabView` class)
+- [`emain-window.ts`](emain/emain-window.ts) - Window management (`PenguBrowserWindow` class)
+- [`emain-tabview.ts`](emain/emain-tabview.ts) - Tab view management (`PenguTabView` class)
 - [`emain-wavesrv.ts`](emain/emain-wavesrv.ts) - Go backend server integration
-- [`emain-wsh.ts`](emain/emain-wsh.ts) - WSH (Wave Shell) client integration
+- [`emain-wsh.ts`](emain/emain-wsh.ts) - WSH (Pengu Shell) client integration
 - [`emain-ipc.ts`](emain/emain-ipc.ts) - IPC handlers for frontend ↔ main process communication
 - [`emain-menu.ts`](emain/emain-menu.ts) - Application menu system
 - [`updater.ts`](emain/updater.ts) - Auto-update functionality
@@ -104,7 +104,7 @@ The Go codebase is organized into modular packages:
 - `wconfig/` - Configuration management
 - `wcore/` - Core business logic
 - `wshrpc/` - RPC communication system
-- `wshutil/` - WSH (Wave Shell) utilities
+- `wshutil/` - WSH (Pengu Shell) utilities
 - `blockcontroller/` - Block execution management
 - `remote/` - Remote connection handling
 - `filestore/` - File storage system
@@ -112,7 +112,7 @@ The Go codebase is organized into modular packages:
 - `telemetry/` - Usage analytics and telemetry
 - `waveobj/` - Core data objects
 - `service/` - Service layer
-- `wps/` - Wave PubSub event system
+- `wps/` - Pengu PubSub event system
 - `waveai/` - AI functionality
 - `shellexec/` - Shell execution
 - `util/` - Common utilities
@@ -121,7 +121,7 @@ The Go codebase is organized into modular packages:
 
 Key Go command-line utilities:
 
-- `wsh/` - Wave Shell command-line tool
+- `wsh/` - Pengu Shell command-line tool
 - `server/` - Main backend server
 - `generatego/` - Code generation
 - `generateschema/` - Schema generation
@@ -129,11 +129,11 @@ Key Go command-line utilities:
 
 ## Communication Architecture
 
-The core communication system is built around the **WSH RPC (Wave Shell RPC)** system, which provides a unified interface for all inter-process communication: frontend ↔ Go backend, Electron main process ↔ backend, and backend ↔ remote systems (SSH, WSL).
+The core communication system is built around the **WSH RPC (Pengu Shell RPC)** system, which provides a unified interface for all inter-process communication: frontend ↔ Go backend, Electron main process ↔ backend, and backend ↔ remote systems (SSH, WSL).
 
 ### WSH RPC System (`pkg/wshrpc/`)
 
-The WSH RPC system is the backbone of Wave Terminal's communication architecture:
+The WSH RPC system is the backbone of Pengu's communication architecture:
 
 **Key Components:**
 

@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mitchellh/mapstructure"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
 )
 
 const (
@@ -105,7 +105,7 @@ func ParseORefNoErr(orefStr string) *ORef {
 	return &oref
 }
 
-type WaveObj interface {
+type WaddleObj interface {
 	GetOType() string // should not depend on object state (should work with nil value)
 }
 
@@ -117,7 +117,7 @@ type waveObjDesc struct {
 }
 
 var waveObjMap = sync.Map{}
-var waveObjRType = reflect.TypeOf((*WaveObj)(nil)).Elem()
+var waveObjRType = reflect.TypeOf((*WaddleObj)(nil)).Elem()
 var metaMapRType = reflect.TypeOf(MetaMapType{})
 
 func RegisterType(rtype reflect.Type) {
@@ -125,9 +125,9 @@ func RegisterType(rtype reflect.Type) {
 		panic(fmt.Sprintf("wave object must be a pointer for %v", rtype))
 	}
 	if !rtype.Implements(waveObjRType) {
-		panic(fmt.Sprintf("wave object must implement WaveObj for %v", rtype))
+		panic(fmt.Sprintf("wave object must implement WaddleObj for %v", rtype))
 	}
-	waveObj := reflect.Zero(rtype).Interface().(WaveObj)
+	waveObj := reflect.Zero(rtype).Interface().(WaddleObj)
 	otype := waveObj.GetOType()
 	if otype == "" {
 		panic(fmt.Sprintf("otype is empty for %v", rtype))
@@ -173,7 +173,7 @@ func RegisterType(rtype reflect.Type) {
 	})
 }
 
-func getWaveObjDesc(otype string) *waveObjDesc {
+func getWaddleObjDesc(otype string) *waveObjDesc {
 	desc, _ := waveObjMap.Load(otype)
 	if desc == nil {
 		return nil
@@ -181,40 +181,40 @@ func getWaveObjDesc(otype string) *waveObjDesc {
 	return desc.(*waveObjDesc)
 }
 
-func GetOID(waveObj WaveObj) string {
-	desc := getWaveObjDesc(waveObj.GetOType())
+func GetOID(waveObj WaddleObj) string {
+	desc := getWaddleObjDesc(waveObj.GetOType())
 	if desc == nil {
 		return ""
 	}
 	return reflect.ValueOf(waveObj).Elem().FieldByIndex(desc.OIDField.Index).String()
 }
 
-func SetOID(waveObj WaveObj, oid string) {
-	desc := getWaveObjDesc(waveObj.GetOType())
+func SetOID(waveObj WaddleObj, oid string) {
+	desc := getWaddleObjDesc(waveObj.GetOType())
 	if desc == nil {
 		return
 	}
 	reflect.ValueOf(waveObj).Elem().FieldByIndex(desc.OIDField.Index).SetString(oid)
 }
 
-func GetVersion(waveObj WaveObj) int {
-	desc := getWaveObjDesc(waveObj.GetOType())
+func GetVersion(waveObj WaddleObj) int {
+	desc := getWaddleObjDesc(waveObj.GetOType())
 	if desc == nil {
 		return 0
 	}
 	return int(reflect.ValueOf(waveObj).Elem().FieldByIndex(desc.VersionField.Index).Int())
 }
 
-func SetVersion(waveObj WaveObj, version int) {
-	desc := getWaveObjDesc(waveObj.GetOType())
+func SetVersion(waveObj WaddleObj, version int) {
+	desc := getWaddleObjDesc(waveObj.GetOType())
 	if desc == nil {
 		return
 	}
 	reflect.ValueOf(waveObj).Elem().FieldByIndex(desc.VersionField.Index).SetInt(int64(version))
 }
 
-func GetMeta(waveObj WaveObj) MetaMapType {
-	desc := getWaveObjDesc(waveObj.GetOType())
+func GetMeta(waveObj WaddleObj) MetaMapType {
+	desc := getWaddleObjDesc(waveObj.GetOType())
 	if desc == nil {
 		return nil
 	}
@@ -225,15 +225,15 @@ func GetMeta(waveObj WaveObj) MetaMapType {
 	return mval.(MetaMapType)
 }
 
-func SetMeta(waveObj WaveObj, meta map[string]any) {
-	desc := getWaveObjDesc(waveObj.GetOType())
+func SetMeta(waveObj WaddleObj, meta map[string]any) {
+	desc := getWaddleObjDesc(waveObj.GetOType())
 	if desc == nil {
 		return
 	}
 	reflect.ValueOf(waveObj).Elem().FieldByIndex(desc.MetaField.Index).Set(reflect.ValueOf(meta))
 }
 
-func ToJsonMap(w WaveObj) (map[string]any, error) {
+func ToJsonMap(w WaddleObj) (map[string]any, error) {
 	if w == nil {
 		return nil, nil
 	}
@@ -256,7 +256,7 @@ func ToJsonMap(w WaveObj) (map[string]any, error) {
 	return m, nil
 }
 
-func ToJson(w WaveObj) ([]byte, error) {
+func ToJson(w WaddleObj) ([]byte, error) {
 	m, err := ToJsonMap(w)
 	if err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ func ToJson(w WaveObj) ([]byte, error) {
 	return json.Marshal(m)
 }
 
-func FromJson(data []byte) (WaveObj, error) {
+func FromJson(data []byte) (WaddleObj, error) {
 	var m map[string]any
 	err := json.Unmarshal(data, &m)
 	if err != nil {
@@ -273,16 +273,16 @@ func FromJson(data []byte) (WaveObj, error) {
 	return FromJsonMap(m)
 }
 
-func FromJsonMap(m map[string]any) (WaveObj, error) {
+func FromJsonMap(m map[string]any) (WaddleObj, error) {
 	otype, ok := m[OTypeKeyName].(string)
 	if !ok {
 		return nil, fmt.Errorf("missing otype")
 	}
-	desc := getWaveObjDesc(otype)
+	desc := getWaddleObjDesc(otype)
 	if desc == nil {
 		return nil, fmt.Errorf("unknown otype: %s", otype)
 	}
-	wobj := reflect.Zero(desc.RType).Interface().(WaveObj)
+	wobj := reflect.Zero(desc.RType).Interface().(WaddleObj)
 	dconfig := &mapstructure.DecoderConfig{
 		Result:  &wobj,
 		TagName: "json",
@@ -307,14 +307,14 @@ func ORefFromMap(m map[string]any) (*ORef, error) {
 	return &oref, nil
 }
 
-func ORefFromWaveObj(w WaveObj) *ORef {
+func ORefFromWaddleObj(w WaddleObj) *ORef {
 	return &ORef{
 		OType: w.GetOType(),
 		OID:   GetOID(w),
 	}
 }
 
-func FromJsonGen[T WaveObj](data []byte) (T, error) {
+func FromJsonGen[T WaddleObj](data []byte) (T, error) {
 	obj, err := FromJson(data)
 	if err != nil {
 		var zero T

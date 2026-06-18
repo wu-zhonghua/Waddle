@@ -18,26 +18,26 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
 )
 
 // set by main-server.go
-var WaveVersion = "0.0.0"
+var WaddleVersion = "0.0.0"
 var BuildTime = "0"
 
 const (
-	WaveConfigHomeEnvVar           = "WAVETERM_CONFIG_HOME"
-	WaveDataHomeEnvVar             = "WAVETERM_DATA_HOME"
-	WaveAppPathVarName             = "WAVETERM_APP_PATH"
-	WaveAppResourcesPathVarName    = "WAVETERM_RESOURCES_PATH"
-	WaveAppElectronExecPathVarName = "WAVETERM_ELECTRONEXECPATH"
-	WaveDevVarName                 = "WAVETERM_DEV"
-	WaveDevViteVarName             = "WAVETERM_DEV_VITE"
-	WaveWshForceUpdateVarName      = "WAVETERM_WSHFORCEUPDATE"
-	WaveNoConfirmQuitVarName       = "WAVETERM_NOCONFIRMQUIT"
+	WaddleConfigHomeEnvVar           = "WADDLE_CONFIG_HOME"
+	WaddleDataHomeEnvVar             = "WADDLE_DATA_HOME"
+	WaddleAppPathVarName             = "WADDLE_APP_PATH"
+	WaddleAppResourcesPathVarName    = "WADDLE_RESOURCES_PATH"
+	WaddleAppElectronExecPathVarName = "WADDLE_ELECTRONEXECPATH"
+	WaddleDevVarName                 = "WADDLE_DEV"
+	WaddleDevViteVarName             = "WADDLE_DEV_VITE"
+	WaddleWshForceUpdateVarName      = "WADDLE_WSHFORCEUPDATE"
+	WaddleNoConfirmQuitVarName       = "WADDLE_NOCONFIRMQUIT"
 
-	WaveJwtTokenVarName  = "WAVETERM_JWT"
-	WaveSwapTokenVarName = "WAVETERM_SWAPTOKEN"
+	WaddleJwtTokenVarName  = "WADDLE_JWT"
+	WaddleSwapTokenVarName = "WADDLE_SWAPTOKEN"
 )
 
 const (
@@ -49,22 +49,22 @@ const (
 
 const NeedJwtConst = "NEED-JWT"
 
-var ConfigHome_VarCache string          // caches WAVETERM_CONFIG_HOME
-var DataHome_VarCache string            // caches WAVETERM_DATA_HOME
-var AppPath_VarCache string             // caches WAVETERM_APP_PATH
-var AppResourcesPath_VarCache string    // caches WAVETERM_RESOURCES_PATH
-var AppElectronExecPath_VarCache string // caches WAVETERM_ELECTRONEXECPATH
-var Dev_VarCache string                 // caches WAVETERM_DEV
+var ConfigHome_VarCache string          // caches WADDLE_CONFIG_HOME
+var DataHome_VarCache string            // caches WADDLE_DATA_HOME
+var AppPath_VarCache string             // caches WADDLE_APP_PATH
+var AppResourcesPath_VarCache string    // caches WADDLE_RESOURCES_PATH
+var AppElectronExecPath_VarCache string // caches WADDLE_ELECTRONEXECPATH
+var Dev_VarCache string                 // caches WADDLE_DEV
 
-const WaveLockFile = "wave.lock"
-const DomainSocketBaseName = "wave.sock"
-const RemoteDomainSocketBaseName = "wave-remote.sock"
-const WaveDBDir = "db"
+const WaddleLockFile = "waddle.lock"
+const DomainSocketBaseName = "waddle.sock"
+const RemoteDomainSocketBaseName = "waddle-remote.sock"
+const WaddleDBDir = "db"
 const ConfigDir = "config"
-const RemoteWaveHomeDirName = ".waveterm"
+const RemoteWaddleHomeDirName = ".waddle"
 const RemoteWshBinDirName = "bin"
-const RemoteFullWshBinPath = "~/.waveterm/bin/wsh"
-const RemoteFullDomainSocketPath = "~/.waveterm/wave-remote.sock"
+const RemoteFullWshBinPath = "~/.waddle/bin/wsh"
+const RemoteFullDomainSocketPath = "~/.waddle/waddle-remote.sock"
 
 const AppPathBinDir = "bin"
 
@@ -88,26 +88,26 @@ type FDLock interface {
 }
 
 func CacheAndRemoveEnvVars() error {
-	ConfigHome_VarCache = os.Getenv(WaveConfigHomeEnvVar)
+	ConfigHome_VarCache = os.Getenv(WaddleConfigHomeEnvVar)
 	if ConfigHome_VarCache == "" {
-		return fmt.Errorf(WaveConfigHomeEnvVar + " not set")
+		return fmt.Errorf(WaddleConfigHomeEnvVar + " not set")
 	}
-	os.Unsetenv(WaveConfigHomeEnvVar)
-	DataHome_VarCache = os.Getenv(WaveDataHomeEnvVar)
+	os.Unsetenv(WaddleConfigHomeEnvVar)
+	DataHome_VarCache = os.Getenv(WaddleDataHomeEnvVar)
 	if DataHome_VarCache == "" {
-		return fmt.Errorf("%s not set", WaveDataHomeEnvVar)
+		return fmt.Errorf("%s not set", WaddleDataHomeEnvVar)
 	}
-	os.Unsetenv(WaveDataHomeEnvVar)
-	AppPath_VarCache = os.Getenv(WaveAppPathVarName)
-	os.Unsetenv(WaveAppPathVarName)
-	AppResourcesPath_VarCache = os.Getenv(WaveAppResourcesPathVarName)
-	os.Unsetenv(WaveAppResourcesPathVarName)
-	AppElectronExecPath_VarCache = os.Getenv(WaveAppElectronExecPathVarName)
-	os.Unsetenv(WaveAppElectronExecPathVarName)
-	Dev_VarCache = os.Getenv(WaveDevVarName)
-	os.Unsetenv(WaveDevVarName)
-	os.Unsetenv(WaveDevViteVarName)
-	os.Unsetenv(WaveNoConfirmQuitVarName)
+	os.Unsetenv(WaddleDataHomeEnvVar)
+	AppPath_VarCache = os.Getenv(WaddleAppPathVarName)
+	os.Unsetenv(WaddleAppPathVarName)
+	AppResourcesPath_VarCache = os.Getenv(WaddleAppResourcesPathVarName)
+	os.Unsetenv(WaddleAppResourcesPathVarName)
+	AppElectronExecPath_VarCache = os.Getenv(WaddleAppElectronExecPathVarName)
+	os.Unsetenv(WaddleAppElectronExecPathVarName)
+	Dev_VarCache = os.Getenv(WaddleDevVarName)
+	os.Unsetenv(WaddleDevVarName)
+	os.Unsetenv(WaddleDevViteVarName)
+	os.Unsetenv(WaddleNoConfirmQuitVarName)
 	return nil
 }
 
@@ -115,27 +115,27 @@ func IsDevMode() bool {
 	return Dev_VarCache != ""
 }
 
-func GetWaveAppPath() string {
+func GetWaddleAppPath() string {
 	return AppPath_VarCache
 }
 
-func GetWaveAppResourcesPath() string {
+func GetWaddleAppResourcesPath() string {
 	return AppResourcesPath_VarCache
 }
 
-func GetWaveDataDir() string {
+func GetWaddleDataDir() string {
 	return DataHome_VarCache
 }
 
-func GetWaveConfigDir() string {
+func GetWaddleConfigDir() string {
 	return ConfigHome_VarCache
 }
 
-func GetWaveAppBinPath() string {
-	return filepath.Join(GetWaveAppPath(), AppPathBinDir)
+func GetWaddleAppBinPath() string {
+	return filepath.Join(GetWaddleAppPath(), AppPathBinDir)
 }
 
-func GetWaveAppElectronExecPath() string {
+func GetWaddleAppElectronExecPath() string {
 	return AppElectronExecPath_VarCache
 }
 
@@ -180,36 +180,36 @@ func ReplaceHomeDir(pathStr string) string {
 }
 
 func GetDomainSocketName() string {
-	return filepath.Join(GetWaveDataDir(), DomainSocketBaseName)
+	return filepath.Join(GetWaddleDataDir(), DomainSocketBaseName)
 }
 
 // returns a Unix-style path for the remote socket (using fmt.Sprintf instead of filepath.Join
 // because this path is for a remote Unix system, not the local OS which might be Windows)
 func GetPersistentRemoteSockName(clientId string) string {
-	return fmt.Sprintf("~/.waveterm/client/%s/waveterm.sock", clientId)
+	return fmt.Sprintf("~/.waddle/client/%s/waddle.sock", clientId)
 }
 
-func EnsureWaveDataDir() error {
-	return CacheEnsureDir(GetWaveDataDir(), "wavehome", 0700, "wave home directory")
+func EnsureWaddleDataDir() error {
+	return CacheEnsureDir(GetWaddleDataDir(), "waddlehome", 0700, "Waddle home directory")
 }
 
-func EnsureWaveDBDir() error {
-	return CacheEnsureDir(filepath.Join(GetWaveDataDir(), WaveDBDir), "wavedb", 0700, "wave db directory")
+func EnsureWaddleDBDir() error {
+	return CacheEnsureDir(filepath.Join(GetWaddleDataDir(), WaddleDBDir), "waddledb", 0700, "Waddle db directory")
 }
 
-func EnsureWaveConfigDir() error {
-	return CacheEnsureDir(GetWaveConfigDir(), "waveconfig", 0700, "wave config directory")
+func EnsureWaddleConfigDir() error {
+	return CacheEnsureDir(GetWaddleConfigDir(), "waveconfig", 0700, "Waddle config directory")
 }
 
-func EnsureWavePresetsDir() error {
-	return CacheEnsureDir(filepath.Join(GetWaveConfigDir(), "presets"), "wavepresets", 0700, "wave presets directory")
+func EnsureWaddlePresetsDir() error {
+	return CacheEnsureDir(filepath.Join(GetWaddleConfigDir(), "presets"), "waddlepresets", 0700, "Waddle presets directory")
 }
 
-func resolveWaveCachesDir() string {
+func resolveWaddleCachesDir() string {
 	var cacheDir string
-	appBundle := "waveterm"
+	appBundle := "waddle"
 	if IsDevMode() {
-		appBundle = "waveterm-dev"
+		appBundle = "waddle-dev"
 	}
 
 	switch runtime.GOOS {
@@ -239,15 +239,15 @@ func resolveWaveCachesDir() string {
 	return cacheDir
 }
 
-func GetWaveCachesDir() string {
+func GetWaddleCachesDir() string {
 	waveCachesDirOnce.Do(func() {
-		waveCachesDir = resolveWaveCachesDir()
+		waveCachesDir = resolveWaddleCachesDir()
 	})
 	return waveCachesDir
 }
 
-func EnsureWaveCachesDir() error {
-	return CacheEnsureDir(GetWaveCachesDir(), "wavecaches", 0700, "wave caches directory")
+func EnsureWaddleCachesDir() error {
+	return CacheEnsureDir(GetWaddleCachesDir(), "waddlecaches", 0700, "Waddle caches directory")
 }
 
 func CacheEnsureDir(dirName string, cacheKey string, perm os.FileMode, dirDesc string) error {
@@ -478,7 +478,7 @@ func getSystemSummary(ctx context.Context) string {
 
 // job socket path on remote machine
 func GetRemoteJobSocketPath(jobId string) string {
-	socketDir := filepath.Join("/tmp", fmt.Sprintf("waveterm-%d", os.Getuid()))
+	socketDir := filepath.Join("/tmp", fmt.Sprintf("waddle-%d", os.Getuid()))
 	return filepath.Join(socketDir, fmt.Sprintf("%s.sock", jobId))
 }
 
@@ -491,6 +491,6 @@ func GetRemoteJobFilePath(jobId string, extension string) string {
 // job file dir on remote machines
 func GetRemoteJobLogDir() string {
 	homeDir := GetHomeDir()
-	jobDir := filepath.Join(homeDir, ".waveterm", "jobs")
+	jobDir := filepath.Join(homeDir, ".waddle", "jobs")
 	return jobDir
 }

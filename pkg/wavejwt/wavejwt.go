@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	IssuerWaveTerm = "waveterm"
+	IssuerWaddle = "waddle"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 	privateKey ed25519.PrivateKey
 )
 
-type WaveJwtClaims struct {
+type WaddleJwtClaims struct {
 	jwt.RegisteredClaims
 	MainServer bool   `json:"mainserver,omitempty"`
 	Sock       string `json:"sock,omitempty"`
@@ -87,7 +87,7 @@ func SetPrivateKey(keyData []byte) error {
 	return nil
 }
 
-func ValidateAndExtract(tokenStr string) (*WaveJwtClaims, error) {
+func ValidateAndExtract(tokenStr string) (*WaddleJwtClaims, error) {
 	globalLock.Lock()
 	pubKey := publicKey
 	globalLock.Unlock()
@@ -96,7 +96,7 @@ func ValidateAndExtract(tokenStr string) (*WaveJwtClaims, error) {
 		return nil, fmt.Errorf("public key not set")
 	}
 
-	token, err := jwt.ParseWithClaims(tokenStr, &WaveJwtClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &WaddleJwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodEd25519); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -106,7 +106,7 @@ func ValidateAndExtract(tokenStr string) (*WaveJwtClaims, error) {
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
-	claims, ok := token.Claims.(*WaveJwtClaims)
+	claims, ok := token.Claims.(*WaddleJwtClaims)
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
@@ -114,7 +114,7 @@ func ValidateAndExtract(tokenStr string) (*WaveJwtClaims, error) {
 	return claims, nil
 }
 
-func Sign(claims *WaveJwtClaims) (string, error) {
+func Sign(claims *WaddleJwtClaims) (string, error) {
 	globalLock.Lock()
 	privKey := privateKey
 	globalLock.Unlock()
@@ -127,7 +127,7 @@ func Sign(claims *WaveJwtClaims) (string, error) {
 		claims.IssuedAt = jwt.NewNumericDate(time.Now())
 	}
 	if claims.Issuer == "" {
-		claims.Issuer = IssuerWaveTerm
+		claims.Issuer = IssuerWaddle
 	}
 	if claims.ExpiresAt == nil {
 		claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 365))

@@ -25,16 +25,16 @@ import (
 
 	"github.com/kevinburke/ssh_config"
 	"github.com/skeema/knownhosts"
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/secretstore"
-	"github.com/wavetermdev/waveterm/pkg/trimquotes"
-	"github.com/wavetermdev/waveterm/pkg/userinput"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/secretstore"
+	"github.com/waddledev/waddle/pkg/trimquotes"
+	"github.com/waddledev/waddle/pkg/userinput"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wconfig"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	xknownhosts "golang.org/x/crypto/ssh/knownhosts"
@@ -86,7 +86,7 @@ const (
 var waveSshConfigUserSettingsInternal *ssh_config.UserSettings
 var configUserSettingsOnce = &sync.Once{}
 
-func WaveSshConfigUserSettings() *ssh_config.UserSettings {
+func WaddleSshConfigUserSettings() *ssh_config.UserSettings {
 	configUserSettingsOnce.Do(func() {
 		waveSshConfigUserSettingsInternal = ssh_config.DefaultUserSettings
 		waveSshConfigUserSettingsInternal.IgnoreMatchDirective = true
@@ -876,7 +876,7 @@ func ConnectToClient(connCtx context.Context, opts *SSHOpts, currentClient *ssh.
 		JumpNum:       jumpNum,
 	}
 	if jumpNum > SshProxyJumpMaxDepth {
-		return nil, jumpNum, ConnectionError{ConnectionDebugInfo: debugInfo, Err: utilds.Errorf(ConnErrCode_ProxyDepth, "ProxyJump %d exceeds Wave's max depth of %d", jumpNum, SshProxyJumpMaxDepth)}
+		return nil, jumpNum, ConnectionError{ConnectionDebugInfo: debugInfo, Err: utilds.Errorf(ConnErrCode_ProxyDepth, "ProxyJump %d exceeds Waddle's max depth of %d", jumpNum, SshProxyJumpMaxDepth)}
 	}
 
 	rawName := opts.String()
@@ -968,11 +968,11 @@ func findSshConfigKeywords(hostPattern string) (connKeywords *wconfig.ConnKeywor
 			outErr = panicErr
 		}
 	}()
-	WaveSshConfigUserSettings().ReloadConfigs()
+	WaddleSshConfigUserSettings().ReloadConfigs()
 	sshKeywords := &wconfig.ConnKeywords{}
 	var err error
 
-	userRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "User")
+	userRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "User")
 	if err != nil {
 		return nil, err
 	}
@@ -986,7 +986,7 @@ func findSshConfigKeywords(hostPattern string) (connKeywords *wconfig.ConnKeywor
 	}
 	sshKeywords.SshUser = &userClean
 
-	hostNameRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "HostName")
+	hostNameRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "HostName")
 	if err != nil {
 		return nil, err
 	}
@@ -998,38 +998,38 @@ func findSshConfigKeywords(hostPattern string) (connKeywords *wconfig.ConnKeywor
 		sshKeywords.SshHostName = &hostNameRaw
 	}
 
-	portRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "Port")
+	portRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "Port")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshPort = utilfn.Ptr(trimquotes.TryTrimQuotes(portRaw))
 
-	identityFileRaw := WaveSshConfigUserSettings().GetAll(hostPattern, "IdentityFile")
+	identityFileRaw := WaddleSshConfigUserSettings().GetAll(hostPattern, "IdentityFile")
 	for i := 0; i < len(identityFileRaw); i++ {
 		identityFileRaw[i] = trimquotes.TryTrimQuotes(identityFileRaw[i])
 	}
 	sshKeywords.SshIdentityFile = identityFileRaw
 
-	batchModeRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "BatchMode")
+	batchModeRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "BatchMode")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshBatchMode = utilfn.Ptr(strings.ToLower(trimquotes.TryTrimQuotes(batchModeRaw)) == "yes")
 
 	// we currently do not support host-bound or unbound but will use yes when they are selected
-	pubkeyAuthenticationRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "PubkeyAuthentication")
+	pubkeyAuthenticationRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "PubkeyAuthentication")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshPubkeyAuthentication = utilfn.Ptr(strings.ToLower(trimquotes.TryTrimQuotes(pubkeyAuthenticationRaw)) != "no")
 
-	passwordAuthenticationRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "PasswordAuthentication")
+	passwordAuthenticationRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "PasswordAuthentication")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshPasswordAuthentication = utilfn.Ptr(strings.ToLower(trimquotes.TryTrimQuotes(passwordAuthenticationRaw)) != "no")
 
-	kbdInteractiveAuthenticationRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "KbdInteractiveAuthentication")
+	kbdInteractiveAuthenticationRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "KbdInteractiveAuthentication")
 	if err != nil {
 		return nil, err
 	}
@@ -1037,24 +1037,24 @@ func findSshConfigKeywords(hostPattern string) (connKeywords *wconfig.ConnKeywor
 
 	// these are parsed as a single string and must be separated
 	// these are case sensitive in openssh so they are here too
-	preferredAuthenticationsRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "PreferredAuthentications")
+	preferredAuthenticationsRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "PreferredAuthentications")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshPreferredAuthentications = strings.Split(trimquotes.TryTrimQuotes(preferredAuthenticationsRaw), ",")
-	addKeysToAgentRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "AddKeysToAgent")
+	addKeysToAgentRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "AddKeysToAgent")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshAddKeysToAgent = utilfn.Ptr(strings.ToLower(trimquotes.TryTrimQuotes(addKeysToAgentRaw)) == "yes")
 
-	identitiesOnly, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "IdentitiesOnly")
+	identitiesOnly, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "IdentitiesOnly")
 	if err != nil {
 		return nil, err
 	}
 	sshKeywords.SshIdentitiesOnly = utilfn.Ptr(strings.ToLower(trimquotes.TryTrimQuotes(identitiesOnly)) == "yes")
 
-	identityAgentRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "IdentityAgent")
+	identityAgentRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "IdentityAgent")
 	if err != nil {
 		return nil, err
 	}
@@ -1088,7 +1088,7 @@ func findSshConfigKeywords(hostPattern string) (connKeywords *wconfig.ConnKeywor
 		sshKeywords.SshIdentityAgent = utilfn.Ptr(agentPath)
 	}
 
-	proxyJumpRaw, err := WaveSshConfigUserSettings().GetStrict(hostPattern, "ProxyJump")
+	proxyJumpRaw, err := WaddleSshConfigUserSettings().GetStrict(hostPattern, "ProxyJump")
 	if err != nil {
 		return nil, err
 	}
@@ -1100,9 +1100,9 @@ func findSshConfigKeywords(hostPattern string) (connKeywords *wconfig.ConnKeywor
 		}
 		sshKeywords.SshProxyJump = append(sshKeywords.SshProxyJump, proxyJumpName)
 	}
-	rawUserKnownHostsFile, _ := WaveSshConfigUserSettings().GetStrict(hostPattern, "UserKnownHostsFile")
+	rawUserKnownHostsFile, _ := WaddleSshConfigUserSettings().GetStrict(hostPattern, "UserKnownHostsFile")
 	sshKeywords.SshUserKnownHostsFile = strings.Fields(rawUserKnownHostsFile) // TODO - smarter splitting escaped spaces and quotes
-	rawGlobalKnownHostsFile, _ := WaveSshConfigUserSettings().GetStrict(hostPattern, "GlobalKnownHostsFile")
+	rawGlobalKnownHostsFile, _ := WaddleSshConfigUserSettings().GetStrict(hostPattern, "GlobalKnownHostsFile")
 	sshKeywords.SshGlobalKnownHostsFile = strings.Fields(rawGlobalKnownHostsFile) // TODO - smarter splitting escaped spaces and quotes
 
 	return sshKeywords, nil

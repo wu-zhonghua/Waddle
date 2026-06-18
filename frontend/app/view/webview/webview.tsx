@@ -14,7 +14,7 @@ import {
     SuggestionControlNoResults,
 } from "@/app/suggestion/suggestion";
 import { MockBoundary } from "@/app/waveenv/mockboundary";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { openLink } from "@/store/global";
 import { adaptFromReactOrNativeKeyEvent, checkKeyPressed } from "@/util/keyutil";
 import { fireAndForget, useAtomValueSafe } from "@/util/util";
@@ -83,7 +83,7 @@ export class WebViewModel implements ViewModel {
         this.blockId = blockId;
         this.env = waveEnv;
         this.noPadding = atom(true);
-        this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
+        this.blockAtom = this.env.wos.getWaddleObjectAtom<Block>(`block:${blockId}`);
         this.url = atom();
         const defaultUrlAtom = this.env.getSettingsKeyAtom("web:defaulturl");
         this.homepageUrl = atom((get) => {
@@ -561,7 +561,7 @@ export class WebViewModel implements ViewModel {
         }
     }
 
-    keyDownHandler(e: WaveKeyboardEvent): boolean {
+    keyDownHandler(e: WaddleKeyboardEvent): boolean {
         if (checkKeyPressed(e, "Cmd:l")) {
             this.urlInputRef?.current?.focus();
             this.urlInputRef?.current?.select();
@@ -752,7 +752,7 @@ export class WebViewModel implements ViewModel {
 
 const BookmarkTypeahead = memo(
     ({ model, blockRef }: { model: WebViewModel; blockRef: React.RefObject<HTMLDivElement> }) => {
-        const env = useWaveEnv<WebViewEnv>();
+        const env = useWaddleEnv<WebViewEnv>();
         const openBookmarksJson = () => {
             fireAndForget(async () => {
                 const path = `${env.electron.getConfigDir()}/presets/bookmarks.json`;
@@ -842,7 +842,7 @@ function WebViewPreviewFallback({ url }: { url?: string | null }) {
 }
 
 const WebView = memo(({ model, onFailLoad, blockRef, initialSrc }: WebViewProps) => {
-    const env = useWaveEnv<WebViewEnv>();
+    const env = useWaddleEnv<WebViewEnv>();
     const blockData = useAtomValue(model.blockAtom);
     const defaultUrl = useAtomValue(model.homepageUrl);
     const defaultSearchAtom = env.getSettingsKeyAtom("web:defaultsearch");

@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { format } from "util";
 import winston from "winston";
-import { getWaveDataDir, isDev } from "./emain-platform";
+import { getWaddleDataDir, isDev } from "./emain-platform";
 
 const oldConsoleLog = console.log;
 
@@ -66,8 +66,8 @@ function pruneOldLogs(logsDir: string): { pruned: string[]; error: any } {
 }
 
 function rotateLogIfNeeded(): string | null {
-    const waveDataDir = getWaveDataDir();
-    const logFile = path.join(waveDataDir, "waveapp.log");
+    const waveDataDir = getWaddleDataDir();
+    const logFile = path.join(waveDataDir, "waddleapp.log");
     const logsDir = path.join(waveDataDir, "logs");
 
     if (!fs.existsSync(logsDir)) {
@@ -94,7 +94,7 @@ let prunedFiles: string[] = [];
 let pruneError: any = null;
 try {
     rotatedPath = rotateLogIfNeeded();
-    const logsDir = path.join(getWaveDataDir(), "logs");
+    const logsDir = path.join(getWaddleDataDir(), "logs");
     const pruneResult = pruneOldLogs(logsDir);
     prunedFiles = pruneResult.pruned;
     pruneError = pruneResult.error;
@@ -103,7 +103,7 @@ try {
 }
 
 const loggerTransports: winston.transport[] = [
-    new winston.transports.File({ filename: path.join(getWaveDataDir(), "waveapp.log"), level: "info" }),
+    new winston.transports.File({ filename: path.join(getWaddleDataDir(), "waddleapp.log"), level: "info" }),
 ];
 if (isDev) {
     loggerTransports.push(new winston.transports.Console());

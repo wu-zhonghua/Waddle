@@ -20,9 +20,9 @@ import (
 	"unicode"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/tsunami/rpctypes"
-	"github.com/wavetermdev/waveterm/tsunami/util"
-	"github.com/wavetermdev/waveterm/tsunami/vdom"
+	"github.com/waddledev/waddle/tsunami/rpctypes"
+	"github.com/waddledev/waddle/tsunami/util"
+	"github.com/waddledev/waddle/tsunami/vdom"
 )
 
 const TsunamiListenAddrEnvVar = "TSUNAMI_LISTENADDR"
@@ -167,7 +167,7 @@ func (c *ClientImpl) getFaviconPath() string {
 			}
 		}
 	}
-	return "/wave-logo-256.png"
+	return "/waddle-logo-256.png"
 }
 
 func (c *ClientImpl) makeBackendOpts() *rpctypes.VDomBackendOpts {
@@ -318,7 +318,7 @@ func (c *ClientImpl) SendTermWrite(refId string, data string) error {
 }
 
 func makeNullRendered() *rpctypes.RenderedElem {
-	return &rpctypes.RenderedElem{WaveId: uuid.New().String(), Tag: vdom.WaveNullTag}
+	return &rpctypes.RenderedElem{WaddleId: uuid.New().String(), Tag: vdom.WaddleNullTag}
 }
 
 func structToProps(props any) map[string]any {

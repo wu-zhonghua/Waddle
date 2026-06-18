@@ -4,7 +4,8 @@
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { TreeView, type TreeNodeData } from "@/app/treeview/treeview";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { checkKeyPressed, isCharacterKeyEvent } from "@/util/keyutil";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
 import { addOpenMenuItems } from "@/util/previewutil";
@@ -32,6 +33,15 @@ import { debounce } from "throttle-debounce";
 import "./directorypreview.scss";
 import { EntryManagerOverlay, EntryManagerOverlayProps, EntryManagerType } from "./entry-manager";
 import {
+    DirectoryViewMode,
+    DirectoryViewModeSettingKey,
+    type DirectoryTreeNodeVisuals,
+    fileInfoEntriesToTreeNodes,
+    fileInfoToTreeNode,
+    filterDirectoryTreeEntries,
+    normalizeDirectoryViewMode,
+} from "./preview-directory-tree";
+import {
     cleanMimetype,
     getBestUnit,
     getLastModifiedTime,
@@ -47,6 +57,77 @@ import { type PreviewModel } from "./preview-model";
 import type { PreviewEnv } from "./previewenv";
 
 const PageJumpSize = 20;
+const DirectoryTreeMaxEntries = 500;
+
+function normalizeTreeIconName(icon: string): string {
+    if (!isIconValid(icon)) {
+        return null;
+    }
+    const iconParts = icon.trim().split(/\s+/);
+    const iconName = iconParts.find((part) => !part.startsWith("fa-"));
+    if (iconName == null) {
+        return null;
+    }
+    if (iconParts.includes("fa-brands")) {
+        return `brands@${iconName}`;
+    }
+    if (iconParts.includes("fa-regular")) {
+        return `regular@${iconName}`;
+    }
+    return iconName;
+}
+
+function getFallbackTreeIconColor(fileInfo: FileInfo): string {
+    const mimeType = fileInfo.isdir ? "directory" : (fileInfo.mimetype ?? "");
+    if (mimeType === "directory") {
+        return "var(--term-bright-blue)";
+    }
+    if (mimeType.startsWith("image/")) {
+        return "var(--term-bright-green)";
+    }
+    if (mimeType.startsWith("video/")) {
+        return "var(--term-bright-magenta)";
+    }
+    if (mimeType.startsWith("audio/")) {
+        return "var(--term-bright-cyan)";
+    }
+    if (mimeType === "application/pdf") {
+        return "var(--term-bright-red)";
+    }
+    if (mimeType.includes("json") || mimeType.includes("yaml") || mimeType.includes("toml")) {
+        return "var(--term-yellow)";
+    }
+    if (mimeType.startsWith("text/markdown") || mimeType.startsWith("text/mdx")) {
+        return "var(--term-bright-cyan)";
+    }
+    if (mimeType.startsWith("text/") || mimeType.includes("javascript") || mimeType.includes("typescript")) {
+        return "var(--term-green)";
+    }
+    return "var(--term-gray)";
+}
+
+function getDirectoryTreeNodeVisuals(fileInfo: FileInfo, fullConfig: FullConfigType): DirectoryTreeNodeVisuals {
+    const mimeType = fileInfo.isdir ? "directory" : (fileInfo.mimetype ?? "");
+    let icon: string = null;
+    let iconColor: string = null;
+    let configKey = mimeType;
+
+    while (configKey.length > 0 && (icon == null || iconColor == null)) {
+        const mimeConfig = fullConfig.mimetypes?.[configKey];
+        if (icon == null && isIconValid(mimeConfig?.icon)) {
+            icon = normalizeTreeIconName(mimeConfig.icon);
+        }
+        if (iconColor == null && mimeConfig?.color) {
+            iconColor = mimeConfig.color;
+        }
+        configKey = configKey.slice(0, -1);
+    }
+
+    return {
+        icon,
+        iconColor: iconColor ?? getFallbackTreeIconColor(fileInfo),
+    };
+}
 
 interface DirectoryTableHeaderCellProps {
     header: Header<FileInfo, unknown>;
@@ -111,7 +192,7 @@ function DirectoryTable({
     newFile,
     newDirectory,
 }: DirectoryTableProps) {
-    const env = useWaveEnv<PreviewEnv>();
+    const env = useWaddleEnv<PreviewEnv>();
     const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
     const defaultSort = useAtomValue(env.getSettingsKeyAtom("preview:defaultsort")) ?? "name";
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
@@ -556,12 +637,242 @@ const MemoizedTableBody = React.memo(
     (prev, next) => prev.table.options.data == next.table.options.data
 ) as typeof TableBody;
 
+interface DirectoryViewModeToggleProps {
+    mode: DirectoryViewMode;
+    onChange: (mode: DirectoryViewMode) => void;
+}
+
+function DirectoryViewModeToggle({ mode, onChange }: DirectoryViewModeToggleProps) {
+    const options: { mode: DirectoryViewMode; icon: string; title: string }[] = [
+        { mode: "folder", icon: "folder-open", title: "Folder view" },
+        { mode: "tree", icon: "list-tree", title: "Tree view" },
+    ];
+
+    return (
+        <div className="dir-view-mode-toggle" role="group" aria-label="Directory view mode" onClick={(e) => e.stopPropagation()}>
+            {options.map((option) => (
+                <button
+                    key={option.mode}
+                    type="button"
+                    title={option.title}
+                    aria-label={option.title}
+                    aria-pressed={mode === option.mode}
+                    className={clsx("dir-view-mode-button", { active: mode === option.mode })}
+                    onClick={() => onChange(option.mode)}
+                >
+                    <i className={`fa-solid fa-${option.icon}`} />
+                </button>
+            ))}
+        </div>
+    );
+}
+
+interface DirectoryTreeProps {
+    model: PreviewModel;
+    data: FileInfo[];
+    search: string;
+    setSearch: (_: string) => void;
+    setSelectedPath: (_: string) => void;
+    dirPath: string;
+    entryManagerOverlayPropsAtom: PrimitiveAtom<EntryManagerOverlayProps>;
+    newFile: () => void;
+    newDirectory: () => void;
+}
+
+function DirectoryTree({
+    model,
+    data,
+    search,
+    setSearch,
+    setSelectedPath,
+    dirPath,
+    entryManagerOverlayPropsAtom,
+    newFile,
+    newDirectory,
+}: DirectoryTreeProps) {
+    const env = useWaddleEnv<PreviewEnv>();
+    const showHiddenFiles = useAtomValue(model.showHiddenFiles);
+    const searchActive = useAtomValue(model.directorySearchActive);
+    const conn = useAtomValue(model.connection);
+    const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
+    const setErrorMsg = useSetAtom(model.errorMsgAtom);
+    const setEntryManagerProps = useSetAtom(entryManagerOverlayPropsAtom);
+
+    const treeData = useMemo(() => {
+        const entries = filterDirectoryTreeEntries(data, showHiddenFiles, search);
+        return fileInfoEntriesToTreeNodes(entries, dirPath, (entry) => getDirectoryTreeNodeVisuals(entry, fullConfig));
+    }, [data, dirPath, fullConfig, search, showHiddenFiles]);
+
+    const selectedPathSeed = treeData.rootIds[0] ?? dirPath ?? "";
+    useEffect(() => {
+        setSelectedPath(selectedPathSeed);
+    }, [selectedPathSeed, setSelectedPath]);
+
+    const fetchDir = useCallback(
+        async (id: string, limit: number) => {
+            const entries: FileInfo[] = [];
+            const remotePath = await model.formatRemoteUri(id, globalStore.get);
+            const stream = env.rpc.FileListStreamCommand(TabRpcClient, { path: remotePath }, null);
+            for await (const chunk of stream) {
+                if (chunk?.fileinfo) {
+                    entries.push(...chunk.fileinfo);
+                }
+            }
+            const filteredEntries = filterDirectoryTreeEntries(entries, showHiddenFiles, search);
+            const capped = filteredEntries.length > limit;
+            const visibleEntries = filteredEntries.slice(0, limit);
+            return {
+                nodes: visibleEntries.map((entry) =>
+                    fileInfoToTreeNode(entry, id, getDirectoryTreeNodeVisuals(entry, fullConfig))
+                ),
+                capped,
+                totalKnown: filteredEntries.length,
+            };
+        },
+        [env, fullConfig, model, search, showHiddenFiles]
+    );
+
+    const updateName = useCallback(
+        (path: string, isDir: boolean) => {
+            const fileName = path.split("/").at(-1);
+            setEntryManagerProps({
+                entryManagerType: EntryManagerType.EditName,
+                startingValue: fileName,
+                onSave: (newName: string) => {
+                    if (newName !== fileName) {
+                        const lastInstance = path.lastIndexOf(fileName);
+                        const newPath = path.substring(0, lastInstance) + newName;
+                        handleRename(model, path, newPath, isDir, setErrorMsg);
+                    }
+                    setEntryManagerProps(undefined);
+                },
+            });
+        },
+        [model, setEntryManagerProps, setErrorMsg]
+    );
+
+    const handleTreeNodeContextMenu = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>, _id: string, node: TreeNodeData) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const filePath = node.path ?? node.id;
+            const fileName = node.label ?? filePath.split("/").pop() ?? filePath;
+            const finfo: FileInfo = {
+                name: fileName,
+                path: filePath,
+                isdir: node.isDirectory,
+                mimetype: node.mimeType ?? (node.isDirectory ? "directory" : ""),
+            };
+            const menu: ContextMenuItem[] = [
+                {
+                    label: "New File",
+                    click: () => {
+                        newFile();
+                    },
+                },
+                {
+                    label: "New Folder",
+                    click: () => {
+                        newDirectory();
+                    },
+                },
+                {
+                    label: "Rename",
+                    click: () => {
+                        updateName(filePath, node.isDirectory);
+                    },
+                },
+                {
+                    type: "separator",
+                },
+                {
+                    label: "Copy File Name",
+                    click: () => fireAndForget(() => navigator.clipboard.writeText(fileName)),
+                },
+                {
+                    label: "Copy Full File Name",
+                    click: () => fireAndForget(() => navigator.clipboard.writeText(filePath)),
+                },
+                {
+                    label: "Copy File Name (Shell Quoted)",
+                    click: () => fireAndForget(() => navigator.clipboard.writeText(shellQuote([fileName]))),
+                },
+                {
+                    label: "Copy Full File Name (Shell Quoted)",
+                    click: () => fireAndForget(() => navigator.clipboard.writeText(shellQuote([filePath]))),
+                },
+            ];
+            addOpenMenuItems(menu, conn, finfo);
+            menu.push(
+                {
+                    type: "separator",
+                },
+                {
+                    label: "Default Settings",
+                    submenu: makeDirectoryDefaultMenuItems(model),
+                },
+                {
+                    type: "separator",
+                },
+                {
+                    label: "Delete",
+                    click: () => handleFileDelete(model, filePath, false, setErrorMsg),
+                }
+            );
+            ContextMenuModel.getInstance().showContextMenu(menu, e);
+        },
+        [conn, model, newDirectory, newFile, setErrorMsg, updateName]
+    );
+
+    return (
+        <div className="dir-tree-panel">
+            {(searchActive || search !== "") && (
+                <div className="flex rounded-[3px] py-1 px-2 bg-warning text-black">
+                    <span>{search === "" ? "Type to search (Esc to cancel)" : `Searching for "${search}"`}</span>
+                    <div
+                        className="ml-auto bg-transparent flex justify-center items-center flex-col p-0.5 rounded-md hover:bg-hoverbg focus:bg-hoverbg focus-within:bg-hoverbg cursor-pointer"
+                        onClick={() => {
+                            setSearch("");
+                            globalStore.set(model.directorySearchActive, false);
+                        }}
+                    >
+                        <i className="fa-solid fa-xmark" />
+                    </div>
+                </div>
+            )}
+            <TreeView
+                key={`${dirPath}:${search}:${showHiddenFiles}`}
+                rootIds={treeData.rootIds}
+                initialNodes={treeData.initialNodes}
+                fetchDir={fetchDir}
+                maxDirEntries={DirectoryTreeMaxEntries}
+                minWidth={0}
+                maxWidth={1000000}
+                width="100%"
+                height="100%"
+                className="dir-tree"
+                onOpenFile={(_id, node) => {
+                    model.goHistory(node.path ?? node.id);
+                    setSearch("");
+                    globalStore.set(model.directorySearchActive, false);
+                }}
+                onSelectionChange={(_id, node) => setSelectedPath(node.path ?? node.id)}
+                onNodeContextMenu={handleTreeNodeContextMenu}
+            />
+        </div>
+    );
+}
+
 interface DirectoryPreviewProps {
     model: PreviewModel;
 }
 
 function DirectoryPreview({ model }: DirectoryPreviewProps) {
-    const env = useWaveEnv<PreviewEnv>();
+    const env = useWaddleEnv<PreviewEnv>();
+    const directoryViewModeSetting = useAtomValue(env.getSettingsKeyAtom(DirectoryViewModeSettingKey));
+    const [directoryViewMode, setDirectoryViewMode] = useState<DirectoryViewMode>(() =>
+        normalizeDirectoryViewMode(directoryViewModeSetting)
+    );
     const [searchText, setSearchText] = useState("");
     const [focusIndex, setFocusIndex] = useState(0);
     const [unfilteredData, setUnfilteredData] = useState<FileInfo[]>([]);
@@ -571,8 +882,20 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     const conn = useAtomValue(model.connection);
     const blockData = useAtomValue(model.blockAtom);
     const finfo = useAtomValue(model.statFile);
-    const dirPath = finfo?.path;
+    const dirPath = finfo?.path ?? "";
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
+
+    useEffect(() => {
+        setDirectoryViewMode(normalizeDirectoryViewMode(directoryViewModeSetting));
+    }, [directoryViewModeSetting]);
+
+    const updateDirectoryViewMode = useCallback(
+        (mode: DirectoryViewMode) => {
+            setDirectoryViewMode(mode);
+            fireAndForget(() => env.rpc.SetConfigCommand(TabRpcClient, { [DirectoryViewModeSettingKey]: mode }));
+        },
+        [env]
+    );
 
     useEffect(() => {
         model.refreshCallback = () => {
@@ -586,6 +909,10 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     useEffect(
         () =>
             fireAndForget(async () => {
+                if (dirPath == "") {
+                    setUnfilteredData([]);
+                    return;
+                }
                 const entries: FileInfo[] = [];
                 try {
                     const remotePath = await model.formatRemoteUri(dirPath, globalStore.get);
@@ -632,7 +959,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     );
 
     useEffect(() => {
-        model.directoryKeyDownHandler = (waveEvent: WaveKeyboardEvent): boolean => {
+        model.directoryKeyDownHandler = (waveEvent: WaddleKeyboardEvent): boolean => {
             if (checkKeyPressed(waveEvent, "Cmd:f")) {
                 globalStore.set(model.directorySearchActive, true);
                 return true;
@@ -642,24 +969,27 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 globalStore.set(model.directorySearchActive, false);
                 return;
             }
-            if (checkKeyPressed(waveEvent, "ArrowUp")) {
+            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "ArrowUp")) {
                 setFocusIndex((idx) => Math.max(idx - 1, 0));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "ArrowDown")) {
+            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "ArrowDown")) {
                 setFocusIndex((idx) => Math.min(idx + 1, filteredData.length - 1));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "PageUp")) {
+            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "PageUp")) {
                 setFocusIndex((idx) => Math.max(idx - PageJumpSize, 0));
                 return true;
             }
-            if (checkKeyPressed(waveEvent, "PageDown")) {
+            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "PageDown")) {
                 setFocusIndex((idx) => Math.min(idx + PageJumpSize, filteredData.length - 1));
                 return true;
             }
             if (checkKeyPressed(waveEvent, "Enter")) {
-                if (filteredData.length == 0) {
+                if (directoryViewMode !== "tree" && filteredData.length == 0) {
+                    return;
+                }
+                if (selectedPath == null || selectedPath == "") {
                     return;
                 }
                 model.goHistory(selectedPath);
@@ -692,7 +1022,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
         return () => {
             model.directoryKeyDownHandler = null;
         };
-    }, [filteredData, selectedPath, searchText]);
+    }, [directoryViewMode, filteredData, selectedPath, searchText]);
 
     useEffect(() => {
         if (filteredData.length != 0 && focusIndex > filteredData.length - 1) {
@@ -877,19 +1207,36 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 onContextMenu={(e) => handleFileContextMenu(e)}
                 onClick={() => setEntryManagerProps(undefined)}
             >
-                <DirectoryTable
-                    model={model}
-                    data={filteredData}
-                    search={searchText}
-                    focusIndex={focusIndex}
-                    setFocusIndex={setFocusIndex}
-                    setSearch={setSearchText}
-                    setSelectedPath={setSelectedPath}
-                    setRefreshVersion={setRefreshVersion}
-                    entryManagerOverlayPropsAtom={entryManagerPropsAtom}
-                    newFile={newFile}
-                    newDirectory={newDirectory}
-                />
+                <div className="dir-preview-toolbar">
+                    <DirectoryViewModeToggle mode={directoryViewMode} onChange={updateDirectoryViewMode} />
+                </div>
+                {directoryViewMode === "tree" ? (
+                    <DirectoryTree
+                        model={model}
+                        data={unfilteredData}
+                        search={searchText}
+                        setSearch={setSearchText}
+                        setSelectedPath={setSelectedPath}
+                        dirPath={dirPath}
+                        entryManagerOverlayPropsAtom={entryManagerPropsAtom}
+                        newFile={newFile}
+                        newDirectory={newDirectory}
+                    />
+                ) : (
+                    <DirectoryTable
+                        model={model}
+                        data={filteredData}
+                        search={searchText}
+                        focusIndex={focusIndex}
+                        setFocusIndex={setFocusIndex}
+                        setSearch={setSearchText}
+                        setSelectedPath={setSelectedPath}
+                        setRefreshVersion={setRefreshVersion}
+                        entryManagerOverlayPropsAtom={entryManagerPropsAtom}
+                        newFile={newFile}
+                        newDirectory={newDirectory}
+                    />
+                )}
             </div>
             {entryManagerProps && (
                 <EntryManagerOverlay

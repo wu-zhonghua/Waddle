@@ -13,37 +13,37 @@ function setWpsRpcClient(client: WshClient) {
     WpsRpcClient = client;
 }
 
-type WaveEventSubject<T extends WaveEventName = WaveEventName> = {
-    handler: (event: Extract<WaveEvent, { event: T }>) => void;
+type WaddleEventSubject<T extends WaddleEventName = WaddleEventName> = {
+    handler: (event: Extract<WaddleEvent, { event: T }>) => void;
     scope?: string;
 };
 
-type WaveEventSubjectContainer = {
-    handler: (event: WaveEvent) => void;
+type WaddleEventSubjectContainer = {
+    handler: (event: WaddleEvent) => void;
     scope?: string;
     id: string;
 };
 
-type WaveEventSubscription<T extends WaveEventName = WaveEventName> = WaveEventSubject<T> & {
+type WaddleEventSubscription<T extends WaddleEventName = WaddleEventName> = WaddleEventSubject<T> & {
     eventType: T;
 };
 
-type WaveEventUnsubscribe = {
+type WaddleEventUnsubscribe = {
     id: string;
     eventType: string;
 };
 
 // key is "eventType" or "eventType|oref"
 const fileSubjects = new Map<string, SubjectWithRef<WSFileEventData>>();
-const waveEventSubjects = new Map<string, WaveEventSubjectContainer[]>();
+const waveEventSubjects = new Map<string, WaddleEventSubjectContainer[]>();
 
 function wpsReconnectHandler() {
     for (const eventType of waveEventSubjects.keys()) {
-        updateWaveEventSub(eventType);
+        updateWaddleEventSub(eventType);
     }
 }
 
-function updateWaveEventSub(eventType: string) {
+function updateWaddleEventSub(eventType: string) {
     if (isPreviewWindow()) {
         return;
     }
@@ -64,7 +64,7 @@ function updateWaveEventSub(eventType: string) {
     RpcApi.EventSubCommand(WpsRpcClient, subreq, { noresponse: true });
 }
 
-function waveEventSubscribeSingle<T extends WaveEventName>(subscription: WaveEventSubscription<T>): () => void {
+function waveEventSubscribeSingle<T extends WaddleEventName>(subscription: WaddleEventSubscription<T>): () => void {
     // console.log("waveEventSubscribeSingle", subscription);
     if (subscription.handler == null) {
         return () => {};
@@ -75,17 +75,17 @@ function waveEventSubscribeSingle<T extends WaveEventName>(subscription: WaveEve
         subjects = [];
         waveEventSubjects.set(subscription.eventType, subjects);
     }
-    const subcont: WaveEventSubjectContainer = {
+    const subcont: WaddleEventSubjectContainer = {
         id,
-        handler: subscription.handler as (event: WaveEvent) => void,
+        handler: subscription.handler as (event: WaddleEvent) => void,
         scope: subscription.scope,
     };
     subjects.push(subcont);
-    updateWaveEventSub(subscription.eventType);
+    updateWaddleEventSub(subscription.eventType);
     return () => waveEventUnsubscribe({ id, eventType: subscription.eventType });
 }
 
-function waveEventUnsubscribe(...unsubscribes: WaveEventUnsubscribe[]) {
+function waveEventUnsubscribe(...unsubscribes: WaddleEventUnsubscribe[]) {
     const eventTypeSet = new Set<string>();
     for (const unsubscribe of unsubscribes) {
         const subjects = waveEventSubjects.get(unsubscribe.eventType);
@@ -104,7 +104,7 @@ function waveEventUnsubscribe(...unsubscribes: WaveEventUnsubscribe[]) {
     }
 
     for (const eventType of eventTypeSet) {
-        updateWaveEventSub(eventType);
+        updateWaddleEventSub(eventType);
     }
 }
 
@@ -127,8 +127,8 @@ function getFileSubject(zoneId: string, fileName: string): SubjectWithRef<WSFile
     return subject;
 }
 
-function handleWaveEvent(event: WaveEvent) {
-    // console.log("handleWaveEvent", event);
+function handleWaddleEvent(event: WaddleEvent) {
+    // console.log("handleWaddleEvent", event);
     const subjects = waveEventSubjects.get(event.event);
     if (subjects == null) {
         return;
@@ -149,7 +149,7 @@ function handleWaveEvent(event: WaveEvent) {
 
 export {
     getFileSubject,
-    handleWaveEvent,
+    handleWaddleEvent,
     setWpsRpcClient,
     waveEventSubscribeSingle,
     waveEventUnsubscribe,

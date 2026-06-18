@@ -9,16 +9,16 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/service/blockservice"
-	"github.com/wavetermdev/waveterm/pkg/service/clientservice"
-	"github.com/wavetermdev/waveterm/pkg/service/objectservice"
-	"github.com/wavetermdev/waveterm/pkg/service/userinputservice"
-	"github.com/wavetermdev/waveterm/pkg/service/windowservice"
-	"github.com/wavetermdev/waveterm/pkg/service/workspaceservice"
-	"github.com/wavetermdev/waveterm/pkg/tsgen/tsgenmeta"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/web/webcmd"
+	"github.com/waddledev/waddle/pkg/service/blockservice"
+	"github.com/waddledev/waddle/pkg/service/clientservice"
+	"github.com/waddledev/waddle/pkg/service/objectservice"
+	"github.com/waddledev/waddle/pkg/service/userinputservice"
+	"github.com/waddledev/waddle/pkg/service/windowservice"
+	"github.com/waddledev/waddle/pkg/service/workspaceservice"
+	"github.com/waddledev/waddle/pkg/tsgen/tsgenmeta"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/web/webcmd"
 )
 
 var ServiceMap = map[string]any{
@@ -32,12 +32,12 @@ var ServiceMap = map[string]any{
 
 var contextRType = reflect.TypeOf((*context.Context)(nil)).Elem()
 var errorRType = reflect.TypeOf((*error)(nil)).Elem()
-var updatesRType = reflect.TypeOf(([]waveobj.WaveObjUpdate{}))
-var waveObjRType = reflect.TypeOf((*waveobj.WaveObj)(nil)).Elem()
-var waveObjSliceRType = reflect.TypeOf([]waveobj.WaveObj{})
-var waveObjMapRType = reflect.TypeOf(map[string]waveobj.WaveObj{})
+var updatesRType = reflect.TypeOf(([]waveobj.WaddleObjUpdate{}))
+var waveObjRType = reflect.TypeOf((*waveobj.WaddleObj)(nil)).Elem()
+var waveObjSliceRType = reflect.TypeOf([]waveobj.WaddleObj{})
+var waveObjMapRType = reflect.TypeOf(map[string]waveobj.WaddleObj{})
 var methodMetaRType = reflect.TypeOf(tsgenmeta.MethodMeta{})
-var waveObjUpdateRType = reflect.TypeOf(waveobj.WaveObjUpdate{})
+var waveObjUpdateRType = reflect.TypeOf(waveobj.WaddleObjUpdate{})
 var uiContextRType = reflect.TypeOf((*waveobj.UIContext)(nil)).Elem()
 var wsCommandRType = reflect.TypeOf((*webcmd.WSCommandType)(nil)).Elem()
 var orefRType = reflect.TypeOf((*waveobj.ORef)(nil)).Elem()
@@ -50,10 +50,10 @@ type WebCallType struct {
 }
 
 type WebReturnType struct {
-	Success bool                    `json:"success,omitempty"`
-	Error   string                  `json:"error,omitempty"`
-	Data    any                     `json:"data,omitempty"`
-	Updates []waveobj.WaveObjUpdate `json:"updates,omitempty"`
+	Success bool                      `json:"success,omitempty"`
+	Error   string                    `json:"error,omitempty"`
+	Data    any                       `json:"data,omitempty"`
+	Updates []waveobj.WaddleObjUpdate `json:"updates,omitempty"`
 }
 
 func convertNumber(argType reflect.Type, jsonArg float64) (any, error) {
@@ -95,7 +95,7 @@ func convertComplex(argType reflect.Type, jsonArg any) (any, error) {
 	return nativeArgVal.Elem().Interface(), nil
 }
 
-func isSpecialWaveArgType(argType reflect.Type) bool {
+func isSpecialWaddleArgType(argType reflect.Type) bool {
 	return argType == waveObjRType || argType == waveObjSliceRType || argType == waveObjMapRType || argType == wsCommandRType
 }
 
@@ -133,7 +133,7 @@ func convertSpecial(argType reflect.Type, jsonArg any) (any, error) {
 			return nil, fmt.Errorf("cannot convert %T to %s", jsonArg, argType)
 		}
 		sliceArg := jsonArg.([]any)
-		nativeSlice := make([]waveobj.WaveObj, len(sliceArg))
+		nativeSlice := make([]waveobj.WaddleObj, len(sliceArg))
 		for idx, elem := range sliceArg {
 			elemMap, ok := elem.(map[string]any)
 			if !ok {
@@ -151,7 +151,7 @@ func convertSpecial(argType reflect.Type, jsonArg any) (any, error) {
 			return nil, fmt.Errorf("cannot convert %T to %s", jsonArg, argType)
 		}
 		mapArg := jsonArg.(map[string]any)
-		nativeMap := make(map[string]waveobj.WaveObj)
+		nativeMap := make(map[string]waveobj.WaddleObj)
 		for key, elem := range mapArg {
 			elemMap, ok := elem.(map[string]any)
 			if !ok {
@@ -171,9 +171,9 @@ func convertSpecial(argType reflect.Type, jsonArg any) (any, error) {
 
 func convertSpecialForReturn(argType reflect.Type, nativeArg any) (any, error) {
 	if argType == waveObjRType {
-		return waveobj.ToJsonMap(nativeArg.(waveobj.WaveObj))
+		return waveobj.ToJsonMap(nativeArg.(waveobj.WaddleObj))
 	} else if argType == waveObjSliceRType {
-		nativeSlice := nativeArg.([]waveobj.WaveObj)
+		nativeSlice := nativeArg.([]waveobj.WaddleObj)
 		jsonSlice := make([]map[string]any, len(nativeSlice))
 		for idx, elem := range nativeSlice {
 			elemMap, err := waveobj.ToJsonMap(elem)
@@ -184,7 +184,7 @@ func convertSpecialForReturn(argType reflect.Type, nativeArg any) (any, error) {
 		}
 		return jsonSlice, nil
 	} else if argType == waveObjMapRType {
-		nativeMap := nativeArg.(map[string]waveobj.WaveObj)
+		nativeMap := nativeArg.(map[string]waveobj.WaddleObj)
 		jsonMap := make(map[string]map[string]any)
 		for key, elem := range nativeMap {
 			elemMap, err := waveobj.ToJsonMap(elem)
@@ -203,7 +203,7 @@ func convertArgument(argType reflect.Type, jsonArg any) (any, error) {
 	if jsonArg == nil {
 		return reflect.Zero(argType).Interface(), nil
 	}
-	if isSpecialWaveArgType(argType) {
+	if isSpecialWaddleArgType(argType) {
 		return convertSpecial(argType, jsonArg)
 	}
 	jsonType := reflect.TypeOf(jsonArg)
@@ -288,10 +288,10 @@ func convertReturnValues(rtnVals []reflect.Value) *WebReturnType {
 		}
 		if valType == updatesRType {
 			// has a special MarshalJSON method
-			rtn.Updates = val.Interface().([]waveobj.WaveObjUpdate)
+			rtn.Updates = val.Interface().([]waveobj.WaddleObjUpdate)
 			continue
 		}
-		if isSpecialWaveArgType(valType) {
+		if isSpecialWaddleArgType(valType) {
 			jsonVal, err := convertSpecialForReturn(valType, val.Interface())
 			if err != nil {
 				rtn.Error = fmt.Errorf("cannot convert special return value: %v", err).Error()
@@ -384,16 +384,16 @@ func baseValidateServiceArg(argType reflect.Type) error {
 }
 
 func validateMethodReturnArg(retType reflect.Type) error {
-	// specifically allow waveobj.WaveObj, []waveobj.WaveObj, map[string]waveobj.WaveObj, and error
-	if isSpecialWaveArgType(retType) || retType == errorRType {
+	// specifically allow waveobj.WaddleObj, []waveobj.WaddleObj, map[string]waveobj.WaddleObj, and error
+	if isSpecialWaddleArgType(retType) || retType == errorRType {
 		return nil
 	}
 	return baseValidateServiceArg(retType)
 }
 
 func validateMethodArg(argType reflect.Type) error {
-	// specifically allow waveobj.WaveObj, []waveobj.WaveObj, map[string]waveobj.WaveObj, and context.Context
-	if isSpecialWaveArgType(argType) || argType == contextRType {
+	// specifically allow waveobj.WaddleObj, []waveobj.WaddleObj, map[string]waveobj.WaddleObj, and context.Context
+	if isSpecialWaddleArgType(argType) || argType == contextRType {
 		return nil
 	}
 	return baseValidateServiceArg(argType)

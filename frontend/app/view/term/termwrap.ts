@@ -7,7 +7,7 @@ import { getFileSubject } from "@/app/store/wps";
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import {
-    fetchWaveFile,
+    fetchWaddleFile,
     getApi,
     getOverrideConfigAtom,
     getSettingsKeyAtom,
@@ -521,7 +521,7 @@ export class TermWrap {
     async loadInitialTerminalData(): Promise<void> {
         const startTs = Date.now();
         const zoneId = this.getZoneId();
-        const { data: cacheData, fileInfo: cacheFile } = await fetchWaveFile(zoneId, TermCacheFileName);
+        const { data: cacheData, fileInfo: cacheFile } = await fetchWaddleFile(zoneId, TermCacheFileName);
         let ptyOffset = 0;
         if (cacheFile != null) {
             ptyOffset = cacheFile.meta["ptyoffset"] ?? 0;
@@ -543,7 +543,7 @@ export class TermWrap {
                 }
             }
         }
-        const { data: mainData, fileInfo: mainFile } = await fetchWaveFile(zoneId, TermFileName, ptyOffset);
+        const { data: mainData, fileInfo: mainFile } = await fetchWaddleFile(zoneId, TermFileName, ptyOffset);
         console.log(
             `terminal loaded cachefile:${cacheData?.byteLength ?? 0} main:${mainData?.byteLength ?? 0} bytes, ${Date.now() - startTs}ms`
         );

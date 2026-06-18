@@ -5,7 +5,7 @@ import { Button } from "@/app/element/button";
 import { CopyButton } from "@/app/element/copybutton";
 import { useDimensionsWithCallbackRef } from "@/app/hook/useDimensions";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { NodeModel } from "@/layout/index";
 import * as util from "@/util/util";
 import clsx from "clsx";
@@ -55,7 +55,7 @@ const StalledOverlay = React.memo(
     }) => {
         const [elapsedTime, setElapsedTime] = React.useState<string>("");
 
-        const waveEnv = useWaveEnv<BlockEnv>();
+        const waveEnv = useWaddleEnv<BlockEnv>();
         const handleDisconnect = React.useCallback(() => {
             const prtn = waveEnv.rpc.ConnDisconnectCommand(TabRpcClient, connName, { timeout: 5000 });
             prtn.catch((e) => console.log("error disconnecting", connName, e));
@@ -119,7 +119,7 @@ export const ConnStatusOverlay = React.memo(
         viewModel: ViewModel;
         changeConnModalAtom: jotai.PrimitiveAtom<boolean>;
     }) => {
-        const waveEnv = useWaveEnv<BlockEnv>();
+        const waveEnv = useWaddleEnv<BlockEnv>();
         const connName = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "connection"));
         const [connModalOpen] = jotai.useAtom(changeConnModalAtom);
         const connStatus = jotai.useAtomValue(waveEnv.getConnStatusAtom(connName));

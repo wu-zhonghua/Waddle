@@ -13,20 +13,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/jobcontroller"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/shellexec"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/jobcontroller"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/shellexec"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 type DurableShellController struct {
@@ -117,7 +117,7 @@ func (dsc *DurableShellController) GetConnName() string {
 func (dsc *DurableShellController) sendUpdate_withlock() {
 	rtStatus := dsc.getRuntimeStatus_withlock()
 	log.Printf("sending blockcontroller update %#v\n", rtStatus)
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_ControllerStatus,
 		Scopes: []string{
 			waveobj.MakeORef(waveobj.OType_Tab, dsc.TabId).String(),
@@ -261,7 +261,7 @@ func (dsc *DurableShellController) startNewJob(ctx context.Context, blockMeta wa
 		return "", fmt.Errorf("error making jwt token: %w", err)
 	}
 	swapToken.RpcContext = &rpcContext
-	swapToken.Env[wshutil.WaveJwtTokenVarName] = jwtStr
+	swapToken.Env[wshutil.WaddleJwtTokenVarName] = jwtStr
 	cmdOpts := shellexec.CommandOptsType{
 		Interactive: true,
 		Login:       true,

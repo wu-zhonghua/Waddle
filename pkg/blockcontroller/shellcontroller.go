@@ -16,26 +16,26 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/wavetermdev/waveterm/pkg/blocklogger"
-	"github.com/wavetermdev/waveterm/pkg/filestore"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/remote/conncontroller"
-	"github.com/wavetermdev/waveterm/pkg/shellexec"
-	"github.com/wavetermdev/waveterm/pkg/util/envutil"
-	"github.com/wavetermdev/waveterm/pkg/util/fileutil"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
-	"github.com/wavetermdev/waveterm/pkg/wslconn"
-	"github.com/wavetermdev/waveterm/pkg/wstore"
+	"github.com/waddledev/waddle/pkg/blocklogger"
+	"github.com/waddledev/waddle/pkg/filestore"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/remote/conncontroller"
+	"github.com/waddledev/waddle/pkg/shellexec"
+	"github.com/waddledev/waddle/pkg/util/envutil"
+	"github.com/waddledev/waddle/pkg/util/fileutil"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/wslconn"
+	"github.com/waddledev/waddle/pkg/wstore"
 )
 
 const (
@@ -167,7 +167,7 @@ type RunShellOpts struct {
 func (sc *ShellController) sendUpdate_nolock() {
 	rtStatus := sc.getRuntimeStatus_nolock()
 	log.Printf("sending blockcontroller update %#v\n", rtStatus)
-	wps.Broker.Publish(wps.WaveEvent{
+	wps.Broker.Publish(wps.WaddleEvent{
 		Event: wps.Event_ControllerStatus,
 		Scopes: []string{
 			waveobj.MakeORef(waveobj.OType_Tab, sc.TabId).String(),
@@ -185,7 +185,7 @@ func (sc *ShellController) UpdateControllerAndSendUpdate(updateFn func() bool) {
 	if sendUpdate {
 		rtStatus := sc.GetRuntimeStatus()
 		log.Printf("sending blockcontroller update %#v\n", rtStatus)
-		wps.Broker.Publish(wps.WaveEvent{
+		wps.Broker.Publish(wps.WaddleEvent{
 			Event: wps.Event_ControllerStatus,
 			Scopes: []string{
 				waveobj.MakeORef(waveobj.OType_Tab, sc.TabId).String(),
@@ -444,7 +444,7 @@ func (bc *ShellController) setupAndStartShellProcess(logCtx context.Context, rc 
 				return nil, fmt.Errorf("error making jwt token: %w", err)
 			}
 			swapToken.RpcContext = &rpcContext
-			swapToken.Env[wshutil.WaveJwtTokenVarName] = jwtStr
+			swapToken.Env[wshutil.WaddleJwtTokenVarName] = jwtStr
 			shellProc, err = shellexec.StartWslShellProc(ctx, rc.TermSize, cmdStr, cmdOpts, wslConn)
 			if err != nil {
 				wslConn.SetWshError(err)
@@ -477,7 +477,7 @@ func (bc *ShellController) setupAndStartShellProcess(logCtx context.Context, rc 
 				return nil, fmt.Errorf("error making jwt token: %w", err)
 			}
 			swapToken.RpcContext = &rpcContext
-			swapToken.Env[wshutil.WaveJwtTokenVarName] = jwtStr
+			swapToken.Env[wshutil.WaddleJwtTokenVarName] = jwtStr
 			shellProc, err = shellexec.StartRemoteShellProc(ctx, logCtx, rc.TermSize, cmdStr, cmdOpts, conn)
 			if err != nil {
 				conn.SetWshError(err)
@@ -503,7 +503,7 @@ func (bc *ShellController) setupAndStartShellProcess(logCtx context.Context, rc 
 				return nil, fmt.Errorf("error making jwt token: %w", err)
 			}
 			swapToken.RpcContext = &rpcContext
-			swapToken.Env[wshutil.WaveJwtTokenVarName] = jwtStr
+			swapToken.Env[wshutil.WaddleJwtTokenVarName] = jwtStr
 		}
 		cmdOpts.ShellPath = connUnion.ShellPath
 		cmdOpts.ShellOpts = getLocalShellOpts(blockMeta)
@@ -826,13 +826,13 @@ func getCustomInitScript(logCtx context.Context, meta waveobj.MetaMapType, connN
 	blocklogger.Infof(logCtx, "[conndebug] initScript detected as a file %q from meta key: %s\n", initScriptVal, metaKeyName)
 	initScriptVal, err := wavebase.ExpandHomeDir(initScriptVal)
 	if err != nil {
-		blocklogger.Infof(logCtx, "[conndebug] cannot expand home dir in Wave initscript file: %v\n", err)
-		return fmt.Sprintf("echo \"cannot expand home dir in Wave initscript file, from key %s\";\n", metaKeyName)
+		blocklogger.Infof(logCtx, "[conndebug] cannot expand home dir in Waddle initscript file: %v\n", err)
+		return fmt.Sprintf("echo \"cannot expand home dir in Waddle initscript file, from key %s\";\n", metaKeyName)
 	}
 	fileData, err := os.ReadFile(initScriptVal)
 	if err != nil {
-		blocklogger.Infof(logCtx, "[conndebug] cannot open Wave initscript file: %v\n", err)
-		return fmt.Sprintf("echo \"cannot open Wave initscript file, from key %s\";\n", metaKeyName)
+		blocklogger.Infof(logCtx, "[conndebug] cannot open Waddle initscript file: %v\n", err)
+		return fmt.Sprintf("echo \"cannot open Waddle initscript file, from key %s\";\n", metaKeyName)
 	}
 	if len(fileData) > MaxInitScriptSize {
 		blocklogger.Infof(logCtx, "[conndebug] initscript file too large, size=%d, max=%d\n", len(fileData), MaxInitScriptSize)

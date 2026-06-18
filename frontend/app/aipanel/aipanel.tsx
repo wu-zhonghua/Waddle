@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { handleWaveAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
+import { handleWaddleAIContextMenu } from "@/app/aipanel/aipanel-contextmenu";
 import { waveAIHasSelection } from "@/app/aipanel/waveai-focus-utils";
 import { useTabBackground } from "@/app/block/blockutil";
 import { ErrorBoundary } from "@/app/element/errorboundary";
@@ -9,7 +9,7 @@ import { atoms, getSettingsKeyAtom } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { useTabModelMaybe } from "@/app/store/tab-model";
 import { isBuilderWindow } from "@/app/store/windowtype";
-import { useWaveEnv } from "@/app/waveenv/waveenv";
+import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { checkKeyPressed, keydownWrapper } from "@/util/keyutil";
 import { isMacOS, isWindows } from "@/util/platformutil";
 import { cn } from "@/util/util";
@@ -25,10 +25,10 @@ import { AIPanelHeader } from "./aipanelheader";
 import { AIPanelInput } from "./aipanelinput";
 import { AIPanelMessages } from "./aipanelmessages";
 import { AIRateLimitStrip } from "./airatelimitstrip";
-import { WaveUIMessage } from "./aitypes";
+import { WaddleUIMessage } from "./aitypes";
 import { BYOKAnnouncement } from "./byokannouncement";
 import { TelemetryRequiredMessage } from "./telemetryrequired";
-import { WaveAIModel } from "./waveai-model";
+import { WaddleAIModel } from "./waveai-model";
 
 const AIBlockMask = memo(() => {
     return (
@@ -94,11 +94,11 @@ const AIWelcomeMessage = memo(() => {
         <div className="text-secondary py-8">
             <div className="text-center">
                 <i className="fa fa-sparkles text-4xl text-accent mb-2 block"></i>
-                <p className="text-lg font-bold text-primary">Welcome to Wave AI</p>
+                <p className="text-lg font-bold text-primary">Welcome to Waddle AI</p>
             </div>
             <div className="mt-4 text-left max-w-md mx-auto">
                 <p className="text-sm mb-6">
-                    Wave AI is your terminal assistant with context. I can read your terminal output, analyze widgets,
+                    Waddle AI is your terminal assistant with context. I can read your terminal output, analyze widgets,
                     access files, and help you solve problems faster.
                 </p>
                 <div className="bg-accent/10 border border-accent/30 rounded-lg p-4">
@@ -188,11 +188,11 @@ const AIBuilderWelcomeMessage = memo(() => {
         <div className="text-secondary py-8">
             <div className="text-center">
                 <i className="fa fa-sparkles text-4xl text-accent mb-4 block"></i>
-                <p className="text-lg font-bold text-primary">WaveApp Builder</p>
+                <p className="text-lg font-bold text-primary">WaddleApp Builder</p>
             </div>
             <div className="mt-4 text-left max-w-md mx-auto">
                 <p className="text-sm mb-6">
-                    The WaveApp builder helps create wave widgets that integrate seamlessly into Wave Terminal.
+                    The WaddleApp builder helps create Waddle widgets that integrate seamlessly into Waddle.
                 </p>
             </div>
         </div>
@@ -202,7 +202,7 @@ const AIBuilderWelcomeMessage = memo(() => {
 AIBuilderWelcomeMessage.displayName = "AIBuilderWelcomeMessage";
 
 const AIErrorMessage = memo(() => {
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const errorMessage = jotai.useAtomValue(model.errorMessage);
 
     if (!errorMessage) {
@@ -234,7 +234,7 @@ const AIErrorMessage = memo(() => {
 AIErrorMessage.displayName = "AIErrorMessage";
 
 const ConfigChangeModeFixer = memo(() => {
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const telemetryEnabled = jotai.useAtomValue(getSettingsKeyAtom("telemetry:enabled")) ?? false;
     const aiModeConfigs = jotai.useAtomValue(model.aiModeConfigs);
 
@@ -255,12 +255,12 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const [isDragOver, setIsDragOver] = useState(false);
     const [isReactDndDragOver, setIsReactDndDragOver] = useState(false);
     const [initialLoadDone, setInitialLoadDone] = useState(false);
-    const model = WaveAIModel.getInstance();
+    const model = WaddleAIModel.getInstance();
     const containerRef = useRef<HTMLDivElement>(null);
-    const waveEnv = useWaveEnv();
+    const waveEnv = useWaddleEnv();
     const isLayoutMode = jotai.useAtomValue(atoms.controlShiftDelayAtom);
     const showOverlayBlockNums = jotai.useAtomValue(getSettingsKeyAtom("app:showoverlayblocknums")) ?? true;
-    const isFocused = jotai.useAtomValue(model.isWaveAIFocusedAtom);
+    const isFocused = jotai.useAtomValue(model.isWaddleAIFocusedAtom);
     const focusFollowsCursorMode = jotai.useAtomValue(getSettingsKeyAtom("app:focusfollowscursor")) ?? "off";
     const telemetryEnabled = jotai.useAtomValue(getSettingsKeyAtom("telemetry:enabled")) ?? false;
     const isPanelVisible = jotai.useAtomValue(model.getPanelVisibleAtom());
@@ -273,7 +273,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     const isUsingCustomMode = !defaultMode.startsWith("waveai@");
     const allowAccess = telemetryEnabled || (hasCustomModes && isUsingCustomMode);
 
-    const { messages, sendMessage, status, setMessages, error, stop } = useChat<WaveUIMessage>({
+    const { messages, sendMessage, status, setMessages, error, stop } = useChat<WaddleUIMessage>({
         transport: new DefaultChatTransport({
             api: model.getUseChatEndpointUrl(),
             prepareSendMessagesRequest: (_opts) => {
@@ -305,7 +305,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
     (window as any).aichatmessages = messages;
     (window as any).aichatstatus = status;
 
-    const handleKeyDown = (waveEvent: WaveKeyboardEvent): boolean => {
+    const handleKeyDown = (waveEvent: WaddleKeyboardEvent): boolean => {
         if (checkKeyPressed(waveEvent, "Cmd:k")) {
             model.clearChat();
             return true;
@@ -512,8 +512,8 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
 
     const handleFocusCapture = useCallback(
         (_event: React.FocusEvent) => {
-            // console.log("Wave AI focus capture", getElemAsStr(event.target));
-            model.requestWaveAIFocus();
+            // console.log("Waddle AI focus capture", getElemAsStr(event.target));
+            model.requestWaddleAIFocus();
         },
         [model]
     );
@@ -538,7 +538,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
 
         const hasSelection = waveAIHasSelection();
         if (hasSelection) {
-            model.requestWaveAIFocus();
+            model.requestWaddleAIFocus();
             return;
         }
 
@@ -593,7 +593,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
                         {messages.length === 0 && initialLoadDone ? (
                             <div
                                 className="flex-1 overflow-y-auto p-2 relative"
-                                onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                                onContextMenu={(e) => handleWaddleAIContextMenu(e, true)}
                             >
                                 <div className="absolute top-2 left-2 z-10">
                                     <AIModeDropdown />
@@ -604,7 +604,7 @@ const AIPanelComponentInner = memo(({ roundTopLeft }: AIPanelComponentInnerProps
                             <AIPanelMessages
                                 messages={messages}
                                 status={status}
-                                onContextMenu={(e) => handleWaveAIContextMenu(e, true)}
+                                onContextMenu={(e) => handleWaddleAIContextMenu(e, true)}
                             />
                         )}
                         <AIErrorMessage />

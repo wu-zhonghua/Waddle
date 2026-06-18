@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { globalStore } from "@/app/store/jotaiStore";
-import { useWaveEnv, WaveEnv, WaveEnvContext } from "@/app/waveenv/waveenv";
-import { applyMockEnvOverrides, MockWaveEnv } from "@/preview/mock/mockwaveenv";
+import { useWaddleEnv, WaddleEnv, WaddleEnvContext } from "@/app/waveenv/waveenv";
+import { applyMockEnvOverrides, MockWaddleEnv } from "@/preview/mock/mockwaveenv";
 import { PlatformMacOS } from "@/util/platformutil";
 import { atom } from "jotai";
 import React, { useMemo, useRef } from "react";
@@ -19,7 +19,7 @@ function badgeBlockId(tabId: string, badgeId: string): string {
     return `${tabId}-badge-${badgeId}`;
 }
 
-function makeTabWaveObj(tab: PreviewTabEntry): Tab {
+function makeTabWaddleObj(tab: PreviewTabEntry): Tab {
     const blockids = (tab.badges ?? []).map((b) => badgeBlockId(tab.tabId, b.badgeid));
     return {
         otype: "tab",
@@ -73,7 +73,7 @@ export const TabBarMockTabs: PreviewTabEntry[] = [
             { badgeid: "01958000-0000-7000-0000-000000000004", icon: "circle-small", color: "#fbbf24", priority: 1 },
         ],
     },
-    { tabId: "preview-tab-5", tabName: "Wave AI" },
+    { tabId: "preview-tab-5", tabName: "Waddle AI" },
     { tabId: "preview-tab-6", tabName: "Preview", flagColor: "#bf55ec" },
 ];
 
@@ -90,21 +90,21 @@ function makeMockWorkspace(tabIds: string[]): Workspace {
 }
 
 export function makeTabBarMockEnv(
-    baseEnv: WaveEnv,
-    envRef: React.RefObject<MockWaveEnv>,
+    baseEnv: WaddleEnv,
+    envRef: React.RefObject<MockWaddleEnv>,
     platform: NodeJS.Platform
-): MockWaveEnv {
+): MockWaddleEnv {
     const initialTabIds = TabBarMockTabs.map((t) => t.tabId);
-    const mockWaveObjs: Record<string, WaveObj> = {
+    const mockWaddleObjs: Record<string, WaddleObj> = {
         [`workspace:${TabBarMockWorkspaceId}`]: makeMockWorkspace(initialTabIds),
     };
     for (const tab of TabBarMockTabs) {
-        mockWaveObjs[`tab:${tab.tabId}`] = makeTabWaveObj(tab);
+        mockWaddleObjs[`tab:${tab.tabId}`] = makeTabWaddleObj(tab);
     }
     const env = applyMockEnvOverrides(baseEnv, {
         tabId: TabBarMockTabs[1].tabId,
         platform,
-        mockWaveObjs,
+        mockWaddleObjs,
         atoms: {
             workspaceId: atom(TabBarMockWorkspaceId),
             staticTabId: atom(TabBarMockTabs[1].tabId),
@@ -117,7 +117,7 @@ export function makeTabBarMockEnv(
                 const e = envRef.current;
                 if (e == null) return;
                 const newTabId = `preview-tab-${crypto.randomUUID()}`;
-                e.mockSetWaveObj(`tab:${newTabId}`, {
+                e.mockSetWaddleObj(`tab:${newTabId}`, {
                     otype: "tab",
                     oid: newTabId,
                     version: 1,
@@ -125,8 +125,8 @@ export function makeTabBarMockEnv(
                     blockids: [],
                     meta: {},
                 } as Tab);
-                const ws = globalStore.get(e.wos.getWaveObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
-                e.mockSetWaveObj(`workspace:${TabBarMockWorkspaceId}`, {
+                const ws = globalStore.get(e.wos.getWaddleObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
+                e.mockSetWaddleObj(`workspace:${TabBarMockWorkspaceId}`, {
                     ...ws,
                     tabids: [...(ws.tabids ?? []), newTabId],
                 });
@@ -135,12 +135,12 @@ export function makeTabBarMockEnv(
             closeTab: (_workspaceId: string, tabId: string) => {
                 const e = envRef.current;
                 if (e == null) return Promise.resolve(false);
-                const ws = globalStore.get(e.wos.getWaveObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
+                const ws = globalStore.get(e.wos.getWaddleObjectAtom<Workspace>(`workspace:${TabBarMockWorkspaceId}`));
                 const newTabIds = (ws.tabids ?? []).filter((id) => id !== tabId);
                 if (newTabIds.length === 0) {
                     return Promise.resolve(false);
                 }
-                e.mockSetWaveObj(`workspace:${TabBarMockWorkspaceId}`, { ...ws, tabids: newTabIds });
+                e.mockSetWaddleObj(`workspace:${TabBarMockWorkspaceId}`, { ...ws, tabids: newTabIds });
                 if (globalStore.get(e.atoms.staticTabId) === tabId) {
                     globalStore.set(e.atoms.staticTabId as any, newTabIds[0]);
                 }
@@ -165,9 +165,9 @@ type TabBarMockEnvProviderProps = {
 };
 
 export function TabBarMockEnvProvider({ children }: TabBarMockEnvProviderProps) {
-    const baseEnv = useWaveEnv();
-    const envRef = useRef<MockWaveEnv>(null);
+    const baseEnv = useWaddleEnv();
+    const envRef = useRef<MockWaddleEnv>(null);
     const tabEnv = useMemo(() => makeTabBarMockEnv(baseEnv, envRef, PlatformMacOS), []);
-    return <WaveEnvContext.Provider value={tabEnv}>{children}</WaveEnvContext.Provider>;
+    return <WaddleEnvContext.Provider value={tabEnv}>{children}</WaddleEnvContext.Provider>;
 }
 TabBarMockEnvProvider.displayName = "TabBarMockEnvProvider";

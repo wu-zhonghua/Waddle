@@ -6,15 +6,15 @@
 package wshclient
 
 import (
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/telemetry/telemetrydata"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/telemetry/telemetrydata"
+	"github.com/waddledev/waddle/pkg/vdom"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 // command "activity", wshserver.ActivityCommand
@@ -258,19 +258,19 @@ func ElectronSystemBellCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) error {
 }
 
 // command "eventpublish", wshserver.EventPublishCommand
-func EventPublishCommand(w *wshutil.WshRpc, data wps.WaveEvent, opts *wshrpc.RpcOpts) error {
+func EventPublishCommand(w *wshutil.WshRpc, data wps.WaddleEvent, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "eventpublish", data, opts)
 	return err
 }
 
 // command "eventreadhistory", wshserver.EventReadHistoryCommand
-func EventReadHistoryCommand(w *wshutil.WshRpc, data wshrpc.CommandEventReadHistoryData, opts *wshrpc.RpcOpts) ([]*wps.WaveEvent, error) {
-	resp, err := sendRpcRequestCallHelper[[]*wps.WaveEvent](w, "eventreadhistory", data, opts)
+func EventReadHistoryCommand(w *wshutil.WshRpc, data wshrpc.CommandEventReadHistoryData, opts *wshrpc.RpcOpts) ([]*wps.WaddleEvent, error) {
+	resp, err := sendRpcRequestCallHelper[[]*wps.WaddleEvent](w, "eventreadhistory", data, opts)
 	return resp, err
 }
 
 // command "eventrecv", wshserver.EventRecvCommand
-func EventRecvCommand(w *wshutil.WshRpc, data wps.WaveEvent, opts *wshrpc.RpcOpts) error {
+func EventRecvCommand(w *wshutil.WshRpc, data wps.WaddleEvent, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "eventrecv", data, opts)
 	return err
 }
@@ -490,21 +490,21 @@ func GetVarCommand(w *wshutil.WshRpc, data wshrpc.CommandVarData, opts *wshrpc.R
 	return resp, err
 }
 
-// command "getwaveaichat", wshserver.GetWaveAIChatCommand
-func GetWaveAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandGetWaveAIChatData, opts *wshrpc.RpcOpts) (*uctypes.UIChat, error) {
-	resp, err := sendRpcRequestCallHelper[*uctypes.UIChat](w, "getwaveaichat", data, opts)
+// command "getwaddleaichat", wshserver.GetWaddleAIChatCommand
+func GetWaddleAIChatCommand(w *wshutil.WshRpc, data wshrpc.CommandGetWaddleAIChatData, opts *wshrpc.RpcOpts) (*uctypes.UIChat, error) {
+	resp, err := sendRpcRequestCallHelper[*uctypes.UIChat](w, "getwaddleaichat", data, opts)
 	return resp, err
 }
 
-// command "getwaveaimodeconfig", wshserver.GetWaveAIModeConfigCommand
-func GetWaveAIModeConfigCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (wconfig.AIModeConfigUpdate, error) {
-	resp, err := sendRpcRequestCallHelper[wconfig.AIModeConfigUpdate](w, "getwaveaimodeconfig", nil, opts)
+// command "getwaddleaimodeconfig", wshserver.GetWaddleAIModeConfigCommand
+func GetWaddleAIModeConfigCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (wconfig.AIModeConfigUpdate, error) {
+	resp, err := sendRpcRequestCallHelper[wconfig.AIModeConfigUpdate](w, "getwaddleaimodeconfig", nil, opts)
 	return resp, err
 }
 
-// command "getwaveairatelimit", wshserver.GetWaveAIRateLimitCommand
-func GetWaveAIRateLimitCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*uctypes.RateLimitInfo, error) {
-	resp, err := sendRpcRequestCallHelper[*uctypes.RateLimitInfo](w, "getwaveairatelimit", nil, opts)
+// command "getwaddleairatelimit", wshserver.GetWaddleAIRateLimitCommand
+func GetWaddleAIRateLimitCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*uctypes.RateLimitInfo, error) {
+	resp, err := sendRpcRequestCallHelper[*uctypes.RateLimitInfo](w, "getwaddleairatelimit", nil, opts)
 	return resp, err
 }
 
@@ -641,7 +641,7 @@ func NetworkOnlineCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (bool, error)
 }
 
 // command "notify", wshserver.NotifyCommand
-func NotifyCommand(w *wshutil.WshRpc, data wshrpc.WaveNotificationOptions, opts *wshrpc.RpcOpts) error {
+func NotifyCommand(w *wshutil.WshRpc, data wshrpc.WaddleNotificationOptions, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "notify", data, opts)
 	return err
 }
@@ -970,45 +970,45 @@ func VDomUrlRequestCommand(w *wshutil.WshRpc, data wshrpc.VDomUrlRequestData, op
 	return sendRpcRequestResponseStreamHelper[wshrpc.VDomUrlRequestResponse](w, "vdomurlrequest", data, opts)
 }
 
+// command "waddleaiaddcontext", wshserver.WaddleAIAddContextCommand
+func WaddleAIAddContextCommand(w *wshutil.WshRpc, data wshrpc.CommandWaddleAIAddContextData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "waddleaiaddcontext", data, opts)
+	return err
+}
+
+// command "waddleaienabletelemetry", wshserver.WaddleAIEnableTelemetryCommand
+func WaddleAIEnableTelemetryCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "waddleaienabletelemetry", nil, opts)
+	return err
+}
+
+// command "waddleaigettooldiff", wshserver.WaddleAIGetToolDiffCommand
+func WaddleAIGetToolDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandWaddleAIGetToolDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandWaddleAIGetToolDiffRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandWaddleAIGetToolDiffRtnData](w, "waddleaigettooldiff", data, opts)
+	return resp, err
+}
+
+// command "waddleaitoolapprove", wshserver.WaddleAIToolApproveCommand
+func WaddleAIToolApproveCommand(w *wshutil.WshRpc, data wshrpc.CommandWaddleAIToolApproveData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "waddleaitoolapprove", data, opts)
+	return err
+}
+
+// command "waddlefilereadstream", wshserver.WaddleFileReadStreamCommand
+func WaddleFileReadStreamCommand(w *wshutil.WshRpc, data wshrpc.CommandWaddleFileReadStreamData, opts *wshrpc.RpcOpts) (*wshrpc.WaddleFileInfo, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.WaddleFileInfo](w, "waddlefilereadstream", data, opts)
+	return resp, err
+}
+
+// command "waddleinfo", wshserver.WaddleInfoCommand
+func WaddleInfoCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*wshrpc.WaddleInfoData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.WaddleInfoData](w, "waddleinfo", nil, opts)
+	return resp, err
+}
+
 // command "waitforroute", wshserver.WaitForRouteCommand
 func WaitForRouteCommand(w *wshutil.WshRpc, data wshrpc.CommandWaitForRouteData, opts *wshrpc.RpcOpts) (bool, error) {
 	resp, err := sendRpcRequestCallHelper[bool](w, "waitforroute", data, opts)
-	return resp, err
-}
-
-// command "waveaiaddcontext", wshserver.WaveAIAddContextCommand
-func WaveAIAddContextCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveAIAddContextData, opts *wshrpc.RpcOpts) error {
-	_, err := sendRpcRequestCallHelper[any](w, "waveaiaddcontext", data, opts)
-	return err
-}
-
-// command "waveaienabletelemetry", wshserver.WaveAIEnableTelemetryCommand
-func WaveAIEnableTelemetryCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) error {
-	_, err := sendRpcRequestCallHelper[any](w, "waveaienabletelemetry", nil, opts)
-	return err
-}
-
-// command "waveaigettooldiff", wshserver.WaveAIGetToolDiffCommand
-func WaveAIGetToolDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveAIGetToolDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandWaveAIGetToolDiffRtnData, error) {
-	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandWaveAIGetToolDiffRtnData](w, "waveaigettooldiff", data, opts)
-	return resp, err
-}
-
-// command "waveaitoolapprove", wshserver.WaveAIToolApproveCommand
-func WaveAIToolApproveCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveAIToolApproveData, opts *wshrpc.RpcOpts) error {
-	_, err := sendRpcRequestCallHelper[any](w, "waveaitoolapprove", data, opts)
-	return err
-}
-
-// command "wavefilereadstream", wshserver.WaveFileReadStreamCommand
-func WaveFileReadStreamCommand(w *wshutil.WshRpc, data wshrpc.CommandWaveFileReadStreamData, opts *wshrpc.RpcOpts) (*wshrpc.WaveFileInfo, error) {
-	resp, err := sendRpcRequestCallHelper[*wshrpc.WaveFileInfo](w, "wavefilereadstream", data, opts)
-	return resp, err
-}
-
-// command "waveinfo", wshserver.WaveInfoCommand
-func WaveInfoCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*wshrpc.WaveInfoData, error) {
-	resp, err := sendRpcRequestCallHelper[*wshrpc.WaveInfoData](w, "waveinfo", nil, opts)
 	return resp, err
 }
 
@@ -1071,5 +1071,3 @@ func WslStatusCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) ([]wshrpc.ConnSta
 	resp, err := sendRpcRequestCallHelper[[]wshrpc.ConnStatus](w, "wslstatus", nil, opts)
 	return resp, err
 }
-
-

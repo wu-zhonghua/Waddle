@@ -10,18 +10,18 @@ import (
 	"runtime/debug"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/util/shellutil"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/util/shellutil"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
 var (
 	rootCmd = &cobra.Command{
 		Use:          "wsh",
-		Short:        "CLI tool to control Wave Terminal",
-		Long:         `wsh is a small utility that lets you do cool things with Wave Terminal, right from the command line`,
+		Short:        "CLI tool to control Waddle",
+		Long:         `wsh is a small utility that lets you do cool things with Waddle, right from the command line`,
 		SilenceUsage: true,
 	}
 )
@@ -83,9 +83,9 @@ func OutputHelpMessage(cmd *cobra.Command) {
 }
 
 func preRunSetupRpcClient(cmd *cobra.Command, args []string) error {
-	jwtToken := os.Getenv(wshutil.WaveJwtTokenVarName)
+	jwtToken := os.Getenv(wshutil.WaddleJwtTokenVarName)
 	if jwtToken == "" {
-		return fmt.Errorf("wsh must be run inside a Wave-managed SSH session (WAVETERM_JWT not found)")
+		return fmt.Errorf("wsh must be run inside a Waddle-managed SSH session (WADDLE_JWT not found)")
 	}
 	err := setupRpcClient(nil, jwtToken)
 	if err != nil {
@@ -153,12 +153,12 @@ func setupRpcClientWithToken(swapTokenStr string) (wshrpc.CommandAuthenticateRtn
 func setupRpcClient(serverImpl wshutil.ServerImpl, jwtToken string) error {
 	rpcCtx, err := wshutil.ExtractUnverifiedRpcContext(jwtToken)
 	if err != nil {
-		return fmt.Errorf("error extracting rpc context from %s: %v", wshutil.WaveJwtTokenVarName, err)
+		return fmt.Errorf("error extracting rpc context from %s: %v", wshutil.WaddleJwtTokenVarName, err)
 	}
 	RpcContext = *rpcCtx
 	sockName, err := wshutil.ExtractUnverifiedSocketName(jwtToken)
 	if err != nil {
-		return fmt.Errorf("error extracting socket name from %s: %v", wshutil.WaveJwtTokenVarName, err)
+		return fmt.Errorf("error extracting socket name from %s: %v", wshutil.WaddleJwtTokenVarName, err)
 	}
 	RpcClient, err = wshutil.SetupDomainSocketRpcClient(sockName, serverImpl, "wshcmd")
 	if err != nil {
@@ -169,7 +169,7 @@ func setupRpcClient(serverImpl wshutil.ServerImpl, jwtToken string) error {
 		return fmt.Errorf("error authenticating: %v", err)
 	}
 	RpcClientRouteId = authRtn.RouteId
-	blockId := os.Getenv("WAVETERM_BLOCKID")
+	blockId := os.Getenv("WADDLE_BLOCKID")
 	if blockId != "" {
 		peerInfo := fmt.Sprintf("domain:block:%s", blockId)
 		wshclient.SetPeerInfoCommand(RpcClient, peerInfo, &wshrpc.RpcOpts{Route: wshutil.ControlRoute})
@@ -191,9 +191,9 @@ func resolveSimpleId(id string) (*waveobj.ORef, error) {
 		}
 		return &orefObj, nil
 	}
-	blockId := os.Getenv("WAVETERM_BLOCKID")
+	blockId := os.Getenv("WADDLE_BLOCKID")
 	if blockId == "" {
-		return nil, fmt.Errorf("no WAVETERM_BLOCKID env var set")
+		return nil, fmt.Errorf("no WADDLE_BLOCKID env var set")
 	}
 	rtnData, err := wshclient.ResolveIdsCommand(RpcClient, wshrpc.CommandResolveIdsData{
 		BlockId: blockId,
@@ -210,7 +210,7 @@ func resolveSimpleId(id string) (*waveobj.ORef, error) {
 }
 
 func getTabIdFromEnv() string {
-	return os.Getenv("WAVETERM_TABID")
+	return os.Getenv("WADDLE_TABID")
 }
 
 // this will send wsh activity to the client running on *your* local machine (it does not contact any wave cloud infrastructure)

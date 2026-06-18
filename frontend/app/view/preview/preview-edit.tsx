@@ -45,7 +45,7 @@ function CodeEditPreview({ model }: SpecializedViewProps) {
     const baseName = fileName ? fileName.split("/").pop() : null;
     const language = baseName && shellFileMap[baseName] ? shellFileMap[baseName] : undefined;
 
-    function codeEditKeyDownHandler(e: WaveKeyboardEvent): boolean {
+    function codeEditKeyDownHandler(e: WaddleKeyboardEvent): boolean {
         if (checkKeyPressed(e, "Cmd:e")) {
             fireAndForget(() => model.setEditMode(false));
             return true;

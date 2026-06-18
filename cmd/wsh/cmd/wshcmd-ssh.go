@@ -7,11 +7,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wavetermdev/waveterm/pkg/remote"
-	"github.com/wavetermdev/waveterm/pkg/waveobj"
-	"github.com/wavetermdev/waveterm/pkg/wconfig"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/remote"
+	"github.com/waddledev/waddle/pkg/waveobj"
+	"github.com/waddledev/waddle/pkg/wconfig"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
 )
 
 var (
@@ -66,7 +66,7 @@ func sshRun(cmd *cobra.Command, args []string) (rtnErr error) {
 	if newBlock {
 		tabId := getTabIdFromEnv()
 		if tabId == "" {
-			return fmt.Errorf("no WAVETERM_TABID env var set")
+			return fmt.Errorf("no WADDLE_TABID env var set")
 		}
 
 		// Create a new block with the SSH connection

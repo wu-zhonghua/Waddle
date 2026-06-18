@@ -10,19 +10,19 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/vdom"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/vdom"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
-type WaveAppServerImpl struct {
+type WaddleAppServerImpl struct {
 	Client  *Client
 	BlockId string
 }
 
-func (*WaveAppServerImpl) WshServerImpl() {}
+func (*WaddleAppServerImpl) WshServerImpl() {}
 
-func (impl *WaveAppServerImpl) VDomRenderCommand(ctx context.Context, feUpdate vdom.VDomFrontendUpdate) chan wshrpc.RespOrErrorUnion[*vdom.VDomBackendUpdate] {
+func (impl *WaddleAppServerImpl) VDomRenderCommand(ctx context.Context, feUpdate vdom.VDomFrontendUpdate) chan wshrpc.RespOrErrorUnion[*vdom.VDomBackendUpdate] {
 	respChan := make(chan wshrpc.RespOrErrorUnion[*vdom.VDomBackendUpdate], 5)
 	defer func() {
 		panicErr := panichandler.PanicHandler("VDomRenderCommand", recover())
@@ -59,7 +59,7 @@ func (impl *WaveAppServerImpl) VDomRenderCommand(ctx context.Context, feUpdate v
 				impl.Client.GlobalEventHandler(impl.Client, event)
 			}
 		} else {
-			impl.Client.Root.Event(event.WaveId, event.EventType, event)
+			impl.Client.Root.Event(event.WaddleId, event.EventType, event)
 		}
 	}
 	// update refs
@@ -102,7 +102,7 @@ func (impl *WaveAppServerImpl) VDomRenderCommand(ctx context.Context, feUpdate v
 	return respChan
 }
 
-func (impl *WaveAppServerImpl) VDomUrlRequestCommand(ctx context.Context, data wshrpc.VDomUrlRequestData) chan wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse] {
+func (impl *WaddleAppServerImpl) VDomUrlRequestCommand(ctx context.Context, data wshrpc.VDomUrlRequestData) chan wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse] {
 	respChan := make(chan wshrpc.RespOrErrorUnion[wshrpc.VDomUrlRequestResponse])
 	writer := NewStreamingResponseWriter(respChan)
 

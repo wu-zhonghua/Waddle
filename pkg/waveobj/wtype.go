@@ -9,7 +9,7 @@ import (
 	"reflect"
 )
 
-type UpdatesRtnType = []WaveObjUpdate
+type UpdatesRtnType = []WaddleObjUpdate
 
 type UIContext struct {
 	WindowId    string `json:"windowid"`
@@ -47,14 +47,14 @@ var ValidOTypes = map[string]bool{
 	OType_Builder:     true,
 }
 
-type WaveObjUpdate struct {
-	UpdateType string  `json:"updatetype"`
-	OType      string  `json:"otype"`
-	OID        string  `json:"oid"`
-	Obj        WaveObj `json:"obj,omitempty"`
+type WaddleObjUpdate struct {
+	UpdateType string    `json:"updatetype"`
+	OType      string    `json:"otype"`
+	OID        string    `json:"oid"`
+	Obj        WaddleObj `json:"obj,omitempty"`
 }
 
-func (update WaveObjUpdate) MarshalJSON() ([]byte, error) {
+func (update WaddleObjUpdate) MarshalJSON() ([]byte, error) {
 	rtn := make(map[string]any)
 	rtn["updatetype"] = update.UpdateType
 	rtn["otype"] = update.OType
@@ -69,8 +69,8 @@ func (update WaveObjUpdate) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rtn)
 }
 
-func MakeUpdate(obj WaveObj) WaveObjUpdate {
-	return WaveObjUpdate{
+func MakeUpdate(obj WaddleObj) WaddleObjUpdate {
+	return WaddleObjUpdate{
 		UpdateType: UpdateType_Update,
 		OType:      obj.GetOType(),
 		OID:        GetOID(obj),
@@ -78,15 +78,15 @@ func MakeUpdate(obj WaveObj) WaveObjUpdate {
 	}
 }
 
-func MakeUpdates(objs []WaveObj) []WaveObjUpdate {
-	rtn := make([]WaveObjUpdate, 0, len(objs))
+func MakeUpdates(objs []WaddleObj) []WaddleObjUpdate {
+	rtn := make([]WaddleObjUpdate, 0, len(objs))
 	for _, obj := range objs {
 		rtn = append(rtn, MakeUpdate(obj))
 	}
 	return rtn
 }
 
-func (update *WaveObjUpdate) UnmarshalJSON(data []byte) error {
+func (update *WaddleObjUpdate) UnmarshalJSON(data []byte) error {
 	var objMap map[string]any
 	err := json.Unmarshal(data, &objMap)
 	if err != nil {
@@ -94,34 +94,34 @@ func (update *WaveObjUpdate) UnmarshalJSON(data []byte) error {
 	}
 	var ok1, ok2, ok3 bool
 	if _, found := objMap["updatetype"]; !found {
-		return fmt.Errorf("missing updatetype (in WaveObjUpdate)")
+		return fmt.Errorf("missing updatetype (in WaddleObjUpdate)")
 	}
 	update.UpdateType, ok1 = objMap["updatetype"].(string)
 	if !ok1 {
-		return fmt.Errorf("in WaveObjUpdate bad updatetype type %T", objMap["updatetype"])
+		return fmt.Errorf("in WaddleObjUpdate bad updatetype type %T", objMap["updatetype"])
 	}
 	if _, found := objMap["otype"]; !found {
-		return fmt.Errorf("missing otype (in WaveObjUpdate)")
+		return fmt.Errorf("missing otype (in WaddleObjUpdate)")
 	}
 	update.OType, ok2 = objMap["otype"].(string)
 	if !ok2 {
-		return fmt.Errorf("in WaveObjUpdate bad otype type %T", objMap["otype"])
+		return fmt.Errorf("in WaddleObjUpdate bad otype type %T", objMap["otype"])
 	}
 	if _, found := objMap["oid"]; !found {
-		return fmt.Errorf("missing oid (in WaveObjUpdate)")
+		return fmt.Errorf("missing oid (in WaddleObjUpdate)")
 	}
 	update.OID, ok3 = objMap["oid"].(string)
 	if !ok3 {
-		return fmt.Errorf("in WaveObjUpdate bad oid type %T", objMap["oid"])
+		return fmt.Errorf("in WaddleObjUpdate bad oid type %T", objMap["oid"])
 	}
 	if _, found := objMap["obj"]; found {
 		objMap, ok := objMap["obj"].(map[string]any)
 		if !ok {
-			return fmt.Errorf("in WaveObjUpdate bad obj type %T", objMap["obj"])
+			return fmt.Errorf("in WaddleObjUpdate bad obj type %T", objMap["obj"])
 		}
 		waveObj, err := FromJsonMap(objMap)
 		if err != nil {
-			return fmt.Errorf("in WaveObjUpdate error decoding obj: %w", err)
+			return fmt.Errorf("in WaddleObjUpdate error decoding obj: %w", err)
 		}
 		update.Obj = waveObj
 	}
@@ -322,7 +322,7 @@ type Job struct {
 	CmdEnv          map[string]string `json:"cmdenv,omitempty"`
 	JobAuthToken    string            `json:"jobauthtoken"` // job manger -> wave
 	AttachedBlockId string            `json:"attachedblockid,omitempty"`
-	WaveVersion     string            `json:"waveversion,omitempty"`
+	WaddleVersion   string            `json:"waveversion,omitempty"`
 
 	// reconnect option (e.g. orphaned, so we need to kill on connect)
 	TerminateOnReconnect bool `json:"terminateonreconnect,omitempty"`
@@ -354,7 +354,7 @@ func (*Job) GetOType() string {
 	return OType_Job
 }
 
-func AllWaveObjTypes() []reflect.Type {
+func AllWaddleObjTypes() []reflect.Type {
 	return []reflect.Type{
 		reflect.TypeOf(&Client{}),
 		reflect.TypeOf(&Window{}),

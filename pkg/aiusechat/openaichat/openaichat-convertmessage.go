@@ -14,10 +14,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/aiutil"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/chatstore"
-	"github.com/wavetermdev/waveterm/pkg/aiusechat/uctypes"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/aiusechat/aiutil"
+	"github.com/waddledev/waddle/pkg/aiusechat/chatstore"
+	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
 const (
@@ -41,7 +41,7 @@ func appendToLastUserMessage(messages []ChatRequestMessage, text string) {
 	}
 }
 
-// convertToolDefinitions converts Wave ToolDefinitions to OpenAI format
+// convertToolDefinitions converts Waddle ToolDefinitions to OpenAI format
 // Only includes tools whose required capabilities are met
 func convertToolDefinitions(waveTools []uctypes.ToolDefinition, capabilities []string) []ToolDefinition {
 	if len(waveTools) == 0 {
@@ -67,7 +67,7 @@ func convertToolDefinitions(waveTools []uctypes.ToolDefinition, capabilities []s
 }
 
 // buildChatHTTPRequest creates an HTTP request for the OpenAI chat completions API
-func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, chatOpts uctypes.WaveChatOpts) (*http.Request, error) {
+func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, chatOpts uctypes.WaddleChatOpts) (*http.Request, error) {
 	opts := chatOpts.Config
 
 	// Model is required for all providers except azure-legacy (which uses deployment name in URL)
@@ -151,17 +151,17 @@ func buildChatHTTPRequest(ctx context.Context, messages []ChatRequestMessage, ch
 
 	req.Header.Set("Accept", "text/event-stream")
 
-	// Only send Wave-specific headers when using Wave provider
-	if opts.Provider == uctypes.AIProvider_Wave {
+	// Only send Waddle-specific headers when using Waddle provider
+	if opts.Provider == uctypes.AIProvider_Waddle {
 		if chatOpts.ClientId != "" {
-			req.Header.Set("X-Wave-ClientId", chatOpts.ClientId)
+			req.Header.Set("X-Waddle-ClientId", chatOpts.ClientId)
 		}
 		if chatOpts.ChatId != "" {
-			req.Header.Set("X-Wave-ChatId", chatOpts.ChatId)
+			req.Header.Set("X-Waddle-ChatId", chatOpts.ChatId)
 		}
-		req.Header.Set("X-Wave-Version", wavebase.WaveVersion)
-		req.Header.Set("X-Wave-APIType", uctypes.APIType_OpenAIChat)
-		req.Header.Set("X-Wave-RequestType", chatOpts.GetWaveRequestType())
+		req.Header.Set("X-Waddle-Version", wavebase.WaddleVersion)
+		req.Header.Set("X-Waddle-APIType", uctypes.APIType_OpenAIChat)
+		req.Header.Set("X-Waddle-RequestType", chatOpts.GetWaddleRequestType())
 	}
 
 	return req, nil

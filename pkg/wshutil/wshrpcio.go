@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
 )
 
 // special I/O wrappers for wshrpc
@@ -48,7 +48,7 @@ func AdaptMsgChToPty(outputCh chan []byte, oscEsc string, output io.Writer) erro
 		panic("oscEsc must be 5 characters")
 	}
 	for msg := range outputCh {
-		barr, err := EncodeWaveOSCBytes(oscEsc, msg)
+		barr, err := EncodeWaddleOSCBytes(oscEsc, msg)
 		if err != nil {
 			return fmt.Errorf("error encoding osc message (AdaptMsgChToPty): %w", err)
 		}

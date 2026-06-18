@@ -1,20 +1,20 @@
 ---
 name: add-config
-description: Guide for adding new configuration settings to Wave Terminal. Use when adding a new setting to the configuration system, implementing a new config key, or adding user-customizable settings.
+description: Guide for adding new configuration settings to Pengu. Use when adding a new setting to the configuration system, implementing a new config key, or adding user-customizable settings.
 ---
 
-# Adding a New Configuration Setting to Wave Terminal
+# Adding a New Configuration Setting to Pengu
 
-This guide explains how to add a new configuration setting to Wave Terminal's hierarchical configuration system.
+This guide explains how to add a new configuration setting to Pengu's hierarchical configuration system.
 
 ## Configuration System Overview
 
-Wave Terminal uses a hierarchical configuration system with:
+Pengu uses a hierarchical configuration system with:
 
 1. **Go Struct Definitions** - Type-safe configuration structure in `pkg/wconfig/settingsconfig.go`
 2. **JSON Schema** - Auto-generated validation schema in `schema/settings.json`
 3. **Default Values** - Built-in defaults in `pkg/wconfig/defaultconfig/settings.json`
-4. **User Configuration** - User overrides in `~/.config/waveterm/settings.json`
+4. **User Configuration** - User overrides in `~/.config/pengu/settings.json`
 5. **Block Metadata** - Block-level overrides in `pkg/waveobj/wtypemeta.go`
 6. **Documentation** - User-facing docs in `docs/docs/config.mdx`
 
@@ -269,7 +269,7 @@ const TabBar = () => {
 # Set in settings file
 wsh setconfig app:hideaibutton=true
 
-# Or edit ~/.config/waveterm/settings.json
+# Or edit ~/.config/pengu/settings.json
 {
   "app:hideaibutton": true
 }
@@ -348,7 +348,7 @@ wsh setmeta term:bellsound="none"
 # Set for specific block
 wsh setmeta --block BLOCK_ID term:bellsound="beep"
 
-# Or edit ~/.config/waveterm/settings.json
+# Or edit ~/.config/pengu/settings.json
 {
   "term:bellsound": "custom.wav"
 }

@@ -4,8 +4,8 @@
 import {
     UseChatSendMessageType,
     UseChatSetMessagesType,
-    WaveUIMessage,
-    WaveUIMessagePart,
+    WaddleUIMessage,
+    WaddleUIMessagePart,
 } from "@/app/aipanel/aitypes";
 import { FocusManager } from "@/app/store/focusManager";
 import { atoms, createBlock, getOrefMetaKeyAtom, getSettingsKeyAtom } from "@/app/store/global";
@@ -62,15 +62,15 @@ const BuilderAIModeConfigs: Record<string, AIModeConfigType> = {
     },
 };
 
-export class WaveAIModel {
-    private static instance: WaveAIModel | null = null;
+export class WaddleAIModel {
+    private static instance: WaddleAIModel | null = null;
     inputRef: React.RefObject<AIPanelInputRef> | null = null;
     scrollToBottomCallback: (() => void) | null = null;
     useChatSendMessage: UseChatSendMessageType | null = null;
     useChatSetMessages: UseChatSetMessagesType | null = null;
     useChatStatus: ChatStatus = "ready";
     useChatStop: (() => void) | null = null;
-    // Used for injecting Wave-specific message data into DefaultChatTransport's prepareSendMessagesRequest
+    // Used for injecting Waddle-specific message data into DefaultChatTransport's prepareSendMessagesRequest
     realMessage: AIMessage | null = null;
     orefContext: ORef;
     inBuilder: boolean = false;
@@ -89,7 +89,7 @@ export class WaveAIModel {
     inputAtom: jotai.PrimitiveAtom<string> = jotai.atom("");
     isLoadingChatAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(false);
     isChatEmptyAtom: jotai.PrimitiveAtom<boolean> = jotai.atom(true);
-    isWaveAIFocusedAtom!: jotai.Atom<boolean>;
+    isWaddleAIFocusedAtom!: jotai.Atom<boolean>;
     panelVisibleAtom!: jotai.Atom<boolean>;
     restoreBackupModalToolCallId: jotai.PrimitiveAtom<string | null> = jotai.atom(null) as jotai.PrimitiveAtom<
         string | null
@@ -126,7 +126,7 @@ export class WaveAIModel {
             return width > 0 ? width - 35 : 0;
         });
 
-        this.isWaveAIFocusedAtom = jotai.atom((get) => {
+        this.isWaddleAIFocusedAtom = jotai.atom((get) => {
             if (this.inBuilder) {
                 return get(BuilderFocusManager.getInstance().focusType) === "waveai";
             }
@@ -174,8 +174,8 @@ export class WaveAIModel {
         return this.panelVisibleAtom;
     }
 
-    static getInstance(): WaveAIModel {
-        if (!WaveAIModel.instance) {
+    static getInstance(): WaddleAIModel {
+        if (!WaddleAIModel.instance) {
             let orefContext: ORef;
             if (isBuilderWindow()) {
                 const builderId = globalStore.get(atoms.builderId);
@@ -184,14 +184,14 @@ export class WaveAIModel {
                 const tabId = globalStore.get(atoms.staticTabId);
                 orefContext = WOS.makeORef("tab", tabId);
             }
-            WaveAIModel.instance = new WaveAIModel(orefContext, isBuilderWindow());
-            (window as any).WaveAIModel = WaveAIModel.instance;
+            WaddleAIModel.instance = new WaddleAIModel(orefContext, isBuilderWindow());
+            (window as any).WaddleAIModel = WaddleAIModel.instance;
         }
-        return WaveAIModel.instance;
+        return WaddleAIModel.instance;
     }
 
     static resetInstance(): void {
-        WaveAIModel.instance = null;
+        WaddleAIModel.instance = null;
     }
 
     getUseChatEndpointUrl(): string {
@@ -226,7 +226,7 @@ export class WaveAIModel {
 
     async addFileFromRemoteUri(draggedFile: DraggedFile): Promise<void> {
         if (draggedFile.isDir) {
-            this.setError("Cannot add directories to Wave AI. Please select a file.");
+            this.setError("Cannot add directories to Waddle AI. Please select a file.");
             return;
         }
 
@@ -237,7 +237,7 @@ export class WaveAIModel {
                 return;
             }
             if (fileInfo.isdir) {
-                this.setError("Cannot add directories to Wave AI. Please select a file.");
+                this.setError("Cannot add directories to Waddle AI. Please select a file.");
                 return;
             }
 
@@ -348,11 +348,11 @@ export class WaveAIModel {
         }
     }
 
-    async reloadChatFromBackend(chatIdValue: string): Promise<WaveUIMessage[]> {
-        const chatData = await RpcApi.GetWaveAIChatCommand(TabRpcClient, { chatid: chatIdValue });
+    async reloadChatFromBackend(chatIdValue: string): Promise<WaddleUIMessage[]> {
+        const chatData = await RpcApi.GetWaddleAIChatCommand(TabRpcClient, { chatid: chatIdValue });
         const messages: UIMessage[] = chatData?.messages ?? [];
         globalStore.set(this.isChatEmptyAtom, messages.length === 0);
-        return messages as WaveUIMessage[];
+        return messages as WaddleUIMessage[];
     }
 
     async stopResponse() {
@@ -470,7 +470,7 @@ export class WaveAIModel {
         return rtInfo ?? {};
     }
 
-    async loadInitialChat(): Promise<WaveUIMessage[]> {
+    async loadInitialChat(): Promise<WaddleUIMessage[]> {
         const rtInfo = await RpcApi.GetRTInfoCommand(TabRpcClient, {
             oref: this.orefContext,
         });
@@ -526,7 +526,7 @@ export class WaveAIModel {
         this.clearError();
 
         const aiMessageParts: AIMessagePart[] = [];
-        const uiMessageParts: WaveUIMessagePart[] = [];
+        const uiMessageParts: WaddleUIMessagePart[] = [];
 
         if (input.trim()) {
             aiMessageParts.push({ type: "text", text: input.trim() });
@@ -588,7 +588,7 @@ export class WaveAIModel {
             return;
         }
         try {
-            const rateLimitInfo = await RpcApi.GetWaveAIRateLimitCommand(TabRpcClient);
+            const rateLimitInfo = await RpcApi.GetWaddleAIRateLimitCommand(TabRpcClient);
             if (rateLimitInfo != null) {
                 globalStore.set(atoms.waveAIRateLimitInfoAtom, rateLimitInfo);
             }
@@ -610,11 +610,11 @@ export class WaveAIModel {
         );
     }
 
-    requestWaveAIFocus() {
+    requestWaddleAIFocus() {
         if (this.inBuilder) {
-            BuilderFocusManager.getInstance().setWaveAIFocused();
+            BuilderFocusManager.getInstance().setWaddleAIFocused();
         } else {
-            FocusManager.getInstance().requestWaveAIFocus();
+            FocusManager.getInstance().requestWaddleAIFocus();
         }
     }
 
@@ -631,7 +631,7 @@ export class WaveAIModel {
     }
 
     toolUseSendApproval(toolcallid: string, approval: string) {
-        RpcApi.WaveAIToolApproveCommand(TabRpcClient, {
+        RpcApi.WaddleAIToolApproveCommand(TabRpcClient, {
             toolcallid: toolcallid,
             approval: approval,
         });
@@ -656,7 +656,7 @@ export class WaveAIModel {
         await createBlock(blockDef, false, true);
     }
 
-    async openWaveAIConfig() {
+    async openWaddleAIConfig() {
         const blockDef: BlockDef = {
             meta: {
                 view: "waveconfig",
@@ -694,14 +694,14 @@ export class WaveAIModel {
         }
     }
 
-    canCloseWaveAIPanel(): boolean {
+    canCloseWaddleAIPanel(): boolean {
         if (this.inBuilder) {
             return false;
         }
         return true;
     }
 
-    closeWaveAIPanel() {
+    closeWaddleAIPanel() {
         if (this.inBuilder) {
             return;
         }

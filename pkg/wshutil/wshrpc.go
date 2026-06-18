@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/streamclient"
-	"github.com/wavetermdev/waveterm/pkg/util/ds"
-	"github.com/wavetermdev/waveterm/pkg/util/utilfn"
-	"github.com/wavetermdev/waveterm/pkg/wps"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/streamclient"
+	"github.com/waddledev/waddle/pkg/util/ds"
+	"github.com/waddledev/waddle/pkg/util/utilfn"
+	"github.com/waddledev/waddle/pkg/wps"
+	"github.com/waddledev/waddle/pkg/wshrpc"
 )
 
 const DefaultTimeoutMs = 5000
@@ -286,7 +286,7 @@ func (w *WshRpc) handleEventRecv(req *RpcMessage) {
 	if req.Data == nil {
 		return
 	}
-	var waveEvent wps.WaveEvent
+	var waveEvent wps.WaddleEvent
 	err := utilfn.ReUnmarshal(&waveEvent, req.Data)
 	if err != nil {
 		return

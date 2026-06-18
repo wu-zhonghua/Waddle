@@ -13,7 +13,7 @@ import (
 var waveObjUpdateKey = struct{}{}
 
 type contextUpdatesType struct {
-	UpdatesStack []map[ORef]WaveObjUpdate
+	UpdatesStack []map[ORef]WaddleObjUpdate
 }
 
 func dumpUpdateStack(updates *contextUpdatesType) {
@@ -35,11 +35,11 @@ func ContextWithUpdates(ctx context.Context) context.Context {
 		return ctx
 	}
 	return context.WithValue(ctx, waveObjUpdateKey, &contextUpdatesType{
-		UpdatesStack: []map[ORef]WaveObjUpdate{make(map[ORef]WaveObjUpdate)},
+		UpdatesStack: []map[ORef]WaddleObjUpdate{make(map[ORef]WaddleObjUpdate)},
 	})
 }
 
-func ContextGetUpdates(ctx context.Context) map[ORef]WaveObjUpdate {
+func ContextGetUpdates(ctx context.Context) map[ORef]WaddleObjUpdate {
 	updatesVal := ctx.Value(waveObjUpdateKey)
 	if updatesVal == nil {
 		return nil
@@ -48,7 +48,7 @@ func ContextGetUpdates(ctx context.Context) map[ORef]WaveObjUpdate {
 	if len(updates.UpdatesStack) == 1 {
 		return updates.UpdatesStack[0]
 	}
-	rtn := make(map[ORef]WaveObjUpdate)
+	rtn := make(map[ORef]WaddleObjUpdate)
 	for _, update := range updates.UpdatesStack {
 		for k, v := range update {
 			rtn[k] = v
@@ -57,7 +57,7 @@ func ContextGetUpdates(ctx context.Context) map[ORef]WaveObjUpdate {
 	return rtn
 }
 
-func ContextGetUpdate(ctx context.Context, oref ORef) *WaveObjUpdate {
+func ContextGetUpdate(ctx context.Context, oref ORef) *WaddleObjUpdate {
 	updatesVal := ctx.Value(waveObjUpdateKey)
 	if updatesVal == nil {
 		return nil
@@ -71,7 +71,7 @@ func ContextGetUpdate(ctx context.Context, oref ORef) *WaveObjUpdate {
 	return nil
 }
 
-func ContextAddUpdate(ctx context.Context, update WaveObjUpdate) {
+func ContextAddUpdate(ctx context.Context, update WaddleObjUpdate) {
 	updatesVal := ctx.Value(waveObjUpdateKey)
 	if updatesVal == nil {
 		return
@@ -90,7 +90,7 @@ func ContextUpdatesBeginTx(ctx context.Context) context.Context {
 		return ctx
 	}
 	updates := updatesVal.(*contextUpdatesType)
-	updates.UpdatesStack = append(updates.UpdatesStack, make(map[ORef]WaveObjUpdate))
+	updates.UpdatesStack = append(updates.UpdatesStack, make(map[ORef]WaddleObjUpdate))
 	return ctx
 }
 

@@ -1,23 +1,23 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { MetaKeyAtomFnType, SettingsKeyAtomFnType, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import type { MetaKeyAtomFnType, SettingsKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 
-export type WebViewEnv = WaveEnvSubset<{
+export type WebViewEnv = WaddleEnvSubset<{
     electron: {
-        openExternal: WaveEnv["electron"]["openExternal"];
-        getWebviewPreload: WaveEnv["electron"]["getWebviewPreload"];
-        clearWebviewStorage: WaveEnv["electron"]["clearWebviewStorage"];
-        getConfigDir: WaveEnv["electron"]["getConfigDir"];
-        setWebviewFocus: WaveEnv["electron"]["setWebviewFocus"];
+        openExternal: WaddleEnv["electron"]["openExternal"];
+        getWebviewPreload: WaddleEnv["electron"]["getWebviewPreload"];
+        clearWebviewStorage: WaddleEnv["electron"]["clearWebviewStorage"];
+        getConfigDir: WaddleEnv["electron"]["getConfigDir"];
+        setWebviewFocus: WaddleEnv["electron"]["setWebviewFocus"];
     };
     rpc: {
-        FetchSuggestionsCommand: WaveEnv["rpc"]["FetchSuggestionsCommand"];
-        SetMetaCommand: WaveEnv["rpc"]["SetMetaCommand"];
-        SetConfigCommand: WaveEnv["rpc"]["SetConfigCommand"];
+        FetchSuggestionsCommand: WaddleEnv["rpc"]["FetchSuggestionsCommand"];
+        SetMetaCommand: WaddleEnv["rpc"]["SetMetaCommand"];
+        SetConfigCommand: WaddleEnv["rpc"]["SetConfigCommand"];
     };
-    wos: WaveEnv["wos"];
-    createBlock: WaveEnv["createBlock"];
+    wos: WaddleEnv["wos"];
+    createBlock: WaddleEnv["createBlock"];
     getSettingsKeyAtom: SettingsKeyAtomFnType<"web:defaulturl" | "web:defaultsearch">;
     getBlockMetaKeyAtom: MetaKeyAtomFnType<
         "web:hidenav" | "web:useragenttype" | "web:zoom" | "web:partition"

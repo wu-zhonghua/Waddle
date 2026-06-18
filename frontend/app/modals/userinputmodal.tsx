@@ -64,7 +64,7 @@ const UserInputModal = (userInputRequest: UserInputRequest) => {
     }, [handleSendConfirm, handleSendText, userInputRequest.responsetype]);
 
     const handleKeyDown = useCallback(
-        (waveEvent: WaveKeyboardEvent): boolean => {
+        (waveEvent: WaddleKeyboardEvent): boolean => {
             if (keyutil.checkKeyPressed(waveEvent, "Escape")) {
                 handleSendErrResponse();
                 return true;

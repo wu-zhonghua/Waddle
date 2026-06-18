@@ -14,18 +14,18 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v4/process"
-	"github.com/wavetermdev/waveterm/pkg/baseds"
-	"github.com/wavetermdev/waveterm/pkg/panichandler"
-	"github.com/wavetermdev/waveterm/pkg/utilds"
-	"github.com/wavetermdev/waveterm/pkg/wavebase"
-	"github.com/wavetermdev/waveterm/pkg/wavejwt"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc"
-	"github.com/wavetermdev/waveterm/pkg/wshrpc/wshclient"
-	"github.com/wavetermdev/waveterm/pkg/wshutil"
+	"github.com/waddledev/waddle/pkg/baseds"
+	"github.com/waddledev/waddle/pkg/panichandler"
+	"github.com/waddledev/waddle/pkg/utilds"
+	"github.com/waddledev/waddle/pkg/wavebase"
+	"github.com/waddledev/waddle/pkg/wavejwt"
+	"github.com/waddledev/waddle/pkg/wshrpc"
+	"github.com/waddledev/waddle/pkg/wshrpc/wshclient"
+	"github.com/waddledev/waddle/pkg/wshutil"
 )
 
-const JobAccessTokenLabel = "Wave-JobAccessToken"
-const JobManagerStartLabel = "Wave-JobManagerStart"
+const JobAccessTokenLabel = "Waddle-JobAccessToken"
+const JobManagerStartLabel = "Waddle-JobManagerStart"
 const JobInputQueueTimeout = 100 * time.Millisecond
 const JobInputQueueSize = 1000
 
@@ -377,7 +377,7 @@ func (jm *JobManager) StartStream(msc *MainServerConn) error {
 }
 
 func MakeJobDomainSocket(clientId string, jobId string) error {
-	socketDir := filepath.Join("/tmp", fmt.Sprintf("waveterm-%d", os.Getuid()))
+	socketDir := filepath.Join("/tmp", fmt.Sprintf("waddle-%d", os.Getuid()))
 	err := os.MkdirAll(socketDir, 0700)
 	if err != nil {
 		return fmt.Errorf("failed to create socket directory: %w", err)

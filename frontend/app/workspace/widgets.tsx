@@ -3,7 +3,7 @@
 
 import { Tooltip } from "@/app/element/tooltip";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { useWaveEnv, WaveEnv, WaveEnvSubset } from "@/app/waveenv/waveenv";
+import { useWaddleEnv, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
 import { modalsModel } from "@/store/modalmodel";
 import { fireAndForget, isBlank, makeIconClass } from "@/util/util";
@@ -20,22 +20,22 @@ import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-export type WidgetsEnv = WaveEnvSubset<{
-    isDev: WaveEnv["isDev"];
+export type WidgetsEnv = WaddleEnvSubset<{
+    isDev: WaddleEnv["isDev"];
     electron: {
-        openBuilder: WaveEnv["electron"]["openBuilder"];
+        openBuilder: WaddleEnv["electron"]["openBuilder"];
     };
     rpc: {
-        ListAllAppsCommand: WaveEnv["rpc"]["ListAllAppsCommand"];
+        ListAllAppsCommand: WaddleEnv["rpc"]["ListAllAppsCommand"];
     };
     atoms: {
-        fullConfigAtom: WaveEnv["atoms"]["fullConfigAtom"];
-        hasConfigErrors: WaveEnv["atoms"]["hasConfigErrors"];
-        workspaceId: WaveEnv["atoms"]["workspaceId"];
-        hasCustomAIPresetsAtom: WaveEnv["atoms"]["hasCustomAIPresetsAtom"];
+        fullConfigAtom: WaddleEnv["atoms"]["fullConfigAtom"];
+        hasConfigErrors: WaddleEnv["atoms"]["hasConfigErrors"];
+        workspaceId: WaddleEnv["atoms"]["workspaceId"];
+        hasCustomAIPresetsAtom: WaddleEnv["atoms"]["hasCustomAIPresetsAtom"];
     };
-    createBlock: WaveEnv["createBlock"];
-    showContextMenu: WaveEnv["showContextMenu"];
+    createBlock: WaddleEnv["createBlock"];
+    showContextMenu: WaddleEnv["showContextMenu"];
 }>;
 
 function sortByDisplayOrder(wmap: { [key: string]: WidgetConfigType }): WidgetConfigType[] {
@@ -133,7 +133,7 @@ type FloatingWindowPropsType = {
 const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: FloatingWindowPropsType) => {
     const [apps, setApps] = useState<AppInfo[]>([]);
     const [loading, setLoading] = useState(true);
-    const env = useWaveEnv<WidgetsEnv>();
+    const env = useWaddleEnv<WidgetsEnv>();
 
     const { refs, floatingStyles, context } = useFloating({
         open: isOpen,
@@ -255,7 +255,7 @@ const AppsFloatingWindow = memo(({ isOpen, onClose, referenceElement }: Floating
 
 const SettingsFloatingWindow = memo(
     ({ isOpen, onClose, referenceElement, hasConfigErrors }: FloatingWindowPropsType) => {
-        const env = useWaveEnv<WidgetsEnv>();
+        const env = useWaddleEnv<WidgetsEnv>();
         const { refs, floatingStyles, context } = useFloating({
             open: isOpen,
             onOpenChange: onClose,
@@ -369,7 +369,7 @@ const SettingsFloatingWindow = memo(
 SettingsFloatingWindow.displayName = "SettingsFloatingWindow";
 
 const Widgets = memo(() => {
-    const env = useWaveEnv<WidgetsEnv>();
+    const env = useWaddleEnv<WidgetsEnv>();
     const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
     const hasConfigErrors = useAtomValue(env.atoms.hasConfigErrors);
     const workspaceId = useAtomValue(env.atoms.workspaceId);
@@ -377,7 +377,7 @@ const Widgets = memo(() => {
     const containerRef = useRef<HTMLDivElement>(null);
     const measurementRef = useRef<HTMLDivElement>(null);
 
-    const featureWaveAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"] ?? false;
+    const featureWaddleAppBuilder = fullConfig?.settings?.["feature:waveappbuilder"] ?? false;
     const widgetsMap = fullConfig?.widgets ?? {};
     const filteredWidgets = Object.fromEntries(
         Object.entries(widgetsMap).filter(([_key, widget]) => shouldIncludeWidgetForWorkspace(widget, workspaceId))
@@ -471,13 +471,13 @@ const Widgets = memo(() => {
                         </div>
                         <div className="flex-grow" />
                         <div className="grid grid-cols-2 gap-0 w-full">
-                            {env.isDev() || featureWaveAppBuilder ? (
+                            {env.isDev() || featureWaddleAppBuilder ? (
                                 <div
                                     ref={appsButtonRef}
                                     className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-sm overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                     onClick={() => setIsAppsOpen(!isAppsOpen)}
                                 >
-                                    <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                    <Tooltip content="Local WaddleApps" placement="left" disable={isAppsOpen}>
                                         <div>
                                             <i className={makeIconClass("cube", true)}></i>
                                         </div>
@@ -510,13 +510,13 @@ const Widgets = memo(() => {
                             <Widget key={`widget-${idx}`} widget={data} mode={mode} env={env} />
                         ))}
                         <div className="flex-grow" />
-                        {env.isDev() || featureWaveAppBuilder ? (
+                        {env.isDev() || featureWaddleAppBuilder ? (
                             <div
                                 ref={appsButtonRef}
                                 className="flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary text-lg overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer"
                                 onClick={() => setIsAppsOpen(!isAppsOpen)}
                             >
-                                <Tooltip content="Local WaveApps" placement="left" disable={isAppsOpen}>
+                                <Tooltip content="Local WaddleApps" placement="left" disable={isAppsOpen}>
                                     <div className="flex flex-col items-center w-full">
                                         <div>
                                             <i className={makeIconClass("cube", true)}></i>
@@ -562,13 +562,13 @@ const Widgets = memo(() => {
                 {env.isDev() ? (
                     <div
                         className="flex justify-center items-center w-full py-1 text-accent text-[30px]"
-                        title="Running Wave Dev Build"
+                        title="Running Waddle Dev Build"
                     >
                         <i className="fa fa-brands fa-dev fa-fw" />
                     </div>
                 ) : null}
             </div>
-            {(env.isDev() || featureWaveAppBuilder) && appsButtonRef.current && (
+            {(env.isDev() || featureWaddleAppBuilder) && appsButtonRef.current && (
                 <AppsFloatingWindow
                     isOpen={isAppsOpen}
                     onClose={() => setIsAppsOpen(false)}
@@ -609,7 +609,7 @@ const Widgets = memo(() => {
                 {env.isDev() ? (
                     <div
                         className="flex justify-center items-center w-full py-1 text-accent text-[30px]"
-                        title="Running Wave Dev Build"
+                        title="Running Waddle Dev Build"
                     >
                         <i className="fa fa-brands fa-dev fa-fw" />
                     </div>
