@@ -9,7 +9,7 @@ import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { getOverrideConfigAtom, refocusNode } from "@/store/global";
 import * as WOS from "@/store/wos";
 import { goHistory, goHistoryBack, goHistoryForward } from "@/util/historyutil";
-import { checkKeyPressed } from "@/util/keyutil";
+import { adaptFromReactOrNativeKeyEvent, checkKeyPressed } from "@/util/keyutil";
 import { addOpenMenuItems } from "@/util/previewutil";
 import { base64ToString, fireAndForget, isBlank, jotaiLoadableValue, stringToBase64 } from "@/util/util";
 import { formatRemoteUri } from "@/util/waveutil";
@@ -20,6 +20,7 @@ import type * as MonacoTypes from "monaco-editor";
 import { createRef } from "react";
 import { PreviewView } from "./preview";
 import { makeDirectoryDefaultMenuItems } from "./preview-directory-utils";
+import { formatPreviewHeaderPath } from "./preview-header-utils";
 import type { PreviewEnv } from "./previewenv";
 
 // TODO drive this using config
@@ -129,7 +130,9 @@ export class PreviewModel implements ViewModel {
     preIconButton: Atom<IconButtonDecl>;
     endIconButtons: Atom<IconButtonDecl[]>;
     hideViewName: Atom<boolean>;
-    previewTextRef: React.RefObject<HTMLDivElement>;
+    pathInputRef: React.RefObject<HTMLInputElement>;
+    pathInputValue: PrimitiveAtom<string>;
+    pathInputFocused: PrimitiveAtom<boolean>;
     editMode: Atom<boolean>;
     canPreview: PrimitiveAtom<boolean>;
     specializedView: Atom<Promise<{ specializedView?: string; errorStr?: string }>>;
@@ -180,7 +183,9 @@ export class PreviewModel implements ViewModel {
         this.showHiddenFiles = atom<boolean>(showHiddenFiles);
         this.refreshVersion = atom(0);
         this.directorySearchActive = atom(false);
-        this.previewTextRef = createRef();
+        this.pathInputRef = createRef();
+        this.pathInputValue = atom("");
+        this.pathInputFocused = atom(false);
         this.openFileModal = atom(false);
         this.openFileModalDelay = atom(false);
         this.openFileError = atom(null) as PrimitiveAtom<string>;
@@ -239,22 +244,30 @@ export class PreviewModel implements ViewModel {
             const loadableSV = get(this.loadableSpecializedView);
             const isCeView = loadableSV.state == "hasData" && loadableSV.data.specializedView == "codeedit";
             const loadableFileInfo = get(this.loadableFileInfo);
+            let fileInfo: FileInfo = null;
             if (loadableFileInfo.state == "hasData") {
-                headerPath = loadableFileInfo.data?.path;
-                if (headerPath == "~") {
-                    headerPath = `~ (${loadableFileInfo.data?.dir + "/" + loadableFileInfo.data?.name})`;
-                }
+                fileInfo = loadableFileInfo.data;
             }
-            if (!isBlank(headerPath) && headerPath != "/" && headerPath.endsWith("/")) {
-                headerPath = headerPath.slice(0, -1);
-            }
+            headerPath = formatPreviewHeaderPath(headerPath, fileInfo);
+            const pathInputFocused = get(this.pathInputFocused);
+            const pathInputValue = pathInputFocused ? get(this.pathInputValue) : headerPath;
             const viewTextChildren: HeaderElem[] = [
                 {
-                    elemtype: "text",
-                    text: headerPath,
-                    ref: this.previewTextRef,
+                    elemtype: "input",
+                    value: pathInputValue,
+                    ref: this.pathInputRef,
                     className: "preview-filename",
-                    onClick: () => this.toggleOpenFileModal(),
+                    onChange: this.handlePathInputChange.bind(this),
+                    onKeyDown: this.handlePathInputKeyDown.bind(this),
+                    onFocus: this.handlePathInputFocus.bind(this),
+                    onBlur: this.handlePathInputBlur.bind(this),
+                },
+                {
+                    elemtype: "iconbutton",
+                    icon: "folder-open",
+                    title: "Open Path",
+                    className: "preview-open-path-button",
+                    click: () => this.toggleOpenFileModal(),
                 },
             ];
             let saveClassName = "grey";
@@ -575,6 +588,52 @@ export class PreviewModel implements ViewModel {
             return;
         }
         this.updateOpenFileModalAndError(!modalOpen);
+    }
+
+    getHeaderPath(): string {
+        const filePath = globalStore.get(this.metaFilePath);
+        const loadableFileInfo = globalStore.get(this.loadableFileInfo);
+        const fileInfo = loadableFileInfo.state == "hasData" ? loadableFileInfo.data : null;
+        return formatPreviewHeaderPath(filePath, fileInfo);
+    }
+
+    handlePathInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+        globalStore.set(this.pathInputValue, event.target.value);
+    }
+
+    handlePathInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+        const waveEvent = adaptFromReactOrNativeKeyEvent(event);
+        if (checkKeyPressed(waveEvent, "Enter")) {
+            event.preventDefault();
+            event.stopPropagation();
+            const nextPath = globalStore.get(this.pathInputValue);
+            if (isBlank(nextPath)) {
+                return;
+            }
+            fireAndForget(async () => {
+                await this.goHistory(nextPath);
+                this.pathInputRef.current?.blur();
+            });
+            return;
+        }
+        if (checkKeyPressed(waveEvent, "Escape")) {
+            event.preventDefault();
+            event.stopPropagation();
+            globalStore.set(this.pathInputValue, this.getHeaderPath());
+            this.pathInputRef.current?.blur();
+            refocusNode(this.blockId);
+        }
+    }
+
+    handlePathInputFocus(event: React.FocusEvent<HTMLInputElement>) {
+        globalStore.set(this.pathInputFocused, true);
+        globalStore.set(this.pathInputValue, event.target.value);
+        event.target.select();
+    }
+
+    handlePathInputBlur() {
+        globalStore.set(this.pathInputFocused, false);
+        globalStore.set(this.pathInputValue, this.getHeaderPath());
     }
 
     async goHistory(newPath: string) {

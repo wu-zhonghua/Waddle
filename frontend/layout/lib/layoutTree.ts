@@ -21,6 +21,7 @@ import {
     LayoutTreeFocusNodeAction,
     LayoutTreeInsertNodeAction,
     LayoutTreeInsertNodeAtIndexAction,
+    LayoutTreeInsertLeftSidebarAction,
     LayoutTreeMagnifyNodeToggleAction,
     LayoutTreeMoveNodeAction,
     LayoutTreeResizeNodeAction,
@@ -314,6 +315,28 @@ export function insertNodeAtIndex(layoutState: LayoutTreeState, action: LayoutTr
             layoutState.magnifiedNodeId = action.node.id;
             layoutState.focusedNodeId = action.node.id;
         }
+    }
+    if (action.focused) {
+        layoutState.focusedNodeId = action.node.id;
+    }
+}
+
+export function insertLeftSidebar(layoutState: LayoutTreeState, action: LayoutTreeInsertLeftSidebarAction) {
+    if (!action?.node) {
+        console.error("insertLeftSidebar cannot run, no insert node action provided");
+        return;
+    }
+    action.node.size = action.sidebarSize;
+    if (!layoutState.rootNode) {
+        layoutState.rootNode = action.node;
+    } else {
+        const mainNode = layoutState.rootNode;
+        mainNode.size = action.mainSize;
+        layoutState.rootNode = newLayoutNode(FlexDirection.Row, undefined, [action.node, mainNode]);
+    }
+    if (action.magnified) {
+        layoutState.magnifiedNodeId = action.node.id;
+        layoutState.focusedNodeId = action.node.id;
     }
     if (action.focused) {
         layoutState.focusedNodeId = action.node.id;

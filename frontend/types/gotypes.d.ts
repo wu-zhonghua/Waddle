@@ -2186,6 +2186,16 @@ declare global {
         windowid: string;
     };
 
+    // wps.WshInstallProgressData
+    type WshInstallProgressData = {
+        connname: string;
+        status: string;
+        percent: number;
+        written: number;
+        total: number;
+        message?: string;
+    };
+
     // wshrpc.WshServerCommandMeta
     type WshServerCommandMeta = {
         commandtype: string;

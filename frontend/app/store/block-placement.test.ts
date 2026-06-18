@@ -1,0 +1,155 @@
+// Copyright 2026, Command Line Inc.
+// SPDX-License-Identifier: Apache-2.0
+
+import { describe, expect, it } from "vitest";
+import { newLayoutNode } from "@/layout/lib/layoutNode";
+import { FlexDirection, LayoutTreeActionType } from "@/layout/lib/types";
+import { applyInheritedBlockLocation, makeCreateBlockPlacementAction } from "./block-placement";
+
+describe("makeCreateBlockPlacementAction", () => {
+    const metas: Record<string, MetaType> = {
+        files: { view: "preview", file: "~" },
+        terminal: { view: "term", controller: "shell" },
+    };
+    const getBlockMeta = (blockId: string) => metas[blockId];
+
+    it("places the first files block as a left sidebar", () => {
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-files" });
+
+        const action = makeCreateBlockPlacementAction(terminalNode, filesNode, "files", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.InsertLeftSidebar,
+            sidebarSize: 20,
+            mainSize: 80,
+            focused: true,
+        });
+    });
+
+    it("stacks files below an existing files block", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const newFilesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-files" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, newFilesNode, "files", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitVertical,
+            targetNodeId: filesNode.id,
+            newNode: newFilesNode,
+            position: "after",
+            focused: true,
+        });
+        expect(newFilesNode.size).toBeCloseTo(10);
+    });
+
+    it("stacks terminals below an existing terminal when files are already open", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const newTermNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-terminal" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, newTermNode, "terminal", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitVertical,
+            targetNodeId: terminalNode.id,
+            newNode: newTermNode,
+            position: "after",
+            focused: true,
+        });
+        expect(newTermNode.size).toBeCloseTo(40);
+    });
+
+    it("places the first terminal to the right of an existing files block", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
+        const newTermNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-terminal" });
+
+        const action = makeCreateBlockPlacementAction(filesNode, newTermNode, "terminal", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: filesNode.id,
+            newNode: newTermNode,
+            position: "after",
+            focused: true,
+        });
+        expect(newTermNode.size).toBe(80);
+    });
+});
+
+describe("applyInheritedBlockLocation", () => {
+    const metas: Record<string, MetaType> = {
+        remoteFiles: { view: "preview", file: "/srv/app", connection: "ssh:prod" },
+        remoteTerminal: { view: "term", controller: "shell", "cmd:cwd": "/var/www", connection: "ssh:web" },
+    };
+    const getBlockMeta = (blockId: string) => metas[blockId];
+
+    it("opens new terminals on the focused files connection and directory", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteFiles" });
+        const blockDef: BlockDef = { meta: { view: "term", controller: "shell" } };
+
+        const inherited = applyInheritedBlockLocation(blockDef, filesNode, filesNode.id, "terminal", getBlockMeta);
+
+        expect(inherited.meta).toMatchObject({
+            view: "term",
+            controller: "shell",
+            connection: "ssh:prod",
+            "cmd:cwd": "/srv/app",
+        });
+        expect(blockDef.meta).not.toHaveProperty("connection");
+    });
+
+    it("opens new files on the focused terminal connection and directory", () => {
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteTerminal" });
+        const blockDef: BlockDef = { meta: { view: "preview", file: "~" } };
+
+        const inherited = applyInheritedBlockLocation(blockDef, terminalNode, terminalNode.id, "files", getBlockMeta);
+
+        expect(inherited.meta).toMatchObject({
+            view: "preview",
+            file: "/var/www",
+            connection: "ssh:web",
+        });
+        expect(blockDef.meta.file).toBe("~");
+    });
+
+    it("does not override explicit terminal location metadata", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteFiles" });
+        const blockDef: BlockDef = {
+            meta: {
+                view: "term",
+                controller: "shell",
+                connection: "ssh:staging",
+                "cmd:cwd": "/opt/current",
+            },
+        };
+
+        const inherited = applyInheritedBlockLocation(blockDef, filesNode, filesNode.id, "terminal", getBlockMeta);
+
+        expect(inherited.meta).toMatchObject({
+            connection: "ssh:staging",
+            "cmd:cwd": "/opt/current",
+        });
+    });
+
+    it("does not override explicit files location metadata", () => {
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteTerminal" });
+        const blockDef: BlockDef = {
+            meta: {
+                view: "preview",
+                file: "/tmp/manual",
+                connection: "ssh:manual",
+            },
+        };
+
+        const inherited = applyInheritedBlockLocation(blockDef, terminalNode, terminalNode.id, "files", getBlockMeta);
+
+        expect(inherited.meta).toMatchObject({
+            file: "/tmp/manual",
+            connection: "ssh:manual",
+        });
+    });
+});

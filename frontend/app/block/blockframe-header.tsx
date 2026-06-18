@@ -233,6 +233,7 @@ const BlockFrame_Header = ({
     const iconColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
     const dragHandleRef = preview ? null : nodeModel.dragHandleRef;
     const isTerminalBlock = metaView === "term";
+    const isPreviewHeader = metaView === "preview" && !useTermHeader;
     viewName = metaFrameTitle ?? viewName;
     viewIconUnion = metaFrameIcon ?? viewIconUnion;
 
@@ -248,7 +249,11 @@ const BlockFrame_Header = ({
 
     return (
         <div
-            className={cn("block-frame-default-header", useTermHeader && "!pl-[2px]")}
+            className={cn(
+                "block-frame-default-header",
+                useTermHeader && "!pl-[2px]",
+                isPreviewHeader && "block-frame-preview-header"
+            )}
             data-role="block-header"
             ref={dragHandleRef}
             onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel, waveEnv)}

@@ -1,6 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { createBlock } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { fireAndForget, isBlank } from "@/util/util";
@@ -11,6 +12,9 @@ import { type PreviewModel } from "./preview-model";
 export const recursiveError = "recursive flag must be set for directory operations";
 export const overwriteError = "set overwrite flag to delete the existing file";
 export const mergeError = "set overwrite flag to delete the existing contents or set merge flag to merge the contents";
+
+type DirectoryOpenModel = Pick<PreviewModel, "goHistory">;
+type CreateBlockFn = (blockDef: BlockDef, magnified?: boolean, ephemeral?: boolean) => Promise<string>;
 
 export const displaySuffixes = {
     B: "b",
@@ -79,6 +83,30 @@ export function getSortIcon(sortType: string | boolean): React.ReactNode {
 export function cleanMimetype(input: string): string {
     const truncated = input.split(";")[0];
     return truncated.trim();
+}
+
+export async function openDirectoryEntry(
+    model: DirectoryOpenModel,
+    path: string,
+    isDir: boolean,
+    connection: string,
+    createBlockFn: CreateBlockFn = createBlock
+) {
+    if (isBlank(path)) {
+        return;
+    }
+    if (isDir) {
+        await model.goHistory(path);
+        return;
+    }
+    const blockDef: BlockDef = {
+        meta: {
+            view: "preview",
+            file: path,
+            connection,
+        },
+    };
+    await createBlockFn(blockDef);
 }
 
 export function handleRename(

@@ -81,6 +81,7 @@ export enum LayoutTreeActionType {
     ResizeNode = "resize",
     InsertNode = "insert",
     InsertNodeAtIndex = "insertatindex",
+    InsertLeftSidebar = "insertleftsidebar",
     DeleteNode = "delete",
     FocusNode = "focus",
     MagnifyNodeToggle = "magnify",
@@ -169,6 +170,12 @@ export interface LayoutTreeInsertNodeAtIndexAction extends LayoutTreeAction, Ins
      * The last index is the index within the parent node where the node should be inserted.
      */
     indexArr: number[];
+}
+
+export interface LayoutTreeInsertLeftSidebarAction extends LayoutTreeAction, InsertNodeOperation {
+    type: LayoutTreeActionType.InsertLeftSidebar;
+    sidebarSize: number;
+    mainSize: number;
 }
 
 /**

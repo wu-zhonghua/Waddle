@@ -41,6 +41,7 @@ var WaddleEventDataTypes = map[string]reflect.Type{
 	wps.Event_AIModeConfig:          reflect.TypeOf(wconfig.AIModeConfigUpdate{}),
 	wps.Event_BlockJobStatus:        reflect.TypeOf(wshrpc.BlockJobStatusData{}),
 	wps.Event_Badge:                 reflect.TypeOf(baseds.BadgeEvent{}),
+	wps.Event_WshInstallProgress:    reflect.TypeOf(wps.WshInstallProgressData{}),
 }
 
 func getWaddleEventDataTSType(eventName string, tsTypesMap map[reflect.Type]string) string {

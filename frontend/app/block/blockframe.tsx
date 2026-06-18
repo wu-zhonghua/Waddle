@@ -170,6 +170,7 @@ const BlockFrame_Default_Component = (props: BlockFrameProps) => {
             className={clsx("block", "block-frame-default", "block-" + nodeModel.blockId, {
                 "block-focused": isFocused || preview,
                 "block-preview": preview,
+                "block-view-preview": metaView === "preview",
                 "block-no-highlight": numBlocksInTab === 1 && !aiPanelVisible,
                 ephemeral: isEphemeral,
                 magnified: isMagnified,

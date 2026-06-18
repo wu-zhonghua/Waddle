@@ -977,7 +977,7 @@ export class TermViewModel implements ViewModel {
                         meta.connection = connection;
                     }
                     const blockDef: BlockDef = { meta };
-                    createBlock(blockDef);
+                    createBlock(blockDef, false, false, "files");
                 },
             });
             fullMenu.push({ type: "separator" });

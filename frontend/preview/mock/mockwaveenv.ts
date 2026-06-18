@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { makeDefaultConnStatus } from "@/app/store/global";
+import type { CreateBlockPlacement } from "@/app/store/block-placement";
 import { globalStore } from "@/app/store/jotaiStore";
 import { AllServiceTypes } from "@/app/store/services";
 import { handleWaddleEvent } from "@/app/store/wps";
@@ -494,8 +495,8 @@ export function makeMockWaddleEnv(mockEnv?: MockEnv): MockWaddleEnv {
         isMacOS: () => platform === PlatformMacOS,
         createBlock:
             mergedOverrides.createBlock ??
-            ((blockDef: BlockDef, magnified?: boolean, ephemeral?: boolean) => {
-                console.log("[mock createBlock]", blockDef, { magnified, ephemeral });
+            ((blockDef: BlockDef, magnified?: boolean, ephemeral?: boolean, placement?: CreateBlockPlacement) => {
+                console.log("[mock createBlock]", blockDef, { magnified, ephemeral, placement });
                 const newBlockId = crypto.randomUUID();
                 const newBlock: Block = {
                     otype: "block",

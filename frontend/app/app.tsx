@@ -32,6 +32,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { AppBackground } from "./app-bg";
 import { CenteredDiv } from "./element/quickelems";
+import { WshInstallProgressBar } from "./wsh-install-progress";
 
 import "./app.scss";
 
@@ -386,6 +387,7 @@ const AppInner = () => {
             <DndProvider backend={HTML5Backend}>
                 <Workspace />
             </DndProvider>
+            <WshInstallProgressBar />
         </div>
     );
 };

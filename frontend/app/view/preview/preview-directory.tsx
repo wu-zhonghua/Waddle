@@ -51,6 +51,7 @@ import {
     isIconValid,
     makeDirectoryDefaultMenuItems,
     mergeError,
+    openDirectoryEntry,
     overwriteError,
 } from "./preview-directory-utils";
 import { type PreviewModel } from "./preview-model";
@@ -170,7 +171,7 @@ interface DirectoryTableProps {
     focusIndex: number;
     setFocusIndex: (_: number) => void;
     setSearch: (_: string) => void;
-    setSelectedPath: (_: string) => void;
+    setSelectedPath: (_: string, isDir?: boolean) => void;
     setRefreshVersion: React.Dispatch<React.SetStateAction<number>>;
     entryManagerOverlayPropsAtom: PrimitiveAtom<EntryManagerOverlayProps>;
     newFile: () => void;
@@ -316,7 +317,8 @@ function DirectoryTable({
     const sortingState = table.getState().sorting;
     useEffect(() => {
         const allRows = table.getRowModel()?.flatRows || [];
-        setSelectedPath((allRows[focusIndex]?.getValue("path") as string) ?? null);
+        const focusedRow = allRows[focusIndex];
+        setSelectedPath((focusedRow?.getValue("path") as string) ?? null, focusedRow?.original?.isdir ?? false);
     }, [focusIndex, data, setSelectedPath, sortingState]);
 
     const columnSizeVars = useMemo(() => {
@@ -387,7 +389,7 @@ interface TableBodyProps {
     focusIndex: number;
     setFocusIndex: (_: number) => void;
     setSearch: (_: string) => void;
-    setSelectedPath: (_: string) => void;
+    setSelectedPath: (_: string, isDir?: boolean) => void;
     setRefreshVersion: React.Dispatch<React.SetStateAction<number>>;
     osRef: OverlayScrollbarsComponentRef;
 }
@@ -611,7 +613,7 @@ function TableRow({ model, row, focusIndex, setFocusIndex, setSearch, idx, handl
             data-rowindex={idx}
             onDoubleClick={() => {
                 const newFileName = row.getValue("path") as string;
-                model.goHistory(newFileName);
+                fireAndForget(() => openDirectoryEntry(model, newFileName, row.original.isdir, connection));
                 setSearch("");
                 globalStore.set(model.directorySearchActive, false);
             }}
@@ -672,7 +674,7 @@ interface DirectoryTreeProps {
     data: FileInfo[];
     search: string;
     setSearch: (_: string) => void;
-    setSelectedPath: (_: string) => void;
+    setSelectedPath: (_: string, isDir?: boolean) => void;
     dirPath: string;
     entryManagerOverlayPropsAtom: PrimitiveAtom<EntryManagerOverlayProps>;
     newFile: () => void;
@@ -704,9 +706,10 @@ function DirectoryTree({
     }, [data, dirPath, fullConfig, search, showHiddenFiles]);
 
     const selectedPathSeed = treeData.rootIds[0] ?? dirPath ?? "";
+    const selectedNodeSeed = treeData.initialNodes[selectedPathSeed];
     useEffect(() => {
-        setSelectedPath(selectedPathSeed);
-    }, [selectedPathSeed, setSelectedPath]);
+        setSelectedPath(selectedPathSeed, selectedNodeSeed?.isDirectory ?? false);
+    }, [selectedNodeSeed, selectedPathSeed, setSelectedPath]);
 
     const fetchDir = useCallback(
         async (id: string, limit: number) => {
@@ -852,11 +855,11 @@ function DirectoryTree({
                 height="100%"
                 className="dir-tree"
                 onOpenFile={(_id, node) => {
-                    model.goHistory(node.path ?? node.id);
+                    fireAndForget(() => openDirectoryEntry(model, node.path ?? node.id, node.isDirectory, conn));
                     setSearch("");
                     globalStore.set(model.directorySearchActive, false);
                 }}
-                onSelectionChange={(_id, node) => setSelectedPath(node.path ?? node.id)}
+                onSelectionChange={(_id, node) => setSelectedPath(node.path ?? node.id, node.isDirectory)}
                 onNodeContextMenu={handleTreeNodeContextMenu}
             />
         </div>
@@ -878,12 +881,18 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     const [unfilteredData, setUnfilteredData] = useState<FileInfo[]>([]);
     const showHiddenFiles = useAtomValue(model.showHiddenFiles);
     const [selectedPath, setSelectedPath] = useState("");
+    const [selectedPathIsDir, setSelectedPathIsDir] = useState(false);
     const [refreshVersion, setRefreshVersion] = useAtom(model.refreshVersion);
     const conn = useAtomValue(model.connection);
     const blockData = useAtomValue(model.blockAtom);
     const finfo = useAtomValue(model.statFile);
     const dirPath = finfo?.path ?? "";
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
+
+    const setSelectedEntry = useCallback((path: string, isDir = false) => {
+        setSelectedPath(path);
+        setSelectedPathIsDir(isDir);
+    }, []);
 
     useEffect(() => {
         setDirectoryViewMode(normalizeDirectoryViewMode(directoryViewModeSetting));
@@ -992,7 +1001,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 if (selectedPath == null || selectedPath == "") {
                     return;
                 }
-                model.goHistory(selectedPath);
+                fireAndForget(() => openDirectoryEntry(model, selectedPath, selectedPathIsDir, conn));
                 setSearchText("");
                 globalStore.set(model.directorySearchActive, false);
                 return true;
@@ -1022,7 +1031,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
         return () => {
             model.directoryKeyDownHandler = null;
         };
-    }, [directoryViewMode, filteredData, selectedPath, searchText]);
+    }, [conn, directoryViewMode, filteredData, selectedPath, selectedPathIsDir, searchText]);
 
     useEffect(() => {
         if (filteredData.length != 0 && focusIndex > filteredData.length - 1) {
@@ -1216,7 +1225,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                         data={unfilteredData}
                         search={searchText}
                         setSearch={setSearchText}
-                        setSelectedPath={setSelectedPath}
+                        setSelectedPath={setSelectedEntry}
                         dirPath={dirPath}
                         entryManagerOverlayPropsAtom={entryManagerPropsAtom}
                         newFile={newFile}
@@ -1230,7 +1239,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                         focusIndex={focusIndex}
                         setFocusIndex={setFocusIndex}
                         setSearch={setSearchText}
-                        setSelectedPath={setSelectedPath}
+                        setSelectedPath={setSelectedEntry}
                         setRefreshVersion={setRefreshVersion}
                         entryManagerOverlayPropsAtom={entryManagerPropsAtom}
                         newFile={newFile}

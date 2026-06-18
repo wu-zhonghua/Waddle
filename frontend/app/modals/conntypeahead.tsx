@@ -20,6 +20,7 @@ import * as keyutil from "@/util/keyutil";
 import * as util from "@/util/util";
 import * as jotai from "jotai";
 import * as React from "react";
+import { changeBlockConnection } from "./conntypeahead-utils";
 
 // newConnList -> connList => filteredList -> remoteItems -> sortedRemoteItems => remoteSuggestion
 // filteredList -> createNew
@@ -349,25 +350,15 @@ const ChangeConnectionBlockModal = React.memo(
 
         const changeConnection = React.useCallback(
             async (connName: string) => {
-                if (connName == "") {
-                    connName = null;
-                }
-                if (connName == blockData?.meta?.connection) {
-                    return;
-                }
-                const oldFile = blockData?.meta?.file ?? "";
-                const newFile = oldFile == "" ? "" : "~";
-                await RpcApi.SetMetaCommand(TabRpcClient, {
-                    oref: WOS.makeORef("block", blockId),
-                    meta: { connection: connName, file: newFile, "cmd:cwd": null },
-                });
-
                 try {
-                    await RpcApi.ConnEnsureCommand(
-                        TabRpcClient,
-                        { connname: connName, logblockid: blockId },
-                        { timeout: 60000 }
-                    );
+                    await changeBlockConnection({
+                        rpc: RpcApi,
+                        rpcClient: TabRpcClient,
+                        blockId,
+                        blockORef: WOS.makeORef("block", blockId),
+                        blockMeta: blockData?.meta,
+                        connName,
+                    });
                 } catch (e) {
                     console.log("error connecting", blockId, connName, e);
                 }

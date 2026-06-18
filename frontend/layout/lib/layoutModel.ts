@@ -19,6 +19,7 @@ import {
     focusNode,
     insertNode,
     insertNodeAtIndex,
+    insertLeftSidebar,
     magnifyNodeToggle,
     moveNode,
     replaceNode,
@@ -40,6 +41,7 @@ import {
     LayoutTreeFocusNodeAction,
     LayoutTreeInsertNodeAction,
     LayoutTreeInsertNodeAtIndexAction,
+    LayoutTreeInsertLeftSidebarAction,
     LayoutTreeMagnifyNodeToggleAction,
     LayoutTreeMoveNodeAction,
     LayoutTreeReplaceNodeAction,
@@ -632,6 +634,12 @@ export class LayoutModel {
             case LayoutTreeActionType.InsertNodeAtIndex:
                 insertNodeAtIndex(this.treeState, action as LayoutTreeInsertNodeAtIndexAction);
                 if ((action as LayoutTreeInsertNodeAtIndexAction).focused) {
+                    FocusManager.getInstance().requestNodeFocus();
+                }
+                break;
+            case LayoutTreeActionType.InsertLeftSidebar:
+                insertLeftSidebar(this.treeState, action as LayoutTreeInsertLeftSidebarAction);
+                if ((action as LayoutTreeInsertLeftSidebarAction).focused) {
                     FocusManager.getInstance().requestNodeFocus();
                 }
                 break;

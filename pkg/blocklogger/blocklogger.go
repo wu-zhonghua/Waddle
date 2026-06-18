@@ -39,12 +39,21 @@ type logBlockIdContextKeyType struct{}
 var logBlockIdContextKey = logBlockIdContextKeyType{}
 
 type logBlockIdData struct {
-	BlockId string
-	Verbose bool
+	BlockId     string
+	InfoEnabled bool
+	Verbose     bool
 }
 
 func ContextWithLogBlockId(ctx context.Context, blockId string, verbose bool) context.Context {
-	return context.WithValue(ctx, logBlockIdContextKey, &logBlockIdData{BlockId: blockId, Verbose: verbose})
+	return ContextWithLogBlockIdWithInfo(ctx, blockId, true, verbose)
+}
+
+func ContextWithLogBlockIdWithInfo(ctx context.Context, blockId string, infoEnabled bool, verbose bool) context.Context {
+	return context.WithValue(ctx, logBlockIdContextKey, &logBlockIdData{
+		BlockId:     blockId,
+		InfoEnabled: infoEnabled,
+		Verbose:     verbose,
+	})
 }
 
 func getLogBlockData(ctx context.Context) *logBlockIdData {
@@ -76,6 +85,14 @@ func writeLogf(blockId string, format string, args []any) {
 }
 
 func Infof(ctx context.Context, format string, args ...any) {
+	logData := getLogBlockData(ctx)
+	if logData == nil || !logData.InfoEnabled {
+		return
+	}
+	writeLogf(logData.BlockId, format, args)
+}
+
+func Outputf(ctx context.Context, format string, args ...any) {
 	logData := getLogBlockData(ctx)
 	if logData == nil {
 		return

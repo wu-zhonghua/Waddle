@@ -589,15 +589,17 @@ func termCtxWithLogBlockId(ctx context.Context, logBlockId string) context.Conte
 		return ctx
 	}
 	connDebug := block.Meta.GetString(waveobj.MetaKey_TermConnDebug, "")
-	if connDebug == "" {
-		return ctx
-	}
-	return blocklogger.ContextWithLogBlockId(ctx, logBlockId, connDebug == "debug")
+	return blocklogger.ContextWithLogBlockIdWithInfo(ctx, logBlockId, connDebug != "", connDebug == "debug")
+}
+
+func connCommandContext(ctx context.Context) context.Context {
+	return context.WithoutCancel(ctx)
 }
 
 func (ws *WshServer) ConnEnsureCommand(ctx context.Context, data wshrpc.ConnExtData) error {
 	ctx = genconn.ContextWithConnData(ctx, data.LogBlockId)
 	ctx = termCtxWithLogBlockId(ctx, data.LogBlockId)
+	ctx = connCommandContext(ctx)
 	if strings.HasPrefix(data.ConnName, "wsl://") {
 		distroName := strings.TrimPrefix(data.ConnName, "wsl://")
 		return wslconn.EnsureConnection(ctx, distroName)
@@ -634,6 +636,7 @@ func (ws *WshServer) ConnConnectCommand(ctx context.Context, connRequest wshrpc.
 	}
 	ctx = genconn.ContextWithConnData(ctx, connRequest.LogBlockId)
 	ctx = termCtxWithLogBlockId(ctx, connRequest.LogBlockId)
+	ctx = connCommandContext(ctx)
 	connName := connRequest.Host
 	if strings.HasPrefix(connName, "wsl://") {
 		distroName := strings.TrimPrefix(connName, "wsl://")
@@ -660,6 +663,7 @@ func (ws *WshServer) ConnReinstallWshCommand(ctx context.Context, data wshrpc.Co
 	}
 	ctx = genconn.ContextWithConnData(ctx, data.LogBlockId)
 	ctx = termCtxWithLogBlockId(ctx, data.LogBlockId)
+	ctx = connCommandContext(ctx)
 	connName := data.ConnName
 	if strings.HasPrefix(connName, "wsl://") {
 		distroName := strings.TrimPrefix(connName, "wsl://")

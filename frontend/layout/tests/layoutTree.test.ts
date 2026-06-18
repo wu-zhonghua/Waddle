@@ -3,7 +3,7 @@
 
 import { assert, test } from "vitest";
 import { newLayoutNode } from "../lib/layoutNode";
-import { computeMoveNode, moveNode } from "../lib/layoutTree";
+import { computeMoveNode, insertLeftSidebar, moveNode } from "../lib/layoutTree";
 import {
     DropDirection,
     LayoutTreeActionType,
@@ -82,4 +82,25 @@ test("computeMove - noop action", () => {
 
     pendingAction = computeMoveNode(treeState, moveAction);
     assert(pendingAction === undefined, "inserting a node to the right of itself should not produce a pendingAction");
+});
+
+test("insertLeftSidebar wraps existing layout on the right", () => {
+    const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+    const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
+    const treeState = newLayoutTreeState(terminalNode);
+
+    insertLeftSidebar(treeState, {
+        type: LayoutTreeActionType.InsertLeftSidebar,
+        node: filesNode,
+        magnified: false,
+        focused: true,
+        sidebarSize: 20,
+        mainSize: 80,
+    });
+
+    assert(treeState.rootNode.children?.[0].data?.blockId === "files", "files should be the left child");
+    assert(treeState.rootNode.children?.[0].size === 20, "files should take one fifth of the row");
+    assert(treeState.rootNode.children?.[1].data?.blockId === "terminal", "existing layout should move right");
+    assert(treeState.rootNode.children?.[1].size === 80, "existing layout should take the remaining row width");
+    assert(treeState.focusedNodeId === filesNode.id, "new files node should be focused");
 });

@@ -55,6 +55,7 @@ var ExtraTypes = []any{
 	uctypes.RateLimitInfo{},
 	wconfig.AIModeConfigUpdate{},
 	wshrpc.BlockJobStatusData{},
+	wps.WshInstallProgressData{},
 }
 
 // add extra type unions to generate here

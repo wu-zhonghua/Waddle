@@ -29,6 +29,7 @@ import {
 } from "@/util/util";
 import { atom, Atom, PrimitiveAtom, useAtomValue } from "jotai";
 import { setupBadgesSubscription } from "./badge";
+import { applyInheritedBlockLocation, CreateBlockPlacement, makeCreateBlockPlacementAction } from "./block-placement";
 import { atoms, blockComponentModelMap, ConnStatusMapAtom, initGlobalAtoms, orefAtomCache } from "./global-atoms";
 import { globalStore } from "./jotaiStore";
 import { modalsModel } from "./modalmodel";
@@ -405,21 +406,42 @@ async function createBlockSplitVertically(
     return newBlockId;
 }
 
-async function createBlock(blockDef: BlockDef, magnified = false, ephemeral = false): Promise<string> {
+async function createBlock(
+    blockDef: BlockDef,
+    magnified = false,
+    ephemeral = false,
+    placement: CreateBlockPlacement = "default"
+): Promise<string> {
     const layoutModel = getLayoutModelForStaticTab();
     const rtOpts: RuntimeOpts = { termsize: { rows: 25, cols: 80 } };
-    const blockId = await ObjectService.CreateBlock(blockDef, rtOpts);
+    const getBlockMeta = (existingBlockId: string) => {
+        const block = globalStore.get(WOS.getWaddleObjectAtom<Block>(WOS.makeORef("block", existingBlockId)));
+        return block?.meta;
+    };
+    const resolvedBlockDef = applyInheritedBlockLocation(
+        blockDef,
+        layoutModel.treeState?.rootNode,
+        layoutModel.treeState?.focusedNodeId,
+        placement,
+        getBlockMeta
+    );
+    const blockId = await ObjectService.CreateBlock(resolvedBlockDef, rtOpts);
     if (ephemeral) {
         layoutModel.newEphemeralNode(blockId);
         return blockId;
     }
+    const newNode = newLayoutNode(undefined, undefined, undefined, { blockId });
+    const placementAction =
+        placement === "default" || magnified
+            ? null
+            : makeCreateBlockPlacementAction(layoutModel.treeState?.rootNode, newNode, placement, getBlockMeta);
     const insertNodeAction: LayoutTreeInsertNodeAction = {
         type: LayoutTreeActionType.InsertNode,
-        node: newLayoutNode(undefined, undefined, undefined, { blockId }),
+        node: newNode,
         magnified,
         focused: true,
     };
-    layoutModel.treeReducer(insertNodeAction);
+    layoutModel.treeReducer(placementAction ?? insertNodeAction);
     return blockId;
 }
 

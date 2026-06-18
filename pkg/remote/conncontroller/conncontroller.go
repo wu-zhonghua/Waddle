@@ -314,6 +314,9 @@ func (conn *SSHConn) OpenDomainSocketListener(ctx context.Context) error {
 // if not up to date, or error, version might be ""
 func IsWshVersionUpToDate(logCtx context.Context, wshVersionLine string) (bool, string, string, error) {
 	wshVersionLine = strings.TrimSpace(wshVersionLine)
+	if strings.Contains(strings.ToLower(wshVersionLine), "segmentation fault") {
+		return false, "not-installed", "", nil
+	}
 	if strings.HasPrefix(wshVersionLine, "not-installed") {
 		return false, "not-installed", strings.TrimSpace(strings.TrimPrefix(wshVersionLine, "not-installed")), nil
 	}
@@ -607,13 +610,32 @@ func (conn *SSHConn) UpdateWsh(ctx context.Context, clientDisplayName string, re
 	if client == nil {
 		return fmt.Errorf("cannot update wsh: ssh client is not connected")
 	}
-	err := remote.CpWshToRemote(ctx, client, remoteInfo.ClientOs, remoteInfo.ClientArch)
+	err := remote.CpWshToRemote(wshInstallContext(ctx), client, conn.GetName(), remoteInfo.ClientOs, remoteInfo.ClientArch)
 	if err != nil {
 		return fmt.Errorf("error installing wsh to remote: %w", err)
 	}
 	conn.Infof(ctx, "successfully updated wsh on %s\n", conn.GetName())
 	return nil
 
+}
+
+func wshInstallContext(ctx context.Context) context.Context {
+	return context.WithoutCancel(ctx)
+}
+
+func getClientPlatformForInstall(
+	ctx context.Context,
+	osArchStr string,
+	fallback func() (string, string, error),
+) (string, string, error) {
+	if osArchStr != "" {
+		clientOs, clientArch, err := remote.GetClientPlatformFromOsArchStr(ctx, osArchStr)
+		if err == nil {
+			return clientOs, clientArch, nil
+		}
+		blocklogger.Infof(ctx, "[conndebug] ignoring invalid wsh platform string %q: %v\n", osArchStr, err)
+	}
+	return fallback()
 }
 
 // returns (allowed, error)
@@ -670,17 +692,16 @@ func (conn *SSHConn) InstallWsh(ctx context.Context, osArchStr string) error {
 	}
 	var clientOs, clientArch string
 	var err error
-	if osArchStr != "" {
-		clientOs, clientArch, err = remote.GetClientPlatformFromOsArchStr(ctx, osArchStr)
-	} else {
+	clientOs, clientArch, err = getClientPlatformForInstall(ctx, osArchStr, func() (string, string, error) {
 		clientOs, clientArch, err = remote.GetClientPlatform(ctx, genconn.MakeSSHShellClient(client))
-	}
+		return clientOs, clientArch, err
+	})
 	if err != nil {
 		conn.Infof(ctx, "ERROR detecting client platform: %v\n", err)
 		return fmt.Errorf("error detecting client platform: %w", err)
 	}
 	conn.Infof(ctx, "detected remote platform os:%s arch:%s\n", clientOs, clientArch)
-	err = remote.CpWshToRemote(ctx, client, clientOs, clientArch)
+	err = remote.CpWshToRemote(wshInstallContext(ctx), client, conn.GetName(), clientOs, clientArch)
 	if err != nil {
 		conn.Infof(ctx, "ERROR copying wsh binary to remote: %v\n", err)
 		return fmt.Errorf("error copying wsh binary to remote: %w", err)
@@ -896,13 +917,14 @@ func (conn *SSHConn) tryEnableWsh(ctx context.Context, clientDisplayName string)
 	}
 	if needsInstall {
 		conn.Infof(ctx, "connserver needs to be (re)installed\n")
-		err = conn.InstallWsh(ctx, osArchStr)
+		installCtx := wshInstallContext(ctx)
+		err = conn.InstallWsh(installCtx, osArchStr)
 		if err != nil {
 			conn.Infof(ctx, "ERROR installing wsh: %v\n", err)
 			err = fmt.Errorf("error installing wsh: %w", err)
 			return WshCheckResult{NoWshReason: "error installing wsh/connserver", NoWshCode: NoWshCode_InstallError, WshError: err}
 		}
-		needsInstall, clientVersion, _, err = conn.StartConnServer(ctx, true, true)
+		needsInstall, clientVersion, _, err = conn.StartConnServer(installCtx, true, true)
 		if err != nil {
 			conn.Infof(ctx, "ERROR starting conn server (after install): %v\n", err)
 			err = fmt.Errorf("error starting conn server (after install): %w", err)

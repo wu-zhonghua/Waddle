@@ -66,6 +66,11 @@
         position: relative;
         padding: 1px;
 
+        &.block-view-preview {
+            --preview-header-height: 58px;
+            --header-height: var(--preview-header-height);
+        }
+
         .block-frame-default-inner {
             background-color: var(--block-bg-color);
             width: 100%;
@@ -84,6 +89,41 @@
                 font: var(--header-font);
                 border-bottom: 1px solid var(--border-color);
                 border-radius: var(--block-border-radius) var(--block-border-radius) 0 0;
+
+                &.block-frame-preview-header {
+                    min-height: var(--preview-header-height);
+                    max-height: var(--preview-header-height);
+                    flex-wrap: wrap;
+                    align-content: center;
+                    row-gap: 2px;
+                    column-gap: 8px;
+
+                    .block-frame-default-header-iconview,
+                    .block-frame-preicon-button,
+                    .connection-button,
+                    .block-frame-end-icons {
+                        flex: 0 0 auto;
+                    }
+
+                    .connection-button {
+                        max-width: min(42%, 220px);
+                    }
+
+                    .block-frame-end-icons {
+                        margin-left: auto;
+                    }
+
+                    .block-frame-textelems-wrapper {
+                        order: 2;
+                        flex-basis: 100%;
+                        width: 100%;
+                    }
+
+                    .block-frame-div,
+                    .block-frame-text.preview-filename {
+                        min-width: 0;
+                    }
+                }
 
                 .block-frame-default-header-iconview {
                     display: flex;
@@ -191,6 +231,7 @@
 
                         .input-wrapper {
                             flex-grow: 1;
+                            min-width: 0;
 
                             input {
                                 background-color: transparent;
@@ -204,6 +245,24 @@
                                 box-sizing: border-box;
                                 opacity: 0.7;
                                 font-weight: 500;
+                            }
+
+                            input.preview-filename {
+                                background-color: rgb(from var(--main-text-color) r g b / 6%);
+                                border: 1px solid rgb(from var(--main-text-color) r g b / 14%);
+                                border-radius: 3px;
+                                cursor: text;
+                                direction: ltr;
+                                font: var(--fixed-font);
+                                font-size: 11px;
+                                opacity: 1;
+                                padding: 2px 5px;
+                                text-align: left;
+                            }
+
+                            input.preview-filename:focus {
+                                border-color: rgb(from var(--accent-color) r g b / 65%);
+                                background-color: rgb(from var(--main-text-color) r g b / 9%);
                             }
                         }
 
