@@ -256,7 +256,7 @@ export class PreviewModel implements ViewModel {
             headerPath = formatPreviewHeaderPath(headerPath, fileInfo);
             const pathInputFocused = get(this.pathInputFocused);
             const pathInputValue = pathInputFocused ? get(this.pathInputValue) : headerPath;
-            const viewTextChildren: HeaderElem[] = [
+            const pathControlChildren: HeaderElem[] = [
                 {
                     elemtype: "input",
                     value: pathInputValue,
@@ -275,9 +275,17 @@ export class PreviewModel implements ViewModel {
                     click: () => this.toggleOpenFileModal(),
                 },
             ];
+            let viewTextChildren = pathControlChildren;
             if (fileInfo?.mimetype == "directory") {
                 const directoryViewMode = normalizeDirectoryViewMode(get(this.env.getSettingsKeyAtom(DirectoryViewModeSettingKey)));
-                viewTextChildren.push(this.getDirectoryViewModeHeaderElem(directoryViewMode));
+                viewTextChildren = [
+                    this.getDirectoryViewModeHeaderElem(directoryViewMode),
+                    {
+                        elemtype: "div",
+                        className: "preview-path-controls",
+                        children: pathControlChildren,
+                    },
+                ];
             }
             let saveClassName = "grey";
             if (get(this.newFileContent) !== null) {
@@ -323,12 +331,16 @@ export class PreviewModel implements ViewModel {
                     onClick: () => fireAndForget(() => this.setEditMode(true)),
                 });
             }
-            return [
-                {
-                    elemtype: "div",
-                    children: viewTextChildren,
-                },
-            ] as HeaderElem[];
+            if (fileInfo?.mimetype == "directory") {
+                return [
+                    {
+                        elemtype: "div",
+                        className: "preview-directory-header-row",
+                        children: viewTextChildren,
+                    },
+                ] as HeaderElem[];
+            }
+            return [{ elemtype: "div", children: viewTextChildren }] as HeaderElem[];
         });
         this.preIconButton = atom((get) => {
             const connStatus = get(this.connStatus);

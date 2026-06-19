@@ -55,9 +55,13 @@ describe("preview block header layout", () => {
         const directorySource = readFileSync(join(TestDir, "../view/preview/preview-directory.tsx"), "utf8");
         const css = compileString(readFileSync(join(TestDir, "../view/preview/directorypreview.scss"), "utf8")).css;
 
+        expect(previewModelSource).toContain('className: "preview-directory-header-row"');
         expect(previewModelSource).toContain('className: "dir-view-mode-toggle"');
+        expect(previewModelSource).toContain('className: "preview-path-controls"');
         expect(previewModelSource).toContain("setDirectoryViewMode");
         expect(directorySource).not.toContain('className="dir-preview-toolbar"');
+        expect(css).toContain(".block-frame-div.preview-directory-header-row");
+        expect(css).toContain(".block-frame-div.preview-path-controls");
         expect(css).toContain(".block-frame-div.dir-view-mode-toggle");
     });
 });
