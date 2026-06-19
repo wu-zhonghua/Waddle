@@ -475,11 +475,16 @@ export function replaceNode(layoutState: LayoutTreeState, action: LayoutTreeRepl
 // ─── SPLIT HORIZONTAL ─────────────────────────────────────────────────────────────
 
 export function splitHorizontal(layoutState: LayoutTreeState, action: LayoutTreeSplitHorizontalAction) {
-    const { targetNodeId, newNode, position } = action;
+    const { targetNodeId, newNode, position, targetNodeSize } = action;
     const targetNode = findNode(layoutState.rootNode, targetNodeId);
     if (!targetNode) {
         console.error("splitHorizontal: Target node not found", targetNodeId);
         return;
+    }
+
+    const originalTargetSize = targetNode.size;
+    if (targetNodeSize != null) {
+        targetNode.size = targetNodeSize;
     }
 
     const parent = findParent(layoutState.rootNode, targetNodeId);
@@ -496,7 +501,7 @@ export function splitHorizontal(layoutState: LayoutTreeState, action: LayoutTree
         // Otherwise, if no parent or parent's flexDirection is not Row, we need to wrap
         // Create a new group node with horizontal layout.
         // IMPORTANT: pass an initial children array so the new node is valid.
-        const groupNode = newLayoutNode(FlexDirection.Row, targetNode.size, [targetNode], undefined);
+        const groupNode = newLayoutNode(FlexDirection.Row, originalTargetSize, [targetNode], undefined);
         // Now decide the ordering based on the "position"
         groupNode.children = position === "before" ? [newNode, targetNode] : [targetNode, newNode];
         if (parent) {

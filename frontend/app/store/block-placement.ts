@@ -11,7 +11,7 @@ import {
     LayoutTreeSplitVerticalAction,
 } from "@/layout/lib/types";
 
-export type CreateBlockPlacement = "default" | "files" | "terminal";
+export type CreateBlockPlacement = "default" | "files" | "terminal" | "preview";
 
 const FilesSidebarSize = 20;
 const MainContentSize = 80;
@@ -33,6 +33,17 @@ function findLeafByMeta(rootNode: LayoutNode, getBlockMeta: BlockMetaResolver, p
         if (meta != null && predicate(meta)) {
             match = node;
         }
+    });
+    return match;
+}
+
+function findRightmostLeaf(rootNode: LayoutNode): LayoutNode {
+    let match: LayoutNode = null;
+    walkNodes(rootNode, (node) => {
+        if (node.data?.blockId == null) {
+            return;
+        }
+        match = node;
     });
     return match;
 }
@@ -153,6 +164,17 @@ function makeSplitVerticalAction(targetNode: LayoutNode, newNode: LayoutNode): L
     };
 }
 
+function makeSplitHorizontalAction(targetNode: LayoutNode, newNode: LayoutNode, targetNodeSize?: number): LayoutTreeSplitHorizontalAction {
+    return {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: targetNode.id,
+        newNode,
+        position: "after",
+        focused: true,
+        targetNodeSize,
+    };
+}
+
 export function makeCreateBlockPlacementAction(
     rootNode: LayoutNode,
     newNode: LayoutNode,
@@ -181,14 +203,22 @@ export function makeCreateBlockPlacementAction(
         const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
         if (existingFiles != null) {
             newNode.size = MainContentSize;
-            return {
-                type: LayoutTreeActionType.SplitHorizontal,
-                targetNodeId: existingFiles.id,
-                newNode,
-                position: "after",
-                focused: true,
-            } as LayoutTreeSplitHorizontalAction;
+            return makeSplitHorizontalAction(existingFiles, newNode);
         }
+    }
+    if (placement === "preview") {
+        const rightmostLeaf = findRightmostLeaf(rootNode);
+        if (rightmostLeaf == null) {
+            return null;
+        }
+        const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
+        if (existingFiles != null && existingFiles.id === rightmostLeaf.id) {
+            newNode.size = MainContentSize;
+            return makeSplitHorizontalAction(existingFiles, newNode);
+        }
+        const splitSize = rightmostLeaf.size / 2;
+        newNode.size = splitSize;
+        return makeSplitHorizontalAction(rightmostLeaf, newNode, splitSize);
     }
     return null;
 }

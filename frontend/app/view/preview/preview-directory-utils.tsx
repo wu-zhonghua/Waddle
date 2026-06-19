@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createBlock } from "@/app/store/global";
+import { type CreateBlockPlacement } from "@/app/store/block-placement";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { fireAndForget, isBlank } from "@/util/util";
@@ -14,7 +15,12 @@ export const overwriteError = "set overwrite flag to delete the existing file";
 export const mergeError = "set overwrite flag to delete the existing contents or set merge flag to merge the contents";
 
 type DirectoryOpenModel = Pick<PreviewModel, "goHistory">;
-type CreateBlockFn = (blockDef: BlockDef, magnified?: boolean, ephemeral?: boolean) => Promise<string>;
+type CreateBlockFn = (
+    blockDef: BlockDef,
+    magnified?: boolean,
+    ephemeral?: boolean,
+    placement?: CreateBlockPlacement
+) => Promise<string>;
 
 export const displaySuffixes = {
     B: "b",
@@ -106,7 +112,7 @@ export async function openDirectoryEntry(
             connection,
         },
     };
-    await createBlockFn(blockDef);
+    await createBlockFn(blockDef, false, false, "preview");
 }
 
 export function handleRename(

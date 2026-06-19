@@ -76,6 +76,8 @@ export interface TreeViewRef {
     scrollToId: (id: string) => void;
 }
 
+export type TreeNodeClickAction = "select" | "toggle";
+
 const DefaultRowHeight = 24;
 const DefaultIndentWidth = 16;
 const DefaultOverscan = 10;
@@ -176,6 +178,13 @@ export function buildVisibleRows(
 
     sortIdsByNode(nodesById, rootIds).forEach((id) => appendNode(id, 0));
     return rows;
+}
+
+export function getTreeNodeClickAction(row: TreeViewVisibleRow): TreeNodeClickAction {
+    if (row.kind === "node" && row.isDirectory) {
+        return "toggle";
+    }
+    return "select";
 }
 
 function getNodeIcon(node: TreeNodeData, isExpanded: boolean): string {
@@ -458,7 +467,15 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                                     height: rowHeight,
                                     transform: `translateY(${virtualRow.start}px)`,
                                 }}
-                                onClick={() => row.kind === "node" && commitSelection(row.id)}
+                                onClick={() => {
+                                    if (row.kind !== "node") {
+                                        return;
+                                    }
+                                    commitSelection(row.id);
+                                    if (getTreeNodeClickAction(row) === "toggle") {
+                                        toggleExpand(row.id);
+                                    }
+                                }}
                                 onContextMenu={(event) => {
                                     if (row.kind === "node" && row.node != null) {
                                         onNodeContextMenu?.(event, row.id, row.node);
@@ -466,10 +483,6 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                                 }}
                                 onDoubleClick={() => {
                                     if (row.kind !== "node") {
-                                        return;
-                                    }
-                                    if (row.isDirectory) {
-                                        toggleExpand(row.id);
                                         return;
                                     }
                                     if (row.node != null) {

@@ -229,6 +229,7 @@ export interface LayoutTreeSplitHorizontalAction extends LayoutTreeAction {
     newNode: LayoutNode;
     position: "before" | "after";
     focused?: boolean;
+    targetNodeSize?: number;
 }
 
 // SplitVertical: similar to split horizontal but along the vertical axis.

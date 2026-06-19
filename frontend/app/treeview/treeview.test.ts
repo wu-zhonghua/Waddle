@@ -1,7 +1,7 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { buildVisibleRows, TreeNodeData } from "@/app/treeview/treeview";
+import { buildVisibleRows, getTreeNodeClickAction, TreeNodeData } from "@/app/treeview/treeview";
 import { describe, expect, it } from "vitest";
 
 function makeNodes(entries: TreeNodeData[]): Map<string, TreeNodeData> {
@@ -42,5 +42,19 @@ describe("treeview visible rows", () => {
 
         const cappedRows = buildVisibleRows(nodes, ["dir"], new Set(["dir"]));
         expect(cappedRows.map((row) => row.kind)).toEqual(["node", "node", "capped"]);
+    });
+});
+
+describe("treeview row clicks", () => {
+    it("toggles directory rows on a single click", () => {
+        expect(
+            getTreeNodeClickAction({
+                id: "src",
+                depth: 0,
+                kind: "node",
+                label: "src",
+                isDirectory: true,
+            })
+        ).toBe("toggle");
     });
 });

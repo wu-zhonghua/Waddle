@@ -28,6 +28,6 @@ describe("openDirectoryEntry", () => {
                 file: "/repo/README.md",
                 connection: "remote",
             },
-        });
+        }, false, false, "preview");
     });
 });

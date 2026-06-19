@@ -78,6 +78,41 @@ describe("makeCreateBlockPlacementAction", () => {
         });
         expect(newTermNode.size).toBe(80);
     });
+
+    it("opens a file preview to the right of a lone files block", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const newPreviewNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-preview" });
+
+        const action = makeCreateBlockPlacementAction(filesNode, newPreviewNode, "preview", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: filesNode.id,
+            newNode: newPreviewNode,
+            position: "after",
+            focused: true,
+        });
+        expect(newPreviewNode.size).toBe(80);
+    });
+
+    it("opens a file preview at the far right using the original Wave split size", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const newPreviewNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-preview" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, newPreviewNode, "preview", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: terminalNode.id,
+            newNode: newPreviewNode,
+            position: "after",
+            focused: true,
+            targetNodeSize: 40,
+        });
+        expect(newPreviewNode.size).toBe(40);
+    });
 });
 
 describe("applyInheritedBlockLocation", () => {

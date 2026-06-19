@@ -3,7 +3,7 @@
 
 import { assert, test } from "vitest";
 import { newLayoutNode } from "../lib/layoutNode";
-import { computeMoveNode, insertLeftSidebar, moveNode } from "../lib/layoutTree";
+import { computeMoveNode, insertLeftSidebar, moveNode, splitHorizontal } from "../lib/layoutTree";
 import {
     DropDirection,
     LayoutTreeActionType,
@@ -103,4 +103,25 @@ test("insertLeftSidebar wraps existing layout on the right", () => {
     assert(treeState.rootNode.children?.[1].data?.blockId === "terminal", "existing layout should move right");
     assert(treeState.rootNode.children?.[1].size === 80, "existing layout should take the remaining row width");
     assert(treeState.focusedNodeId === filesNode.id, "new files node should be focused");
+});
+
+test("splitHorizontal can split a target node without shrinking a left sidebar", () => {
+    const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+    const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+    const previewNode = newLayoutNode(undefined, 40, undefined, { blockId: "preview" });
+    const treeState = newLayoutTreeState(newLayoutNode(undefined, undefined, [filesNode, terminalNode]));
+
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: terminalNode.id,
+        newNode: previewNode,
+        position: "after",
+        focused: true,
+        targetNodeSize: 40,
+    });
+
+    assert(treeState.rootNode.children?.[0].size === 20, "files should keep one fifth of the row");
+    assert(treeState.rootNode.children?.[1].size === 40, "terminal should take half of the main row width");
+    assert(treeState.rootNode.children?.[2].size === 40, "preview should take half of the main row width");
+    assert(treeState.focusedNodeId === previewNode.id, "new preview node should be focused");
 });
