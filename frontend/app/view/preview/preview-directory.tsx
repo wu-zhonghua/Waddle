@@ -33,7 +33,6 @@ import { debounce } from "throttle-debounce";
 import "./directorypreview.scss";
 import { EntryManagerOverlay, EntryManagerOverlayProps, EntryManagerType } from "./entry-manager";
 import {
-    DirectoryViewMode,
     DirectoryViewModeSettingKey,
     type DirectoryTreeNodeVisuals,
     fileInfoEntriesToTreeNodes,
@@ -639,36 +638,6 @@ const MemoizedTableBody = React.memo(
     (prev, next) => prev.table.options.data == next.table.options.data
 ) as typeof TableBody;
 
-interface DirectoryViewModeToggleProps {
-    mode: DirectoryViewMode;
-    onChange: (mode: DirectoryViewMode) => void;
-}
-
-function DirectoryViewModeToggle({ mode, onChange }: DirectoryViewModeToggleProps) {
-    const options: { mode: DirectoryViewMode; icon: string; title: string }[] = [
-        { mode: "folder", icon: "folder-open", title: "Folder view" },
-        { mode: "tree", icon: "list-tree", title: "Tree view" },
-    ];
-
-    return (
-        <div className="dir-view-mode-toggle" role="group" aria-label="Directory view mode" onClick={(e) => e.stopPropagation()}>
-            {options.map((option) => (
-                <button
-                    key={option.mode}
-                    type="button"
-                    title={option.title}
-                    aria-label={option.title}
-                    aria-pressed={mode === option.mode}
-                    className={clsx("dir-view-mode-button", { active: mode === option.mode })}
-                    onClick={() => onChange(option.mode)}
-                >
-                    <i className={`fa-solid fa-${option.icon}`} />
-                </button>
-            ))}
-        </div>
-    );
-}
-
 interface DirectoryTreeProps {
     model: PreviewModel;
     data: FileInfo[];
@@ -873,9 +842,7 @@ interface DirectoryPreviewProps {
 function DirectoryPreview({ model }: DirectoryPreviewProps) {
     const env = useWaddleEnv<PreviewEnv>();
     const directoryViewModeSetting = useAtomValue(env.getSettingsKeyAtom(DirectoryViewModeSettingKey));
-    const [directoryViewMode, setDirectoryViewMode] = useState<DirectoryViewMode>(() =>
-        normalizeDirectoryViewMode(directoryViewModeSetting)
-    );
+    const directoryViewMode = normalizeDirectoryViewMode(directoryViewModeSetting);
     const [searchText, setSearchText] = useState("");
     const [focusIndex, setFocusIndex] = useState(0);
     const [unfilteredData, setUnfilteredData] = useState<FileInfo[]>([]);
@@ -893,18 +860,6 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
         setSelectedPath(path);
         setSelectedPathIsDir(isDir);
     }, []);
-
-    useEffect(() => {
-        setDirectoryViewMode(normalizeDirectoryViewMode(directoryViewModeSetting));
-    }, [directoryViewModeSetting]);
-
-    const updateDirectoryViewMode = useCallback(
-        (mode: DirectoryViewMode) => {
-            setDirectoryViewMode(mode);
-            fireAndForget(() => env.rpc.SetConfigCommand(TabRpcClient, { [DirectoryViewModeSettingKey]: mode }));
-        },
-        [env]
-    );
 
     useEffect(() => {
         model.refreshCallback = () => {
@@ -1216,9 +1171,6 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 onContextMenu={(e) => handleFileContextMenu(e)}
                 onClick={() => setEntryManagerProps(undefined)}
             >
-                <div className="dir-preview-toolbar">
-                    <DirectoryViewModeToggle mode={directoryViewMode} onChange={updateDirectoryViewMode} />
-                </div>
                 {directoryViewMode === "tree" ? (
                     <DirectoryTree
                         model={model}

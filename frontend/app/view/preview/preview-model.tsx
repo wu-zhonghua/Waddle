@@ -19,6 +19,7 @@ import { loadable } from "jotai/utils";
 import type * as MonacoTypes from "monaco-editor";
 import { createRef } from "react";
 import { PreviewView } from "./preview";
+import { DirectoryViewMode, DirectoryViewModeSettingKey, normalizeDirectoryViewMode } from "./preview-directory-tree";
 import { makeDirectoryDefaultMenuItems } from "./preview-directory-utils";
 import { formatPreviewHeaderPath } from "./preview-header-utils";
 import type { PreviewEnv } from "./previewenv";
@@ -34,6 +35,10 @@ const BOOKMARKS: { label: string; path: string }[] = [
 
 const MaxFileSize = 1024 * 1024 * 10; // 10MB
 const MaxCSVSize = 1024 * 1024 * 1; // 1MB
+const DirectoryViewModeOptions: { mode: DirectoryViewMode; icon: string; title: string }[] = [
+    { mode: "folder", icon: "folder-open", title: "Folder view" },
+    { mode: "tree", icon: "list-tree", title: "Tree view" },
+];
 
 const textApplicationMimetypes = [
     "application/sql",
@@ -270,6 +275,10 @@ export class PreviewModel implements ViewModel {
                     click: () => this.toggleOpenFileModal(),
                 },
             ];
+            if (fileInfo?.mimetype == "directory") {
+                const directoryViewMode = normalizeDirectoryViewMode(get(this.env.getSettingsKeyAtom(DirectoryViewModeSettingKey)));
+                viewTextChildren.push(this.getDirectoryViewModeHeaderElem(directoryViewMode));
+            }
             let saveClassName = "grey";
             if (get(this.newFileContent) !== null) {
                 saveClassName = "green";
@@ -510,6 +519,27 @@ export class PreviewModel implements ViewModel {
 
     get viewComponent(): ViewComponent {
         return PreviewView;
+    }
+
+    getDirectoryViewModeHeaderElem(mode: DirectoryViewMode): HeaderElem {
+        return {
+            elemtype: "div",
+            className: "dir-view-mode-toggle",
+            children: DirectoryViewModeOptions.map((option) => ({
+                elemtype: "iconbutton",
+                icon: option.icon,
+                title: option.title,
+                className: clsx("dir-view-mode-button", { active: mode === option.mode }),
+                click: (event: React.MouseEvent<any>) => {
+                    event.stopPropagation();
+                    this.setDirectoryViewMode(option.mode);
+                },
+            })),
+        };
+    }
+
+    setDirectoryViewMode(mode: DirectoryViewMode) {
+        fireAndForget(() => this.env.rpc.SetConfigCommand(TabRpcClient, { [DirectoryViewModeSettingKey]: mode }));
     }
 
     async getSpecializedView(getFn: Getter): Promise<{ specializedView?: string; errorStr?: string }> {

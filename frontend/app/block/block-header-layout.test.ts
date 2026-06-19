@@ -49,4 +49,15 @@ describe("preview block header layout", () => {
         expect(source).toContain('icon: "folder-open"');
         expect(source).toContain("click: () => this.toggleOpenFileModal()");
     });
+
+    it("renders directory view mode controls in the preview header", () => {
+        const previewModelSource = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
+        const directorySource = readFileSync(join(TestDir, "../view/preview/preview-directory.tsx"), "utf8");
+        const css = compileString(readFileSync(join(TestDir, "../view/preview/directorypreview.scss"), "utf8")).css;
+
+        expect(previewModelSource).toContain('className: "dir-view-mode-toggle"');
+        expect(previewModelSource).toContain("setDirectoryViewMode");
+        expect(directorySource).not.toContain('className="dir-preview-toolbar"');
+        expect(css).toContain(".block-frame-div.dir-view-mode-toggle");
+    });
 });
