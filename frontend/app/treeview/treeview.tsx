@@ -17,6 +17,7 @@ import React, {
 } from "react";
 
 type TreeNodeChildrenStatus = "unloaded" | "loading" | "loaded" | "error" | "capped";
+export type TreeNodeClickAction = "select" | "toggle" | "open";
 
 export interface TreeNodeData {
     id: string;
@@ -33,6 +34,7 @@ export interface TreeNodeData {
     childrenStatus?: TreeNodeChildrenStatus;
     childrenIds?: string[];
     capInfo?: { max: number; totalKnown?: number };
+    clickAction?: TreeNodeClickAction;
 }
 
 interface FetchDirResult {
@@ -75,8 +77,6 @@ export interface TreeViewProps {
 export interface TreeViewRef {
     scrollToId: (id: string) => void;
 }
-
-export type TreeNodeClickAction = "select" | "toggle";
 
 const DefaultRowHeight = 24;
 const DefaultIndentWidth = 16;
@@ -181,7 +181,13 @@ export function buildVisibleRows(
 }
 
 export function getTreeNodeClickAction(row: TreeViewVisibleRow): TreeNodeClickAction {
-    if (row.kind === "node" && row.isDirectory) {
+    if (row.kind !== "node") {
+        return "select";
+    }
+    if (row.node?.clickAction != null) {
+        return row.node.clickAction;
+    }
+    if (row.isDirectory) {
         return "toggle";
     }
     return "select";
@@ -472,8 +478,12 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                                         return;
                                     }
                                     commitSelection(row.id);
-                                    if (getTreeNodeClickAction(row) === "toggle") {
+                                    const clickAction = getTreeNodeClickAction(row);
+                                    if (clickAction === "toggle") {
                                         toggleExpand(row.id);
+                                    }
+                                    if (clickAction === "open" && row.node != null) {
+                                        onOpenFile?.(row.id, row.node);
                                     }
                                 }}
                                 onContextMenu={(event) => {

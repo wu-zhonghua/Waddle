@@ -13,8 +13,19 @@ describe("directory tree helpers", () => {
     ];
 
     it("filters hidden files when hidden files are disabled", () => {
-        expect(filterDirectoryTreeEntries(entries, false).map((entry) => entry.name)).toEqual(["src", "README.md"]);
-        expect(filterDirectoryTreeEntries(entries, true).map((entry) => entry.name)).toEqual([".env", "src", "README.md"]);
+        expect(filterDirectoryTreeEntries(entries, false).map((entry) => entry.name)).toEqual(["..", "src", "README.md"]);
+        expect(filterDirectoryTreeEntries(entries, true).map((entry) => entry.name)).toEqual(["..", ".env", "src", "README.md"]);
+    });
+
+    it("keeps the parent directory entry visible at the top of the tree", () => {
+        expect(filterDirectoryTreeEntries(entries, false, "readme").map((entry) => entry.name)).toEqual(["..", "README.md"]);
+        expect(fileInfoToTreeNode(entries[0], "/repo")).toMatchObject({
+            label: "..",
+            path: "/",
+            isDirectory: true,
+            childrenStatus: "loaded",
+            clickAction: "open",
+        });
     });
 
     it("maps FileInfo entries into tree nodes", () => {

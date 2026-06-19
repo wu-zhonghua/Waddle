@@ -57,4 +57,22 @@ describe("treeview row clicks", () => {
             })
         ).toBe("toggle");
     });
+
+    it("opens parent directory rows on a single click", () => {
+        expect(
+            getTreeNodeClickAction({
+                id: "/repo/..",
+                depth: 0,
+                kind: "node",
+                label: "..",
+                isDirectory: true,
+                node: {
+                    id: "/repo/..",
+                    label: "..",
+                    isDirectory: true,
+                    clickAction: "open",
+                },
+            })
+        ).toBe("open");
+    });
 });

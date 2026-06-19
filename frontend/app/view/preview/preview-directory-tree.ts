@@ -23,8 +23,11 @@ export function filterDirectoryTreeEntries(
 ): FileInfo[] {
     const normalizedSearch = searchText.trim().toLowerCase();
     return entries.filter((fileInfo) => {
-        if (fileInfo.name == null || fileInfo.name === "..") {
+        if (fileInfo.name == null) {
             return false;
+        }
+        if (fileInfo.name === "..") {
+            return true;
         }
         if (!showHiddenFiles && fileInfo.name.startsWith(".")) {
             return false;
@@ -41,6 +44,7 @@ export function fileInfoToTreeNode(
     parentId: string,
     visuals: DirectoryTreeNodeVisuals = {}
 ): TreeNodeData {
+    const isParentDirectory = fileInfo.name === "..";
     return {
         id: fileInfo.path,
         parentId,
@@ -50,7 +54,8 @@ export function fileInfoToTreeNode(
         mimeType: fileInfo.mimetype,
         icon: visuals.icon,
         iconColor: visuals.iconColor,
-        childrenStatus: fileInfo.isdir ? "unloaded" : "loaded",
+        childrenStatus: fileInfo.isdir && !isParentDirectory ? "unloaded" : "loaded",
+        clickAction: isParentDirectory ? "open" : undefined,
     };
 }
 
