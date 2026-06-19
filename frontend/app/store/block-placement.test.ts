@@ -109,9 +109,35 @@ describe("makeCreateBlockPlacementAction", () => {
             newNode: newPreviewNode,
             position: "after",
             focused: true,
-            targetNodeSize: 40,
+            rebalanceRootRow: {
+                fixedNodeId: filesNode.id,
+                fixedSize: 20,
+                remainingSize: 80,
+            },
         });
-        expect(newPreviewNode.size).toBe(40);
+    });
+
+    it("equalizes all main panes when opening another file preview", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, 40, undefined, { blockId: "terminal" });
+        const previewNode = newLayoutNode(undefined, 40, undefined, { blockId: "preview" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode, previewNode]);
+        const newPreviewNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-preview" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, newPreviewNode, "preview", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: previewNode.id,
+            newNode: newPreviewNode,
+            position: "after",
+            focused: true,
+            rebalanceRootRow: {
+                fixedNodeId: filesNode.id,
+                fixedSize: 20,
+                remainingSize: 80,
+            },
+        });
     });
 });
 

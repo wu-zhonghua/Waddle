@@ -3,7 +3,7 @@
 
 import { assert, test } from "vitest";
 import { newLayoutNode } from "../lib/layoutNode";
-import { computeMoveNode, insertLeftSidebar, moveNode, splitHorizontal } from "../lib/layoutTree";
+import { computeMoveNode, deleteNode, insertLeftSidebar, moveNode, splitHorizontal } from "../lib/layoutTree";
 import {
     DropDirection,
     LayoutTreeActionType,
@@ -124,4 +124,50 @@ test("splitHorizontal can split a target node without shrinking a left sidebar",
     assert(treeState.rootNode.children?.[1].size === 40, "terminal should take half of the main row width");
     assert(treeState.rootNode.children?.[2].size === 40, "preview should take half of the main row width");
     assert(treeState.focusedNodeId === previewNode.id, "new preview node should be focused");
+});
+
+test("splitHorizontal can keep a left sidebar fixed while equalizing main panes", () => {
+    const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+    const terminalNode = newLayoutNode(undefined, 40, undefined, { blockId: "terminal" });
+    const previewNode = newLayoutNode(undefined, 40, undefined, { blockId: "preview" });
+    const newPreviewNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-preview" });
+    const treeState = newLayoutTreeState(newLayoutNode(undefined, undefined, [filesNode, terminalNode, previewNode]));
+
+    splitHorizontal(treeState, {
+        type: LayoutTreeActionType.SplitHorizontal,
+        targetNodeId: previewNode.id,
+        newNode: newPreviewNode,
+        position: "after",
+        focused: true,
+        rebalanceRootRow: {
+            fixedNodeId: filesNode.id,
+            fixedSize: 20,
+            remainingSize: 80,
+        },
+    });
+
+    assert(treeState.rootNode.children?.[0].size === 20, "files should stay one fifth of the row");
+    assert(treeState.rootNode.children?.[1].size === 80 / 3, "first main pane should be one third of the main area");
+    assert(treeState.rootNode.children?.[2].size === 80 / 3, "second main pane should be one third of the main area");
+    assert(treeState.rootNode.children?.[3].size === 80 / 3, "new pane should be one third of the main area");
+});
+
+test("deleteNode can keep a left sidebar fixed while equalizing remaining main panes", () => {
+    const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+    const terminalNode = newLayoutNode(undefined, 40, undefined, { blockId: "terminal" });
+    const previewNode = newLayoutNode(undefined, 40, undefined, { blockId: "preview" });
+    const treeState = newLayoutTreeState(newLayoutNode(undefined, undefined, [filesNode, terminalNode, previewNode]));
+
+    deleteNode(treeState, {
+        type: LayoutTreeActionType.DeleteNode,
+        nodeId: previewNode.id,
+        rebalanceRootRow: {
+            fixedNodeId: filesNode.id,
+            fixedSize: 20,
+            remainingSize: 80,
+        },
+    });
+
+    assert(treeState.rootNode.children?.[0].size === 20, "files should stay one fifth of the row after close");
+    assert(treeState.rootNode.children?.[1].size === 80, "remaining main pane should take the full main area");
 });

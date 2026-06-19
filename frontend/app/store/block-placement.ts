@@ -3,10 +3,12 @@
 
 import { findNode, walkNodes } from "@/layout/lib/layoutNode";
 import {
+    FlexDirection,
     LayoutNode,
     LayoutTreeAction,
     LayoutTreeActionType,
     LayoutTreeInsertLeftSidebarAction,
+    LayoutTreeRootRowRebalance,
     LayoutTreeSplitHorizontalAction,
     LayoutTreeSplitVerticalAction,
 } from "@/layout/lib/types";
@@ -15,6 +17,7 @@ export type CreateBlockPlacement = "default" | "files" | "terminal" | "preview";
 
 const FilesSidebarSize = 20;
 const MainContentSize = 80;
+const RootRowSize = 100;
 const StackedBlockHeightFraction = 1 / 3;
 
 type BlockMetaResolver = (blockId: string) => MetaType | null;
@@ -46,6 +49,35 @@ function findRightmostLeaf(rootNode: LayoutNode): LayoutNode {
         match = node;
     });
     return match;
+}
+
+function findRootRowChildContaining(rootNode: LayoutNode, descendant: LayoutNode): LayoutNode {
+    if (rootNode == null || descendant == null) {
+        return null;
+    }
+    if (rootNode.id === descendant.id) {
+        return rootNode;
+    }
+    if (rootNode.flexDirection !== FlexDirection.Row || rootNode.children == null) {
+        return null;
+    }
+    return rootNode.children.find((child) => findNode(child, descendant.id) != null) ?? null;
+}
+
+function findRootRowRightmostChild(rootNode: LayoutNode): LayoutNode {
+    if (rootNode?.flexDirection === FlexDirection.Row && rootNode.children?.length) {
+        return rootNode.children[rootNode.children.length - 1];
+    }
+    return findRightmostLeaf(rootNode);
+}
+
+function makeRootRowRebalance(sidebarNode: LayoutNode): LayoutTreeRootRowRebalance {
+    const fixedSize = sidebarNode?.size ?? FilesSidebarSize;
+    return {
+        fixedNodeId: sidebarNode.id,
+        fixedSize,
+        remainingSize: Math.max(0, RootRowSize - fixedSize),
+    };
 }
 
 function isFilesMeta(meta: MetaType): boolean {
@@ -164,7 +196,12 @@ function makeSplitVerticalAction(targetNode: LayoutNode, newNode: LayoutNode): L
     };
 }
 
-function makeSplitHorizontalAction(targetNode: LayoutNode, newNode: LayoutNode, targetNodeSize?: number): LayoutTreeSplitHorizontalAction {
+function makeSplitHorizontalAction(
+    targetNode: LayoutNode,
+    newNode: LayoutNode,
+    targetNodeSize?: number,
+    rebalanceRootRow?: LayoutTreeRootRowRebalance
+): LayoutTreeSplitHorizontalAction {
     return {
         type: LayoutTreeActionType.SplitHorizontal,
         targetNodeId: targetNode.id,
@@ -172,6 +209,7 @@ function makeSplitHorizontalAction(targetNode: LayoutNode, newNode: LayoutNode, 
         position: "after",
         focused: true,
         targetNodeSize,
+        rebalanceRootRow,
     };
 }
 
@@ -207,14 +245,22 @@ export function makeCreateBlockPlacementAction(
         }
     }
     if (placement === "preview") {
+        const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
+        if (existingFiles != null) {
+            const sidebarNode = findRootRowChildContaining(rootNode, existingFiles);
+            const targetNode = findRootRowRightmostChild(rootNode);
+            const sidebarIsRootLeftChild =
+                rootNode?.children == null || rootNode.children.length === 0 || rootNode.children[0].id === sidebarNode?.id;
+            if (sidebarNode != null && targetNode != null && sidebarIsRootLeftChild) {
+                if (sidebarNode.id === targetNode.id) {
+                    newNode.size = MainContentSize;
+                }
+                return makeSplitHorizontalAction(targetNode, newNode, undefined, makeRootRowRebalance(sidebarNode));
+            }
+        }
         const rightmostLeaf = findRightmostLeaf(rootNode);
         if (rightmostLeaf == null) {
             return null;
-        }
-        const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
-        if (existingFiles != null && existingFiles.id === rightmostLeaf.id) {
-            newNode.size = MainContentSize;
-            return makeSplitHorizontalAction(existingFiles, newNode);
         }
         const splitSize = rightmostLeaf.size / 2;
         newNode.size = splitSize;

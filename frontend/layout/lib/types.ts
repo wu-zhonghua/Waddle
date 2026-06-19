@@ -178,12 +178,19 @@ export interface LayoutTreeInsertLeftSidebarAction extends LayoutTreeAction, Ins
     mainSize: number;
 }
 
+export interface LayoutTreeRootRowRebalance {
+    fixedNodeId: string;
+    fixedSize: number;
+    remainingSize: number;
+}
+
 /**
  * Action for deleting a node from the layout tree.
  */
 export interface LayoutTreeDeleteNodeAction extends LayoutTreeAction {
     type: LayoutTreeActionType.DeleteNode;
     nodeId: string;
+    rebalanceRootRow?: LayoutTreeRootRowRebalance;
 }
 
 /**
@@ -230,6 +237,7 @@ export interface LayoutTreeSplitHorizontalAction extends LayoutTreeAction {
     position: "before" | "after";
     focused?: boolean;
     targetNodeSize?: number;
+    rebalanceRootRow?: LayoutTreeRootRowRebalance;
 }
 
 // SplitVertical: similar to split horizontal but along the vertical axis.

@@ -46,6 +46,7 @@ import {
     LayoutTreeMoveNodeAction,
     LayoutTreeReplaceNodeAction,
     LayoutTreeResizeNodeAction,
+    LayoutTreeRootRowRebalance,
     LayoutTreeSetPendingAction,
     LayoutTreeSplitHorizontalAction,
     LayoutTreeSplitVerticalAction,
@@ -74,6 +75,7 @@ interface ResizeContext {
 const DefaultGapSizePx = 3;
 const MinNodeSizePx = 40;
 const DefaultAnimationTimeS = 0.15;
+const RootRowSize = 100;
 
 export class LayoutModel {
     /**
@@ -1286,6 +1288,34 @@ export class LayoutModel {
         this.treeReducer(action, setState);
     }
 
+    private nodeContainsPreviewBlock(node: LayoutNode): boolean {
+        let containsPreview = false;
+        walkNodes(node, (candidate) => {
+            if (containsPreview || candidate.data?.blockId == null) {
+                return;
+            }
+            const block = this.getter(WOS.getWaddleObjectAtom<Block>(WOS.makeORef("block", candidate.data.blockId)));
+            containsPreview = block?.meta?.view === "preview";
+        });
+        return containsPreview;
+    }
+
+    private makeRootRowRebalanceForClose(nodeId: string): LayoutTreeRootRowRebalance {
+        const rootNode = this.treeState.rootNode;
+        if (rootNode?.flexDirection !== FlexDirection.Row || rootNode.children?.length < 2) {
+            return undefined;
+        }
+        const sidebarNode = rootNode.children[0];
+        if (findNode(sidebarNode, nodeId) != null || !this.nodeContainsPreviewBlock(sidebarNode)) {
+            return undefined;
+        }
+        return {
+            fixedNodeId: sidebarNode.id,
+            fixedSize: sidebarNode.size,
+            remainingSize: Math.max(0, RootRowSize - sidebarNode.size),
+        };
+    }
+
     /**
      * Close a given node and update the tree state.
      * @param nodeId The id of the node that is being closed.
@@ -1314,6 +1344,7 @@ export class LayoutModel {
         const deleteAction: LayoutTreeDeleteNodeAction = {
             type: LayoutTreeActionType.DeleteNode,
             nodeId: nodeId,
+            rebalanceRootRow: this.makeRootRowRebalanceForClose(nodeId),
         };
         this.treeReducer(deleteAction);
         await this.onNodeDelete?.(nodeToDelete.data);

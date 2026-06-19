@@ -25,6 +25,7 @@ import {
     LayoutTreeMagnifyNodeToggleAction,
     LayoutTreeMoveNodeAction,
     LayoutTreeResizeNodeAction,
+    LayoutTreeRootRowRebalance,
     LayoutTreeState,
     LayoutTreeSwapNodeAction,
     MoveOperation,
@@ -397,6 +398,29 @@ export function deleteNode(layoutState: LayoutTreeState, action: LayoutTreeDelet
             console.error("unable to delete node, not found in tree");
         }
     }
+    rebalanceRootRow(layoutState, action.rebalanceRootRow);
+}
+
+function rebalanceRootRow(layoutState: LayoutTreeState, rebalance?: LayoutTreeRootRowRebalance) {
+    if (rebalance == null || layoutState.rootNode?.children == null) {
+        return;
+    }
+    if (layoutState.rootNode.flexDirection !== FlexDirection.Row) {
+        return;
+    }
+    const fixedNode = layoutState.rootNode.children.find((child) => child.id === rebalance.fixedNodeId);
+    if (fixedNode == null) {
+        return;
+    }
+    const flexibleNodes = layoutState.rootNode.children.filter((child) => child.id !== fixedNode.id);
+    if (flexibleNodes.length === 0) {
+        return;
+    }
+    fixedNode.size = rebalance.fixedSize;
+    const flexibleSize = rebalance.remainingSize / flexibleNodes.length;
+    flexibleNodes.forEach((node) => {
+        node.size = flexibleSize;
+    });
 }
 
 export function resizeNode(layoutState: LayoutTreeState, action: LayoutTreeResizeNodeAction) {
@@ -518,6 +542,7 @@ export function splitHorizontal(layoutState: LayoutTreeState, action: LayoutTree
     if (action.focused) {
         layoutState.focusedNodeId = newNode.id;
     }
+    rebalanceRootRow(layoutState, action.rebalanceRootRow);
 }
 
 // ─── SPLIT VERTICAL ─────────────────────────────────────────────────────────────
