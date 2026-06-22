@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tooltip } from "@/app/element/tooltip";
-import { CreateBlockPlacement } from "@/app/store/block-placement";
+import { getPlacementForBlockDef } from "@/app/store/block-placement";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { useWaddleEnv, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
@@ -58,18 +58,7 @@ type WidgetPropsType = {
 
 async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
     const blockDef = widget.blockdef;
-    env.createBlock(blockDef, widget.magnified, false, getWidgetPlacement(blockDef));
-}
-
-function getWidgetPlacement(blockDef: BlockDef): CreateBlockPlacement {
-    const meta = blockDef?.meta;
-    if (meta?.view === "preview" && meta.file != null) {
-        return "files";
-    }
-    if (meta?.view === "term" || meta?.controller === "shell") {
-        return "terminal";
-    }
-    return "default";
+    env.createBlock(blockDef, widget.magnified, false, getPlacementForBlockDef(blockDef));
 }
 
 const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {

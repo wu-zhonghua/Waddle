@@ -288,6 +288,7 @@ func statToFileInfo(fullPath string, finfo fs.FileInfo, extended bool) *wshrpc.F
 		Mode:          finfo.Mode(),
 		ModeStr:       finfo.Mode().String(),
 		ModTime:       finfo.ModTime().UnixMilli(),
+		CreateTime:    fileCreateTimeMillis(fullPath, finfo),
 		IsDir:         finfo.IsDir(),
 		MimeType:      mimeType,
 		SupportsMkdir: true,

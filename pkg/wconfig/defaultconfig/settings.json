@@ -41,5 +41,5 @@
     "waveai:showcloudmodes": true,
     "waveai:defaultmode": "waveai@balanced",
     "preview:defaultsort": "name",
-    "preview:directoryviewmode": "folder"
+    "preview:directoryviewmode": "tree"
 }

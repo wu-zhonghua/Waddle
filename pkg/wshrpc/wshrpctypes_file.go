@@ -65,6 +65,7 @@ type FileInfo struct {
 	Mode          os.FileMode `json:"mode,omitempty"`
 	ModeStr       string      `json:"modestr,omitempty"`
 	ModTime       int64       `json:"modtime,omitempty"`
+	CreateTime    int64       `json:"createtime,omitempty"`
 	IsDir         bool        `json:"isdir,omitempty"`
 	SupportsMkdir bool        `json:"supportsmkdir,omitempty"`
 	MimeType      string      `json:"mimetype,omitempty"`

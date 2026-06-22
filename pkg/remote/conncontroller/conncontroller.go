@@ -250,6 +250,38 @@ func (conn *SSHConn) closeInternal_withlifecyclelock() {
 	}
 }
 
+func (conn *SSHConn) closeWshTransport() {
+	listener := WithLockRtn(conn, func() net.Listener {
+		return conn.DomainSockListener
+	})
+	if listener != nil {
+		startTime := time.Now()
+		listener.Close()
+		duration := time.Since(startTime).Milliseconds()
+		if duration > 100 {
+			log.Printf("[conncontroller] conn:%s DomainSockListener.Close() took %d ms", conn.GetName(), duration)
+		}
+		conn.WithLock(func() {
+			conn.DomainSockListener = nil
+			conn.DomainSockName = ""
+		})
+	}
+	controller := WithLockRtn(conn, func() *ssh.Session {
+		return conn.ConnController
+	})
+	if controller != nil {
+		startTime := time.Now()
+		controller.Close()
+		duration := time.Since(startTime).Milliseconds()
+		if duration > 100 {
+			log.Printf("[conncontroller] conn:%s ConnController.Close() took %d ms", conn.GetName(), duration)
+		}
+		conn.WithLock(func() {
+			conn.ConnController = nil
+		})
+	}
+}
+
 func (conn *SSHConn) GetDomainSocketName() string {
 	conn.lock.Lock()
 	defer conn.lock.Unlock()
@@ -885,8 +917,14 @@ type WshCheckResult struct {
 	WshError      error
 }
 
-// returns (wsh-enabled, clientVersion, text-reason, wshError)
-func (conn *SSHConn) tryEnableWsh(ctx context.Context, clientDisplayName string) WshCheckResult {
+func shouldRetryWshFailure(result WshCheckResult) bool {
+	if result.WshEnabled {
+		return false
+	}
+	return result.NoWshCode == NoWshCode_ConnServerStartError || result.NoWshCode == NoWshCode_PostInstallStartError
+}
+
+func (conn *SSHConn) tryEnableWshOnce(ctx context.Context, clientDisplayName string) WshCheckResult {
 	conn.Infof(ctx, "running tryEnableWsh...\n")
 	enableWsh, askBeforeInstall := conn.getConnWshSettings()
 	conn.Infof(ctx, "wsh settings enable:%v ask:%v\n", enableWsh, askBeforeInstall)
@@ -939,6 +977,17 @@ func (conn *SSHConn) tryEnableWsh(ctx context.Context, clientDisplayName string)
 	} else {
 		return WshCheckResult{WshEnabled: true, ClientVersion: clientVersion}
 	}
+}
+
+// returns (wsh-enabled, clientVersion, text-reason, wshError)
+func (conn *SSHConn) tryEnableWsh(ctx context.Context, clientDisplayName string) WshCheckResult {
+	result := conn.tryEnableWshOnce(ctx, clientDisplayName)
+	if !shouldRetryWshFailure(result) {
+		return result
+	}
+	conn.Infof(ctx, "wsh connserver start failed, retrying once: %v\n", result.WshError)
+	conn.closeWshTransport()
+	return conn.tryEnableWshOnce(ctx, clientDisplayName)
 }
 
 func (conn *SSHConn) getConnectionConfig() (wconfig.ConnKeywords, bool) {

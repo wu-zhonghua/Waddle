@@ -12,6 +12,7 @@ import * as jotai from "jotai";
 import * as React from "react";
 
 import { useDimensionsWithExistingRef } from "@/app/hook/useDimensions";
+import { Tooltip } from "@/app/element/tooltip";
 import { waveEventSubscribeSingle } from "@/app/store/wps";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import type { MetaKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
@@ -31,7 +32,7 @@ export type SysinfoEnv = WaddleEnvSubset<{
 
 const DefaultNumPoints = 120;
 
-type DataItem = {
+export type DataItem = {
     ts: number;
     [k: string]: number;
 };
@@ -58,15 +59,80 @@ function defaultMemMeta(name: string, maxY: string): TimeSeriesMeta {
     };
 }
 
-const PlotTypes: object = {
-    CPU: function (_dataItem: DataItem): Array<string> {
-        return ["cpu"];
+function defaultPercentMeta(name: string, color: string): TimeSeriesMeta {
+    return {
+        name,
+        label: "%",
+        miny: 0,
+        maxy: 100,
+        color,
+        decimalPlaces: 0,
+    };
+}
+
+function defaultValueMeta(name: string, label: string, color: string, decimalPlaces = 1): TimeSeriesMeta {
+    return {
+        name,
+        label,
+        miny: 0,
+        color,
+        decimalPlaces,
+    };
+}
+
+function filterAvailableMetrics(metrics: string[], dataItem: DataItem): string[] {
+    return metrics.filter((metric) => dataItem?.[metric] != null);
+}
+
+const DashboardMetrics = [
+    "cpu",
+    "mem:used",
+    "disk:usedpct",
+    "net:download",
+    "net:upload",
+    "load:1",
+    "proc:count",
+    "temp:max",
+    "gpu:util",
+    "gpu:memused",
+];
+
+const PlotTypes: Record<string, (dataItem: DataItem) => Array<string>> = {
+    Dashboard: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(DashboardMetrics, dataItem);
     },
-    Mem: function (_dataItem: DataItem): Array<string> {
-        return ["mem:used"];
+    CPU: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["cpu"], dataItem);
     },
-    "CPU + Mem": function (_dataItem: DataItem): Array<string> {
-        return ["cpu", "mem:used"];
+    GPU: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["gpu:util", "gpu:memused"], dataItem);
+    },
+    Disk: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["disk:usedpct"], dataItem);
+    },
+    Network: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["net:download", "net:upload"], dataItem);
+    },
+    Memory: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["mem:used", "mem:available"], dataItem);
+    },
+    Load: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["load:1", "load:5", "load:15"], dataItem);
+    },
+    Processes: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["proc:count"], dataItem);
+    },
+    Temperature: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["temp:max"], dataItem);
+    },
+    Uptime: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["uptime:hours"], dataItem);
+    },
+    Mem: function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["mem:used"], dataItem);
+    },
+    "CPU + Mem": function (dataItem: DataItem): Array<string> {
+        return filterAvailableMetrics(["cpu", "mem:used"], dataItem);
     },
     "All CPU": function (dataItem: DataItem): Array<string> {
         return Object.keys(dataItem)
@@ -79,18 +145,127 @@ const PlotTypes: object = {
     },
 };
 
-const DefaultPlotMeta = {
+export type SysinfoDisplayMode = "summary" | "plots";
+
+export type MetricReading = {
+    metric: string;
+    name: string;
+    value: string;
+    unit: string;
+    deltaLabel: string;
+    deltaDirection: "up" | "down" | "flat" | "unknown";
+    color: string;
+};
+
+export function getSysinfoDisplayMode(plotType: string): SysinfoDisplayMode {
+    if (plotType == "Dashboard") {
+        return "summary";
+    }
+    return "plots";
+}
+
+export function getPlotMetrics(plotType: string, dataItem: DataItem): string[] {
+    const plotFn = PlotTypes[plotType] ?? PlotTypes.Dashboard;
+    return plotFn(dataItem);
+}
+
+const DefaultPlotMeta: Record<string, TimeSeriesMeta> = {
     cpu: defaultCpuMeta("CPU %"),
     "mem:total": defaultMemMeta("Memory Total", "mem:total"),
     "mem:used": defaultMemMeta("Memory Used", "mem:total"),
     "mem:free": defaultMemMeta("Memory Free", "mem:total"),
     "mem:available": defaultMemMeta("Memory Available", "mem:total"),
+    "disk:usedpct": defaultPercentMeta("Disk Used", "var(--term-yellow)"),
+    "disk:used": defaultMemMeta("Disk Used", "disk:total"),
+    "disk:free": defaultMemMeta("Disk Free", "disk:total"),
+    "disk:total": defaultMemMeta("Disk Total", "disk:total"),
+    "net:download": defaultValueMeta("Download", "MB/s", "var(--term-bright-green)", 2),
+    "net:upload": defaultValueMeta("Upload", "MB/s", "var(--term-bright-blue)", 2),
+    "load:1": defaultValueMeta("Load 1m", "load", "var(--term-bright-magenta)", 2),
+    "load:5": defaultValueMeta("Load 5m", "load", "var(--term-magenta)", 2),
+    "load:15": defaultValueMeta("Load 15m", "load", "var(--term-bright-cyan)", 2),
+    "proc:count": defaultValueMeta("Processes", "proc", "var(--term-bright-cyan)", 0),
+    "temp:max": defaultValueMeta("Temperature", "C", "var(--term-bright-red)", 1),
+    "uptime:hours": defaultValueMeta("Uptime", "h", "var(--term-green)", 1),
+    "gpu:util": defaultPercentMeta("GPU", "var(--term-bright-yellow)"),
+    "gpu:memused": defaultMemMeta("GPU Memory", "gpu:memtotal"),
+    "gpu:memtotal": defaultMemMeta("GPU Memory Total", "gpu:memtotal"),
 };
 for (let i = 0; i < 32; i++) {
     DefaultPlotMeta[`cpu:${i}`] = defaultCpuMeta(`Core ${i}`);
 }
 
-function convertWaddleEventToDataItem(event: Extract<WaddleEvent, { event: "sysinfo" }>): DataItem {
+export function getDefaultPlotMeta(): Map<string, TimeSeriesMeta> {
+    return new Map(Object.entries(DefaultPlotMeta));
+}
+
+function formatMetricNumber(value: number, decimalPlaces: number): string {
+    if (!Number.isFinite(value)) {
+        return "--";
+    }
+    return value.toFixed(decimalPlaces);
+}
+
+function formatMetricValue(metric: string, dataItem: DataItem, decimalPlaces: number): string {
+    const value = dataItem?.[metric];
+    if (metric != "gpu:memused") {
+        return formatMetricNumber(value, decimalPlaces);
+    }
+    const totalValue = dataItem?.["gpu:memtotal"];
+    if (!Number.isFinite(totalValue)) {
+        return formatMetricNumber(value, decimalPlaces);
+    }
+    return `${formatMetricNumber(value, decimalPlaces)}/${formatMetricNumber(totalValue, decimalPlaces)}`;
+}
+
+function makeDeltaLabel(delta: number, decimalPlaces: number): string {
+    if (!Number.isFinite(delta)) {
+        return "";
+    }
+    const roundedDelta = Number(delta.toFixed(decimalPlaces));
+    const formattedDelta = Math.abs(roundedDelta).toFixed(decimalPlaces);
+    if (roundedDelta > 0) {
+        return `+${formattedDelta}`;
+    }
+    if (roundedDelta < 0) {
+        return `-${formattedDelta}`;
+    }
+    return decimalPlaces == 0 ? "0" : Number(0).toFixed(decimalPlaces);
+}
+
+export function makeMetricReading(
+    metric: string,
+    dataItem: DataItem,
+    previousDataItem: DataItem,
+    yvalMeta: TimeSeriesMeta
+): MetricReading {
+    const decimalPlaces = yvalMeta?.decimalPlaces ?? 0;
+    const currentValue = dataItem?.[metric];
+    const previousValue = previousDataItem?.[metric];
+    const delta = currentValue - previousValue;
+    let deltaDirection: MetricReading["deltaDirection"] = "unknown";
+    if (Number.isFinite(delta)) {
+        if (delta > 0) {
+            deltaDirection = "up";
+        } else if (delta < 0) {
+            deltaDirection = "down";
+        } else {
+            deltaDirection = "flat";
+        }
+    }
+
+    return {
+        metric,
+        name: yvalMeta?.name ?? metric,
+        value: formatMetricValue(metric, dataItem, decimalPlaces),
+        unit: yvalMeta?.label ?? "",
+        deltaLabel: makeDeltaLabel(delta, decimalPlaces),
+        deltaDirection,
+        color: yvalMeta?.color ?? "var(--accent-color)",
+    };
+}
+
+export function convertWaddleEventToDataItem(event: Extract<WaddleEvent, { event: "sysinfo" }>): DataItem {
     const eventData = event.data;
     if (eventData == null || eventData.ts == null || eventData.values == null) {
         return null;
@@ -186,7 +361,7 @@ class SysinfoViewModel implements ViewModel {
                 console.log("Error adding data to sysinfo", e);
             }
         });
-        this.plotMetaAtom = jotai.atom(new Map(Object.entries(DefaultPlotMeta)));
+        this.plotMetaAtom = jotai.atom(getDefaultPlotMeta());
         this.manageConnection = jotai.atom(true);
         this.filterOutNowsh = jotai.atom(true);
         this.loadingAtom = jotai.atom(true);
@@ -201,7 +376,7 @@ class SysinfoViewModel implements ViewModel {
             const plotType = get(this.plotTypeSelectedAtom);
             const plotData = get(this.dataAtom);
             try {
-                const metrics = PlotTypes[plotType](plotData[plotData.length - 1]);
+                const metrics = getPlotMetrics(plotType, plotData[plotData.length - 1]);
                 if (metrics == null || !Array.isArray(metrics)) {
                     return ["cpu"];
                 }
@@ -213,7 +388,7 @@ class SysinfoViewModel implements ViewModel {
         this.plotTypeSelectedAtom = jotai.atom((get) => {
             const plotType = get(this.env.getBlockMetaKeyAtom(blockId, "sysinfo:type"));
             if (plotType == null || typeof plotType != "string") {
-                return "CPU";
+                return "Dashboard";
             }
             return plotType;
         });
@@ -290,7 +465,7 @@ class SysinfoViewModel implements ViewModel {
             submenu = [];
         } else {
             submenu = Object.keys(PlotTypes).map((plotType) => {
-                const dataTypes = PlotTypes[plotType](plotData[plotData.length - 1]);
+                const dataTypes = getPlotMetrics(plotType, plotData[plotData.length - 1]);
                 const currentlySelected = globalStore.get(this.plotTypeSelectedAtom);
                 const menuItem: ContextMenuItem = {
                     label: plotType,
@@ -402,6 +577,7 @@ type SingleLinePlotProps = {
     title?: boolean;
     sparkline?: boolean;
     targetLen: number;
+    className?: string;
 };
 
 function SingleLinePlot({
@@ -413,6 +589,7 @@ function SingleLinePlot({
     title = false,
     sparkline = false,
     targetLen,
+    className,
 }: SingleLinePlotProps) {
     const containerRef = React.useRef<HTMLInputElement>(null);
     const domRect = useDimensionsWithExistingRef(containerRef, 300);
@@ -519,15 +696,201 @@ function SingleLinePlot({
         };
     }, [plot, plotWidth, plotHeight]);
 
-    return <div ref={containerRef} className="min-h-[100px]" />;
+    return <div ref={containerRef} className={clsx("min-h-[100px]", className)} />;
+}
+
+function findPreviousMetricDataItem(plotData: DataItem[], yval: string): DataItem {
+    for (let i = plotData.length - 2; i >= 0; i--) {
+        if (Number.isFinite(plotData[i]?.[yval])) {
+            return plotData[i];
+        }
+    }
+    return null;
+}
+
+type MetricValueProps = {
+    reading: MetricReading;
+};
+
+function MetricValue({ reading }: MetricValueProps) {
+    const [changing, setChanging] = React.useState(false);
+    const previousValue = React.useRef(reading.value);
+
+    React.useEffect(() => {
+        if (previousValue.current == reading.value) {
+            return;
+        }
+        previousValue.current = reading.value;
+        setChanging(true);
+        const timeoutId = window.setTimeout(() => {
+            setChanging(false);
+        }, 220);
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [reading.value]);
+
+    return (
+        <div
+            className={clsx(
+                "flex min-w-0 items-baseline gap-1 font-mono tabular-nums transition-all duration-200",
+                changing && "scale-[1.03] text-accent"
+            )}
+        >
+            <span className="min-w-0 truncate text-[28px] leading-none font-semibold text-primary">{reading.value}</span>
+            {reading.unit && <span className="shrink-0 text-[11px] leading-none text-secondary">{reading.unit}</span>}
+        </div>
+    );
+}
+
+type SysinfoMetricCardProps = {
+    plotData: DataItem[];
+    yval: string;
+    yvalMeta: TimeSeriesMeta;
+    blockId: string;
+    targetLen: number;
+    expanded: boolean;
+    onToggle: (metric: string) => void;
+};
+
+function SysinfoMetricCard({
+    plotData,
+    yval,
+    yvalMeta,
+    blockId,
+    targetLen,
+    expanded,
+    onToggle,
+}: SysinfoMetricCardProps) {
+    const latestDataItem = plotData[plotData.length - 1];
+    const previousDataItem = findPreviousMetricDataItem(plotData, yval);
+    const reading = makeMetricReading(yval, latestDataItem, previousDataItem, yvalMeta);
+    const chartTitle = expanded ? "Hide trend" : "Show trend";
+    const deltaClass = {
+        up: "text-success",
+        down: "text-error",
+        flat: "text-secondary",
+        unknown: "text-secondary",
+    }[reading.deltaDirection];
+
+    return (
+        <section
+            className={clsx(
+                "min-w-0 rounded-[8px] border border-border bg-black/10 px-3 py-2 transition-colors",
+                expanded && "border-accent/70 bg-accent/5"
+            )}
+        >
+            <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+                <div className="min-w-0 truncate text-[11px] font-medium text-secondary">{reading.name}</div>
+                <Tooltip content={chartTitle} placement="left" openDelay={200}>
+                    <button
+                        type="button"
+                        aria-label={chartTitle}
+                        aria-pressed={expanded}
+                        title={chartTitle}
+                        onClick={() => onToggle(yval)}
+                        className={clsx(
+                            "flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-[11px] text-secondary transition-colors hover:bg-white/10 hover:text-primary",
+                            expanded && "bg-accent/20 text-accent"
+                        )}
+                    >
+                        <i className="fa-solid fa-chart-line" />
+                    </button>
+                </Tooltip>
+            </div>
+            <div className="flex min-w-0 items-end justify-between gap-2">
+                <MetricValue reading={reading} />
+                {reading.deltaLabel && (
+                    <span className={clsx("shrink-0 font-mono text-[11px] tabular-nums", deltaClass)}>
+                        {reading.deltaLabel}
+                    </span>
+                )}
+            </div>
+            {expanded && (
+                <div className="mt-3 h-[78px] overflow-hidden rounded-[6px] border border-border/70 bg-black/20">
+                    <SingleLinePlot
+                        plotData={plotData}
+                        yval={yval}
+                        yvalMeta={yvalMeta}
+                        blockId={blockId}
+                        defaultColor={"var(--accent-color)"}
+                        targetLen={targetLen}
+                        sparkline
+                        className="h-full min-h-0"
+                    />
+                </div>
+            )}
+        </section>
+    );
+}
+
+type SysinfoMetricDashboardProps = {
+    plotData: DataItem[];
+    yvals: string[];
+    plotMeta: Map<string, TimeSeriesMeta>;
+    blockId: string;
+    targetLen: number;
+};
+
+function SysinfoMetricDashboard({ plotData, yvals, plotMeta, blockId, targetLen }: SysinfoMetricDashboardProps) {
+    const [expandedMetrics, setExpandedMetrics] = React.useState<Set<string>>(new Set());
+    const availableMetricKey = yvals.join("|");
+    const hasMetricData = plotData != null && plotData.length > 0 && yvals.length > 0;
+
+    React.useEffect(() => {
+        setExpandedMetrics((prev) => {
+            const next = new Set([...prev].filter((metric) => yvals.includes(metric)));
+            if (next.size == prev.size) {
+                return prev;
+            }
+            return next;
+        });
+    }, [availableMetricKey]);
+
+    const toggleMetric = React.useCallback((metric: string) => {
+        setExpandedMetrics((prev) => {
+            const next = new Set(prev);
+            if (next.has(metric)) {
+                next.delete(metric);
+            } else {
+                next.add(metric);
+            }
+            return next;
+        });
+    }, []);
+
+    if (!hasMetricData) {
+        return <div className="flex h-full min-h-[100px] items-center justify-center text-xs text-secondary">No data</div>;
+    }
+
+    return (
+        <div className="grid w-full content-start gap-2 p-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+            {yvals.map((yval) => {
+                return (
+                    <SysinfoMetricCard
+                        key={`metric-${blockId}-${yval}`}
+                        plotData={plotData}
+                        yval={yval}
+                        yvalMeta={plotMeta.get(yval)}
+                        blockId={blockId}
+                        targetLen={targetLen}
+                        expanded={expandedMetrics.has(yval)}
+                        onToggle={toggleMetric}
+                    />
+                );
+            })}
+        </div>
+    );
 }
 
 const SysinfoViewInner = React.memo(({ model }: SysinfoViewProps) => {
     const plotData = jotai.useAtomValue(model.dataAtom);
     const yvals = jotai.useAtomValue(model.metrics);
     const plotMeta = jotai.useAtomValue(model.plotMetaAtom);
+    const plotType = jotai.useAtomValue(model.plotTypeSelectedAtom);
     const osRef = React.useRef<OverlayScrollbarsComponentRef>(null);
     const targetLen = jotai.useAtomValue(model.numPoints) + 1;
+    const displayMode = getSysinfoDisplayMode(plotType);
     let title = false;
     let cols2 = false;
     if (yvals.length > 1) {
@@ -536,6 +899,7 @@ const SysinfoViewInner = React.memo(({ model }: SysinfoViewProps) => {
     if (yvals.length > 2) {
         cols2 = true;
     }
+    const hasPlotData = plotData != null && plotData.length > 0 && yvals.length > 0;
 
     return (
         <OverlayScrollbarsComponent
@@ -543,28 +907,43 @@ const SysinfoViewInner = React.memo(({ model }: SysinfoViewProps) => {
             className="flex flex-col flex-grow mb-0 overflow-y-auto"
             options={{ scrollbars: { autoHide: "leave" } }}
         >
-            <div
-                className={clsx("w-full h-full grid grid-rows-[repeat(auto-fit,minmax(100px,1fr))] gap-[10px]", {
-                    "grid-cols-2": cols2,
-                })}
-            >
-                {plotData &&
-                    plotData.length > 0 &&
-                    yvals.map((yval, _idx) => {
-                        return (
-                            <SingleLinePlot
-                                key={`plot-${model.blockId}-${yval}`}
-                                plotData={plotData}
-                                yval={yval}
-                                yvalMeta={plotMeta.get(yval)}
-                                blockId={model.blockId}
-                                defaultColor={"var(--accent-color)"}
-                                title={title}
-                                targetLen={targetLen}
-                            />
-                        );
+            {displayMode == "summary" && (
+                <SysinfoMetricDashboard
+                    plotData={plotData}
+                    yvals={yvals}
+                    plotMeta={plotMeta}
+                    blockId={model.blockId}
+                    targetLen={targetLen}
+                />
+            )}
+            {displayMode == "plots" && (
+                <div
+                    className={clsx("w-full h-full grid grid-rows-[repeat(auto-fit,minmax(100px,1fr))] gap-[10px]", {
+                        "grid-cols-2": cols2,
                     })}
-            </div>
+                >
+                    {!hasPlotData && (
+                        <div className="flex h-full min-h-[100px] items-center justify-center text-xs text-secondary">
+                            No data
+                        </div>
+                    )}
+                    {hasPlotData &&
+                        yvals.map((yval, _idx) => {
+                            return (
+                                <SingleLinePlot
+                                    key={`plot-${model.blockId}-${yval}`}
+                                    plotData={plotData}
+                                    yval={yval}
+                                    yvalMeta={plotMeta.get(yval)}
+                                    blockId={model.blockId}
+                                    defaultColor={"var(--accent-color)"}
+                                    title={title}
+                                    targetLen={targetLen}
+                                />
+                            );
+                        })}
+                </div>
+            )}
         </OverlayScrollbarsComponent>
     );
 });

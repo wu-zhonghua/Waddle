@@ -1,65 +1,6 @@
 // Copyright 2024, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-.dir-view-mode-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 2px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: rgb(from var(--main-text-color) r g b / 0.05);
-}
-
-.dir-view-mode-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 22px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    color: var(--secondary-text-color);
-    background: transparent;
-    cursor: pointer;
-
-    &:hover {
-        color: var(--main-text-color);
-        background-color: var(--highlight-bg-color);
-    }
-
-    &.active {
-        color: var(--main-text-color);
-        background-color: rgb(from var(--accent-color) r g b / 0.45);
-    }
-}
-
-.block-frame-textelems-wrapper .block-frame-div.dir-view-mode-toggle {
-    flex: 0 0 auto;
-    width: auto;
-    height: auto;
-    justify-content: flex-start;
-
-    .wave-iconbutton.dir-view-mode-button {
-        width: 24px;
-        height: 22px;
-    }
-}
-
-.block-frame-textelems-wrapper .block-frame-div.preview-directory-header-row {
-    gap: 6px;
-    justify-content: flex-start;
-}
-
-.block-frame-textelems-wrapper .block-frame-div.preview-path-controls {
-    flex: 1 1 auto;
-    min-width: 0;
-    width: auto;
-    justify-content: flex-start;
-    gap: 3px;
-}
-
 .dir-table-container {
     display: flex;
     flex-direction: column;
@@ -252,8 +193,79 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
-        gap: 4px;
         padding: 4px 5px 5px;
+        container-type: inline-size;
+        --dir-tree-name-min-width: 300px;
+        --dir-tree-name-width: 55%;
+        --dir-tree-compact-name-min-width: 190px;
+        --dir-tree-compact-modified-width: 116px;
+        --dir-tree-compact-size-width: 56px;
+        --dir-tree-modified-width: 132px;
+        --dir-tree-size-width: 76px;
+        --dir-tree-row-columns: minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))
+            minmax(var(--dir-tree-modified-width), 1fr) var(--dir-tree-size-width);
+        --dir-tree-detail-columns: minmax(var(--dir-tree-modified-width), 1fr) var(--dir-tree-size-width);
+    }
+
+    .dir-tree-head,
+    .dir-tree .tree-node-row {
+        display: grid;
+        grid-template-columns: var(--dir-tree-row-columns);
+        align-items: center;
+    }
+
+    .dir-tree-head {
+        min-height: 26px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--grey-text-color);
+        font-size: 10px;
+        text-transform: uppercase;
+        user-select: none;
+    }
+
+    .dir-tree-head-cell {
+        display: inline-flex;
+        min-width: 0;
+        align-items: center;
+        gap: 4px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font-family: Hack;
+        font-size: 10px;
+        line-height: 1;
+        text-align: left;
+        text-transform: uppercase;
+        cursor: pointer;
+
+        &:hover,
+        &.active {
+            color: var(--main-text-color);
+        }
+    }
+
+    .dir-tree-head-name,
+    .dir-tree .tree-node-main {
+        grid-column: 1;
+        min-width: 0;
+    }
+
+    .dir-tree-head-name {
+        padding-left: 42px;
+    }
+
+    .dir-tree .tree-node-details {
+        display: grid;
+        grid-column: 2 / 4;
+        grid-template-columns: var(--dir-tree-detail-columns);
+        min-width: 0;
+        align-items: center;
+        margin-left: 0;
+        padding-right: 0;
+    }
+
+    .dir-tree-head-sort {
+        font-size: 9px;
     }
 
     .dir-tree {
@@ -262,6 +274,95 @@
         border: 0;
         border-radius: 0;
         background: transparent;
+
+        .tree-node-details {
+            gap: 0;
+        }
+
+        .tree-node-synthetic .tree-node-main {
+            grid-column: 1 / -1;
+        }
+
+        .dir-tree-detail {
+            display: inline-flex;
+            min-width: 0;
+            align-items: baseline;
+            gap: 4px;
+            color: var(--secondary-text-color);
+            font-family: Hack;
+            font-size: 11px;
+            line-height: 1;
+        }
+
+        .dir-tree-detail-value {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .dir-tree-head-modified {
+        grid-column: 2;
+        justify-content: flex-start;
+    }
+
+    .dir-tree-detail-modified {
+        grid-column: 1;
+        width: auto;
+        justify-content: flex-start;
+    }
+
+    .dir-tree-head-size {
+        grid-column: 3;
+        justify-content: flex-end;
+        padding-right: 8px;
+        text-align: right;
+    }
+
+    .dir-tree-detail-size {
+        grid-column: 2;
+        width: auto;
+        justify-content: flex-end;
+        padding-right: 8px;
+        text-align: right;
+    }
+
+    @container (max-width: 520px) {
+        .dir-tree-head,
+        .dir-tree .tree-node-row {
+            grid-template-columns: minmax(var(--dir-tree-compact-name-min-width), 1fr)
+                var(--dir-tree-compact-modified-width) var(--dir-tree-compact-size-width);
+        }
+
+        .dir-tree .tree-node-details {
+            --dir-tree-detail-columns: var(--dir-tree-compact-modified-width) var(--dir-tree-compact-size-width);
+            grid-column: 2 / 4;
+        }
+
+        .dir-tree-head-size,
+        .dir-tree-detail-size {
+            display: inline-flex;
+            padding-right: 2px;
+        }
+    }
+
+    @container (max-width: 360px) {
+        .dir-tree-head,
+        .dir-tree .tree-node-row {
+            grid-template-columns: minmax(var(--dir-tree-compact-name-min-width), 1fr)
+                var(--dir-tree-compact-modified-width);
+        }
+
+        .dir-tree .tree-node-details {
+            --dir-tree-detail-columns: var(--dir-tree-compact-modified-width);
+            grid-column: 2 / 3;
+        }
+
+        .dir-tree-head-size,
+        .dir-tree-detail-size {
+            display: none;
+        }
     }
 }
 

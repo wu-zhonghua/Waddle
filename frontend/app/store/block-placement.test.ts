@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { newLayoutNode } from "@/layout/lib/layoutNode";
 import { FlexDirection, LayoutTreeActionType } from "@/layout/lib/types";
-import { applyInheritedBlockLocation, makeCreateBlockPlacementAction } from "./block-placement";
+import { applyInheritedBlockLocation, getPlacementForBlockDef, makeCreateBlockPlacementAction } from "./block-placement";
 
 describe("makeCreateBlockPlacementAction", () => {
     const metas: Record<string, MetaType> = {
@@ -21,8 +21,8 @@ describe("makeCreateBlockPlacementAction", () => {
 
         expect(action).toMatchObject({
             type: LayoutTreeActionType.InsertLeftSidebar,
-            sidebarSize: 20,
-            mainSize: 80,
+            sidebarSize: 21,
+            mainSize: 79,
             focused: true,
         });
     });
@@ -76,11 +76,11 @@ describe("makeCreateBlockPlacementAction", () => {
             position: "after",
             focused: true,
         });
-        expect(newTermNode.size).toBe(80);
+        expect(newTermNode.size).toBe(79);
     });
 
     it("opens a file preview to the right of a lone files block", () => {
-        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const filesNode = newLayoutNode(undefined, 21, undefined, { blockId: "files" });
         const newPreviewNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-preview" });
 
         const action = makeCreateBlockPlacementAction(filesNode, newPreviewNode, "preview", getBlockMeta);
@@ -92,7 +92,7 @@ describe("makeCreateBlockPlacementAction", () => {
             position: "after",
             focused: true,
         });
-        expect(newPreviewNode.size).toBe(80);
+        expect(newPreviewNode.size).toBe(79);
     });
 
     it("opens a file preview at the far right using the original Wave split size", () => {
@@ -212,5 +212,21 @@ describe("applyInheritedBlockLocation", () => {
             file: "/tmp/manual",
             connection: "ssh:manual",
         });
+    });
+});
+
+describe("getPlacementForBlockDef", () => {
+    it("opens terminal-like widgets with terminal placement", () => {
+        expect(getPlacementForBlockDef({ meta: { view: "term", controller: "shell" } })).toBe("terminal");
+        expect(getPlacementForBlockDef({ meta: { view: "web" } })).toBe("terminal");
+        expect(getPlacementForBlockDef({ meta: { view: "sysinfo" } })).toBe("terminal");
+    });
+
+    it("keeps file previews in the files placement", () => {
+        expect(getPlacementForBlockDef({ meta: { view: "preview", file: "~" } })).toBe("files");
+    });
+
+    it("uses default placement for other views", () => {
+        expect(getPlacementForBlockDef({ meta: { view: "launcher" } })).toBe("default");
     });
 });

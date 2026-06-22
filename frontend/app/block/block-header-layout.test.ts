@@ -43,25 +43,27 @@ describe("preview block header layout", () => {
         expect(source).toContain("onKeyDown: this.handlePathInputKeyDown.bind(this)");
     });
 
-    it("keeps a header button for the open path popup", () => {
+    it("keeps preview headers as a single editable path without an open path button", () => {
         const source = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
 
-        expect(source).toContain('icon: "folder-open"');
-        expect(source).toContain("click: () => this.toggleOpenFileModal()");
+        expect(source).toContain("className: \"preview-filename\"");
+        expect(source).not.toContain("className: \"preview-open-path-button\"");
+        expect(source).not.toContain("click: () => this.toggleOpenFileModal()");
     });
 
-    it("renders directory view mode controls in the preview header", () => {
+    it("keeps directory preview headers as a clean editable path", () => {
         const previewModelSource = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
         const directorySource = readFileSync(join(TestDir, "../view/preview/preview-directory.tsx"), "utf8");
         const css = compileString(readFileSync(join(TestDir, "../view/preview/directorypreview.scss"), "utf8")).css;
 
-        expect(previewModelSource).toContain('className: "preview-directory-header-row"');
-        expect(previewModelSource).toContain('className: "dir-view-mode-toggle"');
-        expect(previewModelSource).toContain('className: "preview-path-controls"');
-        expect(previewModelSource).toContain("setDirectoryViewMode");
+        expect(previewModelSource).toContain('className: "preview-filename"');
+        expect(previewModelSource).not.toContain('className: "preview-directory-header-row"');
+        expect(previewModelSource).not.toContain('className: "dir-view-mode-toggle"');
+        expect(previewModelSource).not.toContain('className: "preview-path-controls"');
+        expect(previewModelSource).not.toContain("setDirectoryViewMode");
         expect(directorySource).not.toContain('className="dir-preview-toolbar"');
-        expect(css).toContain(".block-frame-div.preview-directory-header-row");
-        expect(css).toContain(".block-frame-div.preview-path-controls");
-        expect(css).toContain(".block-frame-div.dir-view-mode-toggle");
+        expect(css).not.toContain(".block-frame-div.preview-directory-header-row");
+        expect(css).not.toContain(".block-frame-div.preview-path-controls");
+        expect(css).not.toContain(".block-frame-div.dir-view-mode-toggle");
     });
 });

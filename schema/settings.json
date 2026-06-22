@@ -235,7 +235,6 @@
         "preview:directoryviewmode": {
           "type": "string",
           "enum": [
-            "folder",
             "tree"
           ]
         },

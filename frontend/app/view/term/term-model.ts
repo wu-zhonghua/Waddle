@@ -4,6 +4,7 @@
 import { WaddleAIModel } from "@/app/aipanel/waveai-model";
 import { BlockNodeModel } from "@/app/block/blocktypes";
 import { appHandleKeyDown } from "@/app/store/keymodel";
+import { getPlacementForBlockDef } from "@/app/store/block-placement";
 import { modalsModel } from "@/app/store/modalmodel";
 import type { TabModel } from "@/app/store/tab-model";
 import { waveEventSubscribeSingle } from "@/app/store/wps";
@@ -871,12 +872,13 @@ export class TermViewModel implements ViewModel {
                 menu.push({
                     label: hoveredURL.hostname ? "Open URL (" + hoveredURL.hostname + ")" : "Open URL",
                     click: () => {
-                        createBlock({
+                        const blockDef: BlockDef = {
                             meta: {
                                 view: "web",
                                 url: hoveredURL.toString(),
                             },
-                        });
+                        };
+                        createBlock(blockDef, false, false, getPlacementForBlockDef(blockDef));
                     },
                 });
                 menu.push({

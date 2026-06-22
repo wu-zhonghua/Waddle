@@ -8,6 +8,7 @@ import { ModalsRenderer } from "@/app/modals/modalsrenderer";
 import { TabBar } from "@/app/tab/tabbar";
 import { TabContent } from "@/app/tab/tabcontent";
 import { VTabBar } from "@/app/tab/vtabbar";
+import { WorkspaceSysinfoStatus } from "@/app/workspace/sysinfo-status";
 import { Widgets } from "@/app/workspace/widgets";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
 import { atoms, getApi, getSettingsKeyAtom } from "@/store/global";
@@ -157,8 +158,15 @@ const WorkspaceElem = memo(() => {
                             {tabId === "" ? (
                                 <CenteredDiv>No Active Tab</CenteredDiv>
                             ) : (
-                                <div className="flex flex-row h-full">
-                                    <TabContent key={tabId} tabId={tabId} noTopPadding={showLeftTabBar && isMacOS()} />
+                                <div className="flex flex-row h-full min-w-0">
+                                    <div className="flex h-full min-w-0 flex-grow flex-col">
+                                        <TabContent
+                                            key={tabId}
+                                            tabId={tabId}
+                                            noTopPadding={showLeftTabBar && isMacOS()}
+                                        />
+                                        <WorkspaceSysinfoStatus key={`sysinfo-status-${tabId}`} tabId={tabId} />
+                                    </div>
                                     {widgetsSidebarVisible && <Widgets />}
                                 </div>
                             )}

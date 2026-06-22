@@ -18,6 +18,13 @@ import React, {
 
 type TreeNodeChildrenStatus = "unloaded" | "loading" | "loaded" | "error" | "capped";
 export type TreeNodeClickAction = "select" | "toggle" | "open";
+export type TreeSortField = "name" | "type" | "modified" | "created" | "size";
+export type TreeSortDirection = "asc" | "desc";
+
+export interface TreeSortSpec {
+    field: TreeSortField;
+    direction: TreeSortDirection;
+}
 
 export interface TreeNodeData {
     id: string;
@@ -26,6 +33,10 @@ export interface TreeNodeData {
     path?: string;
     isDirectory: boolean;
     mimeType?: string;
+    size?: number;
+    modeStr?: string;
+    modTime?: number;
+    createTime?: number;
     icon?: string;
     iconColor?: string;
     isReadonly?: boolean;
@@ -69,6 +80,8 @@ export interface TreeViewProps {
     width?: number | string;
     height?: number | string;
     className?: string;
+    sortSpec?: TreeSortSpec;
+    renderNodeDetails?: (node: TreeNodeData) => React.ReactNode;
     onOpenFile?: (id: string, node: TreeNodeData) => void;
     onSelectionChange?: (id: string, node: TreeNodeData) => void;
     onNodeContextMenu?: (event: MouseEvent<HTMLDivElement>, id: string, node: TreeNodeData) => void;
@@ -82,6 +95,7 @@ const DefaultRowHeight = 24;
 const DefaultIndentWidth = 16;
 const DefaultOverscan = 10;
 const ChevronWidth = 16;
+const DefaultSortSpec: TreeSortSpec = { field: "name", direction: "asc" };
 
 function normalizeLabel(node: TreeNodeData): string {
     if (node.label?.trim()) {
@@ -92,28 +106,75 @@ function normalizeLabel(node: TreeNodeData): string {
     return chunks[chunks.length - 1] ?? path;
 }
 
-function sortIdsByNode(nodesById: Map<string, TreeNodeData>, ids: string[]): string[] {
+function getSortValue(node: TreeNodeData, field: TreeSortField): string | number {
+    switch (field) {
+        case "type":
+            return node.mimeType ?? (node.isDirectory ? "directory" : "");
+        case "modified":
+            return node.modTime;
+        case "created":
+            return node.createTime;
+        case "size":
+            return node.size;
+        case "name":
+        default:
+            return normalizeLabel(node).toLocaleLowerCase();
+    }
+}
+
+function compareMaybeNumber(leftValue: string | number, rightValue: string | number): number {
+    if (typeof leftValue === "number" || typeof rightValue === "number") {
+        const leftFinite = Number.isFinite(leftValue);
+        const rightFinite = Number.isFinite(rightValue);
+        if (leftFinite && rightFinite) {
+            return (leftValue as number) - (rightValue as number);
+        }
+        if (leftFinite !== rightFinite) {
+            return leftFinite ? -1 : 1;
+        }
+        return 0;
+    }
+    return leftValue.localeCompare(rightValue);
+}
+
+function compareNodes(left: TreeNodeData, right: TreeNodeData, sortSpec: TreeSortSpec): number {
+    const leftParent = normalizeLabel(left) === ".." ? 0 : 1;
+    const rightParent = normalizeLabel(right) === ".." ? 0 : 1;
+    if (leftParent !== rightParent) {
+        return leftParent - rightParent;
+    }
+    const leftDir = left.isDirectory ? 0 : 1;
+    const rightDir = right.isDirectory ? 0 : 1;
+    if (leftDir !== rightDir) {
+        return leftDir - rightDir;
+    }
+    const directionMultiplier = sortSpec.direction === "desc" ? -1 : 1;
+    const sortCompare =
+        compareMaybeNumber(getSortValue(left, sortSpec.field), getSortValue(right, sortSpec.field)) * directionMultiplier;
+    if (sortCompare !== 0) {
+        return sortCompare;
+    }
+    const leftLabel = normalizeLabel(left).toLocaleLowerCase();
+    const rightLabel = normalizeLabel(right).toLocaleLowerCase();
+    if (leftLabel !== rightLabel) {
+        return leftLabel.localeCompare(rightLabel);
+    }
+    return left.id.localeCompare(right.id);
+}
+
+function sortIdsByNode(nodesById: Map<string, TreeNodeData>, ids: string[], sortSpec: TreeSortSpec = DefaultSortSpec): string[] {
     return [...ids].sort((leftId, rightId) => {
-        const left = nodesById.get(leftId);
-        const right = nodesById.get(rightId);
-        const leftDir = left?.isDirectory ? 0 : 1;
-        const rightDir = right?.isDirectory ? 0 : 1;
-        if (leftDir !== rightDir) {
-            return leftDir - rightDir;
-        }
-        const leftLabel = normalizeLabel(left ?? { id: leftId, isDirectory: false }).toLocaleLowerCase();
-        const rightLabel = normalizeLabel(right ?? { id: rightId, isDirectory: false }).toLocaleLowerCase();
-        if (leftLabel !== rightLabel) {
-            return leftLabel.localeCompare(rightLabel);
-        }
-        return leftId.localeCompare(rightId);
+        const left = nodesById.get(leftId) ?? { id: leftId, isDirectory: false };
+        const right = nodesById.get(rightId) ?? { id: rightId, isDirectory: false };
+        return compareNodes(left, right, sortSpec);
     });
 }
 
 export function buildVisibleRows(
     nodesById: Map<string, TreeNodeData>,
     rootIds: string[],
-    expandedIds: Set<string>
+    expandedIds: Set<string>,
+    sortSpec: TreeSortSpec = DefaultSortSpec
 ): TreeViewVisibleRow[] {
     const rows: TreeViewVisibleRow[] = [];
 
@@ -162,7 +223,7 @@ export function buildVisibleRows(
             return;
         }
 
-        const sortedChildren = sortIdsByNode(nodesById, childIds);
+        const sortedChildren = sortIdsByNode(nodesById, childIds, sortSpec);
         sortedChildren.forEach((childId) => appendNode(childId, depth + 1));
         if (status === "capped") {
             const capMax = node.capInfo?.max ?? childIds.length;
@@ -176,7 +237,7 @@ export function buildVisibleRows(
         }
     };
 
-    sortIdsByNode(nodesById, rootIds).forEach((id) => appendNode(id, 0));
+    sortIdsByNode(nodesById, rootIds, sortSpec).forEach((id) => appendNode(id, 0));
     return rows;
 }
 
@@ -234,6 +295,8 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
         width = "100%",
         height = 360,
         className,
+        sortSpec = DefaultSortSpec,
+        renderNodeDetails,
         onOpenFile,
         onSelectionChange,
         onNodeContextMenu,
@@ -262,7 +325,10 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
         );
     }, [initialNodes]);
 
-    const visibleRows = useMemo(() => buildVisibleRows(nodesById, rootIds, expandedIds), [nodesById, rootIds, expandedIds]);
+    const visibleRows = useMemo(
+        () => buildVisibleRows(nodesById, rootIds, expandedIds, sortSpec),
+        [nodesById, rootIds, expandedIds, sortSpec]
+    );
     const idToIndex = useMemo(
         () => new Map(visibleRows.map((row, index) => [row.id, index])),
         [visibleRows]
@@ -327,7 +393,8 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                 });
                 const childrenIds = sortIdsByNode(
                     next,
-                    result.nodes.map((entry) => entry.id)
+                    result.nodes.map((entry) => entry.id),
+                    sortSpec
                 );
                 const source = next.get(id) ?? currentNode;
                 next.set(id, {
@@ -460,12 +527,15 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                             return null;
                         }
                         const selected = row.id === selectedId;
+                        const nodeDetails =
+                            row.kind === "node" && row.node != null ? renderNodeDetails?.(row.node) : null;
                         return (
                             <div
                                 key={row.id}
                                 className={clsx(
-                                    "absolute left-0 right-0 flex items-center whitespace-nowrap text-sm",
+                                    "tree-node-row absolute left-0 right-0 flex items-center whitespace-nowrap text-sm",
                                     row.kind === "node" ? "cursor-pointer" : "text-muted",
+                                    row.kind !== "node" && "tree-node-synthetic",
                                     selected ? "bg-accent/25 text-foreground" : "text-foreground hover:bg-muted/50"
                                 )}
                                 style={{
@@ -500,49 +570,62 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                                     }
                                 }}
                             >
-                                <div
-                                    className="flex items-center"
-                                    style={{ paddingLeft: row.depth * indentWidth, width: ChevronWidth + row.depth * indentWidth }}
-                                >
-                                    {row.kind === "node" && row.isDirectory && row.hasChildren ? (
-                                        <button
-                                            className="h-4 w-4 rounded text-muted hover:text-foreground cursor-pointer"
-                                            onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                                                event.stopPropagation();
-                                                toggleExpand(row.id);
-                                            }}
-                                        >
-                                            <i
-                                                className={clsx(
-                                                    "fa-sharp fa-solid text-[11px]",
-                                                    row.isExpanded ? "fa-chevron-down" : "fa-chevron-right"
-                                                )}
-                                            />
-                                        </button>
-                                    ) : (
-                                        <span className="inline-block h-4 w-4" />
-                                    )}
-                                </div>
                                 {row.kind === "node" ? (
                                     <>
-                                        <i
-                                            className={makeIconClass(getNodeIcon(row.node, row.isExpanded), true)}
-                                            style={{
-                                                color:
-                                                    row.node.notfound || row.node.staterror
-                                                        ? "var(--color-error)"
-                                                        : (row.node.iconColor ?? "inherit"),
-                                            }}
-                                        />
-                                        <span
-                                            className={clsx("ml-2 pr-3", row.node.isReadonly && "text-muted")}
-                                            title={row.label}
-                                        >
-                                            {row.label}
-                                        </span>
+                                        <div className="tree-node-main flex min-w-0 items-center">
+                                            <div
+                                                className="flex items-center"
+                                                style={{
+                                                    paddingLeft: row.depth * indentWidth,
+                                                    width: ChevronWidth + row.depth * indentWidth,
+                                                }}
+                                            >
+                                                {row.isDirectory && row.hasChildren ? (
+                                                    <button
+                                                        className="h-4 w-4 rounded text-muted hover:text-foreground cursor-pointer"
+                                                        onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                                                            event.stopPropagation();
+                                                            toggleExpand(row.id);
+                                                        }}
+                                                    >
+                                                        <i
+                                                            className={clsx(
+                                                                "fa-sharp fa-solid text-[11px]",
+                                                                row.isExpanded ? "fa-chevron-down" : "fa-chevron-right"
+                                                            )}
+                                                        />
+                                                    </button>
+                                                ) : (
+                                                    <span className="inline-block h-4 w-4" />
+                                                )}
+                                            </div>
+                                            <i
+                                                className={makeIconClass(getNodeIcon(row.node, row.isExpanded), true)}
+                                                style={{
+                                                    color:
+                                                        row.node.notfound || row.node.staterror
+                                                            ? "var(--color-error)"
+                                                            : (row.node.iconColor ?? "inherit"),
+                                                }}
+                                            />
+                                            <span
+                                                className={clsx(
+                                                    "ml-2 min-w-0 flex-1 truncate pr-3",
+                                                    row.node.isReadonly && "text-muted"
+                                                )}
+                                                title={row.label}
+                                            >
+                                                {row.label}
+                                            </span>
+                                        </div>
+                                        {nodeDetails != null && (
+                                            <div className="tree-node-details ml-auto flex shrink-0 items-center gap-3 pr-2 text-xs text-muted">
+                                                {nodeDetails}
+                                            </div>
+                                        )}
                                     </>
                                 ) : (
-                                    <span className="ml-6 pr-3 text-xs">{row.label}</span>
+                                    <span className="tree-node-main ml-6 pr-3 text-xs">{row.label}</span>
                                 )}
                             </div>
                         );

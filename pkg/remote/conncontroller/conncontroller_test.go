@@ -89,3 +89,19 @@ func TestGetClientPlatformForInstallUsesValidOsArchStr(t *testing.T) {
 		t.Fatalf("unexpected parsed platform: %s %s", clientOs, clientArch)
 	}
 }
+
+func TestShouldRetryWshFailureForConnserverStartErrors(t *testing.T) {
+	for _, code := range []string{NoWshCode_ConnServerStartError, NoWshCode_PostInstallStartError} {
+		if !shouldRetryWshFailure(WshCheckResult{NoWshCode: code}) {
+			t.Fatalf("expected %s to retry", code)
+		}
+	}
+}
+
+func TestShouldNotRetryWshFailureForUserOrConfigDecisions(t *testing.T) {
+	for _, code := range []string{NoWshCode_Disabled, NoWshCode_UserDeclined, NoWshCode_PermissionError} {
+		if shouldRetryWshFailure(WshCheckResult{NoWshCode: code}) {
+			t.Fatalf("expected %s not to retry", code)
+		}
+	}
+}

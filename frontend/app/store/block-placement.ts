@@ -15,8 +15,8 @@ import {
 
 export type CreateBlockPlacement = "default" | "files" | "terminal" | "preview";
 
-const FilesSidebarSize = 20;
-const MainContentSize = 80;
+const FilesSidebarSize = 21;
+const MainContentSize = 79;
 const RootRowSize = 100;
 const StackedBlockHeightFraction = 1 / 3;
 
@@ -86,6 +86,24 @@ function isFilesMeta(meta: MetaType): boolean {
 
 function isTerminalMeta(meta: MetaType): boolean {
     return meta.view === "term" || meta.controller === "shell";
+}
+
+function isTerminalLikeMeta(meta: MetaType): boolean {
+    if (meta == null) {
+        return false;
+    }
+    return isTerminalMeta(meta) || meta.view === "web" || meta.view === "sysinfo";
+}
+
+export function getPlacementForBlockDef(blockDef: BlockDef): CreateBlockPlacement {
+    const meta = blockDef?.meta;
+    if (meta?.view === "preview" && meta.file != null) {
+        return "files";
+    }
+    if (isTerminalLikeMeta(meta)) {
+        return "terminal";
+    }
+    return "default";
 }
 
 function getNodeMeta(node: LayoutNode, getBlockMeta: BlockMetaResolver): MetaType | null {

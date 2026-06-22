@@ -4,7 +4,13 @@
 import { ContextMenuModel } from "@/app/store/contextmenu";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
-import { TreeView, type TreeNodeData } from "@/app/treeview/treeview";
+import {
+    TreeView,
+    type TreeNodeData,
+    type TreeSortDirection,
+    type TreeSortField,
+    type TreeSortSpec,
+} from "@/app/treeview/treeview";
 import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { checkKeyPressed, isCharacterKeyEvent } from "@/util/keyutil";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
@@ -33,12 +39,10 @@ import { debounce } from "throttle-debounce";
 import "./directorypreview.scss";
 import { EntryManagerOverlay, EntryManagerOverlayProps, EntryManagerType } from "./entry-manager";
 import {
-    DirectoryViewModeSettingKey,
     type DirectoryTreeNodeVisuals,
     fileInfoEntriesToTreeNodes,
     fileInfoToTreeNode,
     filterDirectoryTreeEntries,
-    normalizeDirectoryViewMode,
 } from "./preview-directory-tree";
 import {
     cleanMimetype,
@@ -56,8 +60,12 @@ import {
 import { type PreviewModel } from "./preview-model";
 import type { PreviewEnv } from "./previewenv";
 
-const PageJumpSize = 20;
 const DirectoryTreeMaxEntries = 500;
+
+const DirectoryTreeSortColumns: { field: TreeSortField; label: string }[] = [
+    { field: "modified", label: "Modified" },
+    { field: "size", label: "Size" },
+];
 
 function normalizeTreeIconName(icon: string): string {
     if (!isIconValid(icon)) {
@@ -666,8 +674,14 @@ function DirectoryTree({
     const searchActive = useAtomValue(model.directorySearchActive);
     const conn = useAtomValue(model.connection);
     const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
+    const defaultSort = useAtomValue(env.getSettingsKeyAtom("preview:defaultsort")) ?? "name";
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
     const setEntryManagerProps = useSetAtom(entryManagerOverlayPropsAtom);
+    const [sortSpec, setSortSpec] = useState<TreeSortSpec>(() => getInitialDirectoryTreeSort(defaultSort));
+
+    useEffect(() => {
+        setSortSpec(getInitialDirectoryTreeSort(defaultSort));
+    }, [defaultSort]);
 
     const treeData = useMemo(() => {
         const entries = filterDirectoryTreeEntries(data, showHiddenFiles, search);
@@ -796,6 +810,21 @@ function DirectoryTree({
         [conn, model, newDirectory, newFile, setErrorMsg, updateName]
     );
 
+    const handleSort = useCallback((field: TreeSortField) => {
+        setSortSpec((current) => {
+            if (current.field === field) {
+                return {
+                    field,
+                    direction: current.direction === "asc" ? "desc" : "asc",
+                };
+            }
+            return {
+                field,
+                direction: getDefaultDirectoryTreeSortDirection(field),
+            };
+        });
+    }, []);
+
     return (
         <div className="dir-tree-panel">
             {(searchActive || search !== "") && (
@@ -812,17 +841,20 @@ function DirectoryTree({
                     </div>
                 </div>
             )}
+            <DirectoryTreeHeader sortSpec={sortSpec} onSort={handleSort} />
             <TreeView
                 key={`${dirPath}:${search}:${showHiddenFiles}`}
                 rootIds={treeData.rootIds}
                 initialNodes={treeData.initialNodes}
                 fetchDir={fetchDir}
+                sortSpec={sortSpec}
                 maxDirEntries={DirectoryTreeMaxEntries}
                 minWidth={0}
                 maxWidth={1000000}
                 width="100%"
                 height="100%"
                 className="dir-tree"
+                renderNodeDetails={(node) => <DirectoryTreeNodeDetails node={node} />}
                 onOpenFile={(_id, node) => {
                     fireAndForget(() => openDirectoryEntry(model, node.path ?? node.id, node.isDirectory, conn));
                     setSearch("");
@@ -835,18 +867,106 @@ function DirectoryTree({
     );
 }
 
+function getDefaultDirectoryTreeSortDirection(field: TreeSortField): TreeSortDirection {
+    if (field === "name") {
+        return "asc";
+    }
+    return "desc";
+}
+
+function getInitialDirectoryTreeSort(defaultSort: string): TreeSortSpec {
+    if (defaultSort === "modtime") {
+        return { field: "modified", direction: "desc" };
+    }
+    return { field: "name", direction: "asc" };
+}
+
+function DirectoryTreeSortButton({
+    field,
+    label,
+    sortSpec,
+    onSort,
+}: {
+    field: TreeSortField;
+    label: string;
+    sortSpec: TreeSortSpec;
+    onSort: (field: TreeSortField) => void;
+}) {
+    const active = sortSpec.field === field;
+    return (
+        <button
+            type="button"
+            className={clsx("dir-tree-head-cell", `dir-tree-head-${field}`, active && "active")}
+            aria-sort={active ? (sortSpec.direction === "asc" ? "ascending" : "descending") : "none"}
+            onClick={() => onSort(field)}
+        >
+            <span>{label}</span>
+            {active && (
+                <i
+                    className={clsx(
+                        "fa-solid dir-tree-head-sort",
+                        sortSpec.direction === "asc" ? "fa-chevron-up" : "fa-chevron-down"
+                    )}
+                />
+            )}
+        </button>
+    );
+}
+
+function DirectoryTreeHeader({
+    sortSpec,
+    onSort,
+}: {
+    sortSpec: TreeSortSpec;
+    onSort: (field: TreeSortField) => void;
+}) {
+    return (
+        <div className="dir-tree-head">
+            <DirectoryTreeSortButton field="name" label="Name" sortSpec={sortSpec} onSort={onSort} />
+            {DirectoryTreeSortColumns.map((column) => (
+                <DirectoryTreeSortButton
+                    key={column.field}
+                    field={column.field}
+                    label={column.label}
+                    sortSpec={sortSpec}
+                    onSort={onSort}
+                />
+            ))}
+        </div>
+    );
+}
+
+function formatTreeTime(unixMillis: number): string {
+    if (!Number.isFinite(unixMillis) || unixMillis <= 0) {
+        return "-";
+    }
+    return getLastModifiedTime(unixMillis);
+}
+
+function DirectoryTreeNodeDetails({ node }: { node: TreeNodeData }) {
+    const modified = formatTreeTime(node.modTime);
+    const size = getBestUnit(node.size);
+
+    return (
+        <>
+            <span className="dir-tree-detail dir-tree-detail-modified" title={`Modified: ${modified}`}>
+                <span className="dir-tree-detail-value">{modified}</span>
+            </span>
+            <span className="dir-tree-detail dir-tree-detail-size" title={`Size: ${size}`}>
+                <span className="dir-tree-detail-value">{size}</span>
+            </span>
+        </>
+    );
+}
+
 interface DirectoryPreviewProps {
     model: PreviewModel;
 }
 
 function DirectoryPreview({ model }: DirectoryPreviewProps) {
     const env = useWaddleEnv<PreviewEnv>();
-    const directoryViewModeSetting = useAtomValue(env.getSettingsKeyAtom(DirectoryViewModeSettingKey));
-    const directoryViewMode = normalizeDirectoryViewMode(directoryViewModeSetting);
     const [searchText, setSearchText] = useState("");
-    const [focusIndex, setFocusIndex] = useState(0);
     const [unfilteredData, setUnfilteredData] = useState<FileInfo[]>([]);
-    const showHiddenFiles = useAtomValue(model.showHiddenFiles);
     const [selectedPath, setSelectedPath] = useState("");
     const [selectedPathIsDir, setSelectedPathIsDir] = useState(false);
     const [refreshVersion, setRefreshVersion] = useAtom(model.refreshVersion);
@@ -907,21 +1027,6 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
         [conn, dirPath, refreshVersion]
     );
 
-    const filteredData = useMemo(
-        () =>
-            unfilteredData?.filter((fileInfo) => {
-                if (fileInfo.name == null) {
-                    console.log("fileInfo.name is null", fileInfo);
-                    return false;
-                }
-                if (!showHiddenFiles && fileInfo.name.startsWith(".") && fileInfo.name != "..") {
-                    return false;
-                }
-                return fileInfo.name.toLowerCase().includes(searchText);
-            }) ?? [],
-        [unfilteredData, showHiddenFiles, searchText]
-    );
-
     useEffect(() => {
         model.directoryKeyDownHandler = (waveEvent: WaddleKeyboardEvent): boolean => {
             if (checkKeyPressed(waveEvent, "Cmd:f")) {
@@ -933,26 +1038,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 globalStore.set(model.directorySearchActive, false);
                 return;
             }
-            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "ArrowUp")) {
-                setFocusIndex((idx) => Math.max(idx - 1, 0));
-                return true;
-            }
-            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "ArrowDown")) {
-                setFocusIndex((idx) => Math.min(idx + 1, filteredData.length - 1));
-                return true;
-            }
-            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "PageUp")) {
-                setFocusIndex((idx) => Math.max(idx - PageJumpSize, 0));
-                return true;
-            }
-            if (directoryViewMode !== "tree" && checkKeyPressed(waveEvent, "PageDown")) {
-                setFocusIndex((idx) => Math.min(idx + PageJumpSize, filteredData.length - 1));
-                return true;
-            }
             if (checkKeyPressed(waveEvent, "Enter")) {
-                if (directoryViewMode !== "tree" && filteredData.length == 0) {
-                    return;
-                }
                 if (selectedPath == null || selectedPath == "") {
                     return;
                 }
@@ -986,13 +1072,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
         return () => {
             model.directoryKeyDownHandler = null;
         };
-    }, [conn, directoryViewMode, filteredData, selectedPath, selectedPathIsDir, searchText]);
-
-    useEffect(() => {
-        if (filteredData.length != 0 && focusIndex > filteredData.length - 1) {
-            setFocusIndex(filteredData.length - 1);
-        }
-    }, [filteredData]);
+    }, [conn, selectedPath, selectedPathIsDir, searchText]);
 
     const entryManagerPropsAtom = useState(
         atom<EntryManagerOverlayProps>(null) as PrimitiveAtom<EntryManagerOverlayProps>
@@ -1153,7 +1233,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
 
             ContextMenuModel.getInstance().showContextMenu(menu, e);
         },
-        [setRefreshVersion, conn, newFile, newDirectory, dirPath]
+        [conn, finfo, newFile, newDirectory]
     );
 
     return (
@@ -1171,33 +1251,17 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 onContextMenu={(e) => handleFileContextMenu(e)}
                 onClick={() => setEntryManagerProps(undefined)}
             >
-                {directoryViewMode === "tree" ? (
-                    <DirectoryTree
-                        model={model}
-                        data={unfilteredData}
-                        search={searchText}
-                        setSearch={setSearchText}
-                        setSelectedPath={setSelectedEntry}
-                        dirPath={dirPath}
-                        entryManagerOverlayPropsAtom={entryManagerPropsAtom}
-                        newFile={newFile}
-                        newDirectory={newDirectory}
-                    />
-                ) : (
-                    <DirectoryTable
-                        model={model}
-                        data={filteredData}
-                        search={searchText}
-                        focusIndex={focusIndex}
-                        setFocusIndex={setFocusIndex}
-                        setSearch={setSearchText}
-                        setSelectedPath={setSelectedEntry}
-                        setRefreshVersion={setRefreshVersion}
-                        entryManagerOverlayPropsAtom={entryManagerPropsAtom}
-                        newFile={newFile}
-                        newDirectory={newDirectory}
-                    />
-                )}
+                <DirectoryTree
+                    model={model}
+                    data={unfilteredData}
+                    search={searchText}
+                    setSearch={setSearchText}
+                    setSelectedPath={setSelectedEntry}
+                    dirPath={dirPath}
+                    entryManagerOverlayPropsAtom={entryManagerPropsAtom}
+                    newFile={newFile}
+                    newDirectory={newDirectory}
+                />
             </div>
             {entryManagerProps && (
                 <EntryManagerOverlay

@@ -3,7 +3,7 @@
 
 import type { TreeNodeData } from "@/app/treeview/treeview";
 
-export type DirectoryViewMode = "folder" | "tree";
+export type DirectoryViewMode = "tree";
 
 export const DirectoryViewModeSettingKey = "preview:directoryviewmode";
 
@@ -12,8 +12,8 @@ export interface DirectoryTreeNodeVisuals {
     iconColor?: string;
 }
 
-export function normalizeDirectoryViewMode(value: string | null | undefined): DirectoryViewMode {
-    return value === "tree" ? "tree" : "folder";
+export function normalizeDirectoryViewMode(_value: string | null | undefined): DirectoryViewMode {
+    return "tree";
 }
 
 export function filterDirectoryTreeEntries(
@@ -52,6 +52,10 @@ export function fileInfoToTreeNode(
         path: fileInfo.path,
         isDirectory: fileInfo.isdir,
         mimeType: fileInfo.mimetype,
+        size: fileInfo.size,
+        modeStr: fileInfo.modestr,
+        modTime: fileInfo.modtime,
+        createTime: fileInfo.createtime,
         icon: visuals.icon,
         iconColor: visuals.iconColor,
         childrenStatus: fileInfo.isdir && !isParentDirectory ? "unloaded" : "loaded",

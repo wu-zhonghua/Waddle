@@ -29,7 +29,12 @@ import {
 } from "@/util/util";
 import { atom, Atom, PrimitiveAtom, useAtomValue } from "jotai";
 import { setupBadgesSubscription } from "./badge";
-import { applyInheritedBlockLocation, CreateBlockPlacement, makeCreateBlockPlacementAction } from "./block-placement";
+import {
+    applyInheritedBlockLocation,
+    CreateBlockPlacement,
+    getPlacementForBlockDef,
+    makeCreateBlockPlacementAction,
+} from "./block-placement";
 import { atoms, blockComponentModelMap, ConnStatusMapAtom, initGlobalAtoms, orefAtomCache } from "./global-atoms";
 import { globalStore } from "./jotaiStore";
 import { modalsModel } from "./modalmodel";
@@ -563,7 +568,7 @@ async function openLink(uri: string, forceOpenInternally = false) {
                 url: uri,
             },
         };
-        await createBlock(blockDef);
+        await createBlock(blockDef, false, false, getPlacementForBlockDef(blockDef));
     } else {
         getApi().openExternal(uri);
     }

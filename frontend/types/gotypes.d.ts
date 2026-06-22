@@ -965,6 +965,7 @@ declare global {
         mode?: number;
         modestr?: string;
         modtime?: number;
+        createtime?: number;
         isdir?: boolean;
         supportsmkdir?: boolean;
         mimetype?: string;

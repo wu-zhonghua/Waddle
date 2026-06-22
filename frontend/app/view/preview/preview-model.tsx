@@ -19,7 +19,6 @@ import { loadable } from "jotai/utils";
 import type * as MonacoTypes from "monaco-editor";
 import { createRef } from "react";
 import { PreviewView } from "./preview";
-import { DirectoryViewMode, DirectoryViewModeSettingKey, normalizeDirectoryViewMode } from "./preview-directory-tree";
 import { makeDirectoryDefaultMenuItems } from "./preview-directory-utils";
 import { formatPreviewHeaderPath } from "./preview-header-utils";
 import type { PreviewEnv } from "./previewenv";
@@ -35,10 +34,6 @@ const BOOKMARKS: { label: string; path: string }[] = [
 
 const MaxFileSize = 1024 * 1024 * 10; // 10MB
 const MaxCSVSize = 1024 * 1024 * 1; // 1MB
-const DirectoryViewModeOptions: { mode: DirectoryViewMode; icon: string; title: string }[] = [
-    { mode: "folder", icon: "folder-open", title: "Folder view" },
-    { mode: "tree", icon: "list-tree", title: "Tree view" },
-];
 
 const textApplicationMimetypes = [
     "application/sql",
@@ -267,26 +262,8 @@ export class PreviewModel implements ViewModel {
                     onFocus: this.handlePathInputFocus.bind(this),
                     onBlur: this.handlePathInputBlur.bind(this),
                 },
-                {
-                    elemtype: "iconbutton",
-                    icon: "folder-open",
-                    title: "Open Path",
-                    className: "preview-open-path-button",
-                    click: () => this.toggleOpenFileModal(),
-                },
             ];
-            let viewTextChildren = pathControlChildren;
-            if (fileInfo?.mimetype == "directory") {
-                const directoryViewMode = normalizeDirectoryViewMode(get(this.env.getSettingsKeyAtom(DirectoryViewModeSettingKey)));
-                viewTextChildren = [
-                    this.getDirectoryViewModeHeaderElem(directoryViewMode),
-                    {
-                        elemtype: "div",
-                        className: "preview-path-controls",
-                        children: pathControlChildren,
-                    },
-                ];
-            }
+            const viewTextChildren = pathControlChildren;
             let saveClassName = "grey";
             if (get(this.newFileContent) !== null) {
                 saveClassName = "green";
@@ -330,15 +307,6 @@ export class PreviewModel implements ViewModel {
                     className: "grey rounded-[4px] !py-[2px] !px-[10px] text-[11px] font-[500]",
                     onClick: () => fireAndForget(() => this.setEditMode(true)),
                 });
-            }
-            if (fileInfo?.mimetype == "directory") {
-                return [
-                    {
-                        elemtype: "div",
-                        className: "preview-directory-header-row",
-                        children: viewTextChildren,
-                    },
-                ] as HeaderElem[];
             }
             return [{ elemtype: "div", children: viewTextChildren }] as HeaderElem[];
         });
@@ -531,27 +499,6 @@ export class PreviewModel implements ViewModel {
 
     get viewComponent(): ViewComponent {
         return PreviewView;
-    }
-
-    getDirectoryViewModeHeaderElem(mode: DirectoryViewMode): HeaderElem {
-        return {
-            elemtype: "div",
-            className: "dir-view-mode-toggle",
-            children: DirectoryViewModeOptions.map((option) => ({
-                elemtype: "iconbutton",
-                icon: option.icon,
-                title: option.title,
-                className: clsx("dir-view-mode-button", { active: mode === option.mode }),
-                click: (event: React.MouseEvent<any>) => {
-                    event.stopPropagation();
-                    this.setDirectoryViewMode(option.mode);
-                },
-            })),
-        };
-    }
-
-    setDirectoryViewMode(mode: DirectoryViewMode) {
-        fireAndForget(() => this.env.rpc.SetConfigCommand(TabRpcClient, { [DirectoryViewModeSettingKey]: mode }));
     }
 
     async getSpecializedView(getFn: Getter): Promise<{ specializedView?: string; errorStr?: string }> {

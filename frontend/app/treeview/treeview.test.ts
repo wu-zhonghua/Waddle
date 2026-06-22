@@ -25,6 +25,40 @@ describe("treeview visible rows", () => {
         expect(rows.map((row) => row.id)).toEqual(["root", "b", "c", "a"]);
     });
 
+    it("sorts sibling groups by metadata fields", () => {
+        const nodes = makeNodes([
+            {
+                id: "root",
+                isDirectory: true,
+                childrenStatus: "loaded",
+                childrenIds: ["large-file", "small-file", "large-dir", "small-dir"],
+            },
+            {
+                id: "large-dir",
+                parentId: "root",
+                isDirectory: true,
+                label: "large-dir",
+                size: 300,
+                childrenStatus: "loaded",
+                childrenIds: [],
+            },
+            {
+                id: "small-dir",
+                parentId: "root",
+                isDirectory: true,
+                label: "small-dir",
+                size: 100,
+                childrenStatus: "loaded",
+                childrenIds: [],
+            },
+            { id: "large-file", parentId: "root", isDirectory: false, label: "large.txt", size: 200 },
+            { id: "small-file", parentId: "root", isDirectory: false, label: "small.txt", size: 50 },
+        ]);
+        const rows = buildVisibleRows(nodes, ["root"], new Set(["root"]), { field: "size", direction: "asc" });
+
+        expect(rows.map((row) => row.id)).toEqual(["root", "small-dir", "large-dir", "small-file", "large-file"]);
+    });
+
     it("renders loading and capped synthetic rows", () => {
         const nodes = makeNodes([
             { id: "root", isDirectory: true, childrenStatus: "loading" },
