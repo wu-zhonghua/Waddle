@@ -670,6 +670,7 @@ interface DirectoryTreeProps {
     setSearch: (_: string) => void;
     setSelectedPath: (_: string, isDir?: boolean) => void;
     dirPath: string;
+    refreshVersion: number;
     entryManagerOverlayPropsAtom: PrimitiveAtom<EntryManagerOverlayProps>;
     newFile: () => void;
     newDirectory: () => void;
@@ -682,6 +683,7 @@ function DirectoryTree({
     setSearch,
     setSelectedPath,
     dirPath,
+    refreshVersion,
     entryManagerOverlayPropsAtom,
     newFile,
     newDirectory,
@@ -953,6 +955,7 @@ function DirectoryTree({
                 height="100%"
                 className="dir-tree"
                 renderNodeDetails={(node) => <DirectoryTreeNodeDetails node={node} />}
+                reloadSignal={refreshVersion}
                 onOpenFile={(_id, node) => {
                     fireAndForget(() => openDirectoryEntry(model, node.path ?? node.id, node.isDirectory, conn));
                     setSearch("");
@@ -1473,6 +1476,7 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                     setSearch={setSearchText}
                     setSelectedPath={setSelectedEntry}
                     dirPath={dirPath}
+                    refreshVersion={refreshVersion}
                     entryManagerOverlayPropsAtom={entryManagerPropsAtom}
                     newFile={newFile}
                     newDirectory={newDirectory}

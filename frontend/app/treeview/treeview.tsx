@@ -9,6 +9,7 @@ import React, {
     KeyboardEvent,
     MouseEvent,
     forwardRef,
+    useCallback,
     useEffect,
     useImperativeHandle,
     useMemo,
@@ -85,6 +86,7 @@ export interface TreeViewProps {
     onOpenFile?: (id: string, node: TreeNodeData) => void;
     onSelectionChange?: (id: string, node: TreeNodeData) => void;
     onNodeContextMenu?: (event: MouseEvent<HTMLDivElement>, id: string, node: TreeNodeData) => void;
+    reloadSignal?: unknown;
 }
 
 export interface TreeViewRef {
@@ -168,6 +170,42 @@ function sortIdsByNode(nodesById: Map<string, TreeNodeData>, ids: string[], sort
         const right = nodesById.get(rightId) ?? { id: rightId, isDirectory: false };
         return compareNodes(left, right, sortSpec);
     });
+}
+
+function normalizeInitialTreeNode(node: TreeNodeData): TreeNodeData {
+    return {
+        ...node,
+        childrenStatus: node.childrenStatus ?? "unloaded",
+    };
+}
+
+function makeInitialTreeNodeMap(initialNodes: Record<string, TreeNodeData>): Map<string, TreeNodeData> {
+    return new Map(Object.entries(initialNodes).map(([id, node]) => [id, normalizeInitialTreeNode(node)]));
+}
+
+export function mergeInitialTreeNodes(
+    currentNodes: Map<string, TreeNodeData>,
+    initialNodes: Record<string, TreeNodeData>
+): Map<string, TreeNodeData> {
+    const next = new Map(currentNodes);
+
+    Object.entries(initialNodes).forEach(([id, node]) => {
+        const currentNode = currentNodes.get(id);
+        const refreshedNode = normalizeInitialTreeNode(node);
+        if (!currentNode?.isDirectory || !refreshedNode.isDirectory || currentNode.childrenStatus === "unloaded") {
+            next.set(id, refreshedNode);
+            return;
+        }
+        next.set(id, {
+            ...refreshedNode,
+            childrenIds: currentNode.childrenIds,
+            childrenStatus: currentNode.childrenStatus,
+            capInfo: currentNode.capInfo,
+            staterror: currentNode.staterror,
+        });
+    });
+
+    return next;
 }
 
 export function buildVisibleRows(
@@ -300,29 +338,16 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
         onOpenFile,
         onSelectionChange,
         onNodeContextMenu,
+        reloadSignal,
     } = props;
-    const [nodesById, setNodesById] = useState<Map<string, TreeNodeData>>(
-        () =>
-            new Map(
-                Object.entries(initialNodes).map(([id, node]) => [id, { ...node, childrenStatus: node.childrenStatus ?? "unloaded" }])
-            )
-    );
+    const [nodesById, setNodesById] = useState<Map<string, TreeNodeData>>(() => makeInitialTreeNodeMap(initialNodes));
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
     const [selectedId, setSelectedId] = useState<string>(rootIds[0]);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const lastReloadSignalRef = useRef<unknown>(undefined);
 
     useEffect(() => {
-        setNodesById(
-            new Map(
-                Object.entries(initialNodes).map(([id, node]) => [
-                    id,
-                    {
-                        ...node,
-                        childrenStatus: node.childrenStatus ?? "unloaded",
-                    },
-                ])
-            )
-        );
+        setNodesById((currentNodes) => mergeInitialTreeNodes(currentNodes, initialNodes));
     }, [initialNodes]);
 
     const visibleRows = useMemo(
@@ -365,24 +390,32 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
         [idToIndex, virtualizer]
     );
 
-    const loadChildren = async (id: string) => {
+    const loadChildren = useCallback(async (id: string, force = false) => {
         const currentNode = nodesById.get(id);
-        if (currentNode == null || !currentNode.isDirectory || currentNode.notfound || currentNode.staterror || fetchDir == null) {
+        if (
+            currentNode == null ||
+            !currentNode.isDirectory ||
+            currentNode.notfound ||
+            (!force && currentNode.staterror) ||
+            fetchDir == null
+        ) {
             return;
         }
         const status = currentNode.childrenStatus ?? "unloaded";
-        if (status !== "unloaded") {
+        if (!force && status !== "unloaded") {
             return;
         }
         setNodesById((prev) => {
             const next = new Map(prev);
-            next.set(id, { ...currentNode, childrenStatus: "loading" });
+            const source = next.get(id) ?? currentNode;
+            next.set(id, { ...source, childrenStatus: "loading", staterror: undefined });
             return next;
         });
         try {
             const result = await fetchDir(id, maxDirEntries);
             setNodesById((prev) => {
                 const next = new Map(prev);
+                const source = next.get(id) ?? currentNode;
                 result.nodes.forEach((node) => {
                     const merged: TreeNodeData = {
                         ...node,
@@ -396,7 +429,6 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                     result.nodes.map((entry) => entry.id),
                     sortSpec
                 );
-                const source = next.get(id) ?? currentNode;
                 next.set(id, {
                     ...source,
                     childrenIds,
@@ -417,7 +449,20 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                 return next;
             });
         }
-    };
+    }, [fetchDir, maxDirEntries, nodesById, sortSpec]);
+
+    useEffect(() => {
+        if (reloadSignal == null || Object.is(lastReloadSignalRef.current, reloadSignal)) {
+            return;
+        }
+        lastReloadSignalRef.current = reloadSignal;
+        expandedIds.forEach((id) => {
+            const node = nodesById.get(id);
+            if (node?.isDirectory) {
+                loadChildren(id, true);
+            }
+        });
+    }, [expandedIds, loadChildren, nodesById, reloadSignal]);
 
     const toggleExpand = (id: string) => {
         const node = nodesById.get(id);
