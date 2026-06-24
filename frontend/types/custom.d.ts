@@ -77,6 +77,13 @@ declare global {
         windowId: string;
     };
 
+    type LocalFileChunkData = {
+        path: string;
+        data64: string;
+        offset: number;
+        truncate?: boolean;
+    };
+
     type ElectronApi = {
         getAuthKey(): string; // get-auth-key
         getIsDev(): boolean; // get-is-dev
@@ -98,6 +105,9 @@ declare global {
         onNavigate: (callback: (url: string) => void) => void;
         onIframeNavigate: (callback: (url: string) => void) => void;
         downloadFile: (path: string) => void; // download
+        showSaveFileDialog: (defaultPath: string) => Promise<string | null>; // show-save-file-dialog
+        writeLocalFileChunk: (data: LocalFileChunkData) => Promise<void>; // write-local-file-chunk
+        deleteLocalPath: (path: string) => Promise<void>; // delete-local-path
         openExternal: (url: string) => void; // open-external
         onFullScreenChange: (callback: (isFullScreen: boolean) => void) => void; // fullscreen-change
         onZoomFactorChange: (callback: (zoomFactor: number) => void) => void; // zoom-factor-change

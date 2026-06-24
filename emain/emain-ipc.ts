@@ -251,6 +251,43 @@ export function initIpcHandlers() {
         event.sender.downloadURL(streamingUrl);
     });
 
+    electron.ipcMain.handle("show-save-file-dialog", async (event, defaultPath: string) => {
+        const ww = electron.BrowserWindow.fromWebContents(event.sender);
+        if (ww == null) {
+            return null;
+        }
+        const result = await electron.dialog.showSaveDialog(ww, {
+            title: "Save File",
+            defaultPath: path.basename(defaultPath || "download"),
+        });
+        if (result.canceled || !result.filePath) {
+            return null;
+        }
+        return result.filePath;
+    });
+
+    electron.ipcMain.handle("write-local-file-chunk", async (_event, data: LocalFileChunkData) => {
+        if (data?.path == null || data.path === "") {
+            throw new Error("file path is required");
+        }
+        const offset = data.offset ?? 0;
+        const buffer = Buffer.from(data.data64 ?? "", "base64");
+        await fs.promises.mkdir(path.dirname(data.path), { recursive: true });
+        const handle = await fs.promises.open(data.path, data.truncate ? "w" : "r+");
+        try {
+            await handle.write(buffer, 0, buffer.length, offset);
+        } finally {
+            await handle.close();
+        }
+    });
+
+    electron.ipcMain.handle("delete-local-path", async (_event, filePath: string) => {
+        if (filePath == null || filePath === "") {
+            return;
+        }
+        await fs.promises.rm(filePath, { force: true });
+    });
+
     electron.ipcMain.on("get-cursor-point", (event) => {
         const tabView = getWaddleTabViewByWebContentsId(event.sender.id);
         if (tabView == null) {

@@ -8,6 +8,7 @@ import { ModalsRenderer } from "@/app/modals/modalsrenderer";
 import { TabBar } from "@/app/tab/tabbar";
 import { TabContent } from "@/app/tab/tabcontent";
 import { VTabBar } from "@/app/tab/vtabbar";
+import { WorkspaceFileTransferStatus } from "@/app/workspace/file-transfer-status";
 import { WorkspaceSysinfoStatus } from "@/app/workspace/sysinfo-status";
 import { Widgets } from "@/app/workspace/widgets";
 import { WorkspaceLayoutModel } from "@/app/workspace/workspace-layout-model";
@@ -166,6 +167,7 @@ const WorkspaceElem = memo(() => {
                                             noTopPadding={showLeftTabBar && isMacOS()}
                                         />
                                         <WorkspaceSysinfoStatus key={`sysinfo-status-${tabId}`} tabId={tabId} />
+                                        <WorkspaceFileTransferStatus />
                                     </div>
                                     {widgetsSidebarVisible && <Widgets />}
                                 </div>

@@ -24,6 +24,9 @@ contextBridge.exposeInMainWorld("api", {
     onContextMenuClick: (callback: (id: string | null) => void) =>
         ipcRenderer.on("contextmenu-click", (_event, id: string | null) => callback(id)),
     downloadFile: (filePath) => ipcRenderer.send("download", { filePath }),
+    showSaveFileDialog: (defaultPath: string) => ipcRenderer.invoke("show-save-file-dialog", defaultPath),
+    writeLocalFileChunk: (data: LocalFileChunkData) => ipcRenderer.invoke("write-local-file-chunk", data),
+    deleteLocalPath: (filePath: string) => ipcRenderer.invoke("delete-local-path", filePath),
     openExternal: (url) => {
         if (url && typeof url === "string") {
             ipcRenderer.send("open-external", url);
