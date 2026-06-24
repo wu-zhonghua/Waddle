@@ -12,6 +12,23 @@ export interface DirectoryTreeNodeVisuals {
     iconColor?: string;
 }
 
+export interface DirectoryTreeColumnResizeBounds {
+    min: number;
+    max: number;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}
+
+export function getResizedDirectoryTreeColumnWidth(
+    startWidth: number,
+    deltaX: number,
+    bounds: DirectoryTreeColumnResizeBounds
+): number {
+    return clampNumber(Math.round(startWidth + deltaX), bounds.min, bounds.max);
+}
+
 export function normalizeDirectoryViewMode(_value: string | null | undefined): DirectoryViewMode {
     return "tree";
 }

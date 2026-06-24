@@ -3,7 +3,16 @@ import { makeNativeLabel } from "./platformutil";
 import { fireAndForget } from "./util";
 import { formatRemoteUri } from "./waveutil";
 
-export function addOpenMenuItems(menu: ContextMenuItem[], conn: string, finfo: FileInfo): ContextMenuItem[] {
+type OpenMenuOptions = {
+    onDownloadFile?: (remoteUri: string, finfo: FileInfo) => void;
+};
+
+export function addOpenMenuItems(
+    menu: ContextMenuItem[],
+    conn: string,
+    finfo: FileInfo,
+    opts: OpenMenuOptions = {}
+): ContextMenuItem[] {
     if (!finfo) {
         return menu;
     }
@@ -28,11 +37,15 @@ export function addOpenMenuItems(menu: ContextMenuItem[], conn: string, finfo: F
                 },
             });
         }
-    } else {
+    } else if (!finfo.isdir) {
         menu.push({
             label: "Download File",
             click: () => {
                 const remoteUri = formatRemoteUri(finfo.path, conn);
+                if (opts.onDownloadFile != null) {
+                    opts.onDownloadFile(remoteUri, finfo);
+                    return;
+                }
                 getApi().downloadFile(remoteUri);
             },
         });

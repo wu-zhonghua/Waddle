@@ -11,6 +11,7 @@ import {
     type TreeSortField,
     type TreeSortSpec,
 } from "@/app/treeview/treeview";
+import { FileTransferModel } from "@/app/workspace/file-transfer";
 import { useWaddleEnv } from "@/app/waveenv/waveenv";
 import { checkKeyPressed, isCharacterKeyEvent } from "@/util/keyutil";
 import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
@@ -39,10 +40,12 @@ import { debounce } from "throttle-debounce";
 import "./directorypreview.scss";
 import { EntryManagerOverlay, EntryManagerOverlayProps, EntryManagerType } from "./entry-manager";
 import {
+    type DirectoryTreeColumnResizeBounds,
     type DirectoryTreeNodeVisuals,
     fileInfoEntriesToTreeNodes,
     fileInfoToTreeNode,
     filterDirectoryTreeEntries,
+    getResizedDirectoryTreeColumnWidth,
 } from "./preview-directory-tree";
 import {
     cleanMimetype,
@@ -66,6 +69,20 @@ const DirectoryTreeSortColumns: { field: TreeSortField; label: string }[] = [
     { field: "modified", label: "Modified" },
     { field: "size", label: "Size" },
 ];
+
+type DirectoryTreeResizableColumn = "name" | "modified" | "size";
+type DirectoryTreeResizeHandleColumn = DirectoryTreeResizableColumn;
+type DirectoryTreeColumnWidths = Partial<Record<DirectoryTreeResizableColumn, number>>;
+
+const DirectoryTreeColumnResizeBoundsByColumn: Record<DirectoryTreeResizableColumn, DirectoryTreeColumnResizeBounds> = {
+    name: { min: 120, max: 1600 },
+    modified: { min: 92, max: 600 },
+    size: { min: 48, max: 240 },
+};
+
+function hasNativeFiles(dataTransfer: DataTransfer): boolean {
+    return Array.from(dataTransfer?.types ?? []).includes("Files");
+}
 
 function normalizeTreeIconName(icon: string): string {
     if (!isIconValid(icon)) {
@@ -678,6 +695,9 @@ function DirectoryTree({
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
     const setEntryManagerProps = useSetAtom(entryManagerOverlayPropsAtom);
     const [sortSpec, setSortSpec] = useState<TreeSortSpec>(() => getInitialDirectoryTreeSort(defaultSort));
+    const [columnWidths, setColumnWidths] = useState<DirectoryTreeColumnWidths>({});
+    const panelRef = useRef<HTMLDivElement>(null);
+    const transferModel = FileTransferModel.getInstance();
 
     useEffect(() => {
         setSortSpec(getInitialDirectoryTreeSort(defaultSort));
@@ -747,7 +767,25 @@ function DirectoryTree({
                 name: fileName,
                 path: filePath,
                 isdir: node.isDirectory,
+                size: node.size,
                 mimetype: node.mimeType ?? (node.isDirectory ? "directory" : ""),
+            };
+            const onDownloadFile = (remoteUri: string, downloadInfo: FileInfo) => {
+                fireAndForget(async () => {
+                    await transferModel.startDownloadFile({
+                        rpc: env.rpc,
+                        electron: env.electron,
+                        sourcePath: remoteUri,
+                        fileInfo: downloadInfo,
+                        onComplete: model.refreshCallback,
+                        onError: (error) =>
+                            setErrorMsg({
+                                status: "Download Failed",
+                                text: error.message,
+                                level: "error",
+                            }),
+                    });
+                });
             };
             const menu: ContextMenuItem[] = [
                 {
@@ -788,7 +826,7 @@ function DirectoryTree({
                     click: () => fireAndForget(() => navigator.clipboard.writeText(shellQuote([filePath]))),
                 },
             ];
-            addOpenMenuItems(menu, conn, finfo);
+            addOpenMenuItems(menu, conn, finfo, { onDownloadFile });
             menu.push(
                 {
                     type: "separator",
@@ -807,7 +845,7 @@ function DirectoryTree({
             );
             ContextMenuModel.getInstance().showContextMenu(menu, e);
         },
-        [conn, model, newDirectory, newFile, setErrorMsg, updateName]
+        [conn, env.electron, env.rpc, model, newDirectory, newFile, setErrorMsg, transferModel, updateName]
     );
 
     const handleSort = useCallback((field: TreeSortField) => {
@@ -825,8 +863,68 @@ function DirectoryTree({
         });
     }, []);
 
+    const handleColumnResizeStart = useCallback(
+        (column: DirectoryTreeResizeHandleColumn, event: React.PointerEvent<HTMLButtonElement>) => {
+            const panel = panelRef.current;
+            if (panel == null) {
+                return;
+            }
+            const startWidths: Record<DirectoryTreeResizableColumn, number> = {
+                name: getDirectoryTreeHeaderColumnWidth(panel, "name"),
+                modified: getDirectoryTreeHeaderColumnWidth(panel, "modified"),
+                size: getDirectoryTreeHeaderColumnWidth(panel, "size"),
+            };
+            const startWidth = startWidths[column];
+            if (startWidth <= 0) {
+                return;
+            }
+            const startX = event.clientX;
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const handlePointerMove = (moveEvent: PointerEvent) => {
+                const width = getResizedDirectoryTreeColumnWidth(
+                    startWidth,
+                    moveEvent.clientX - startX,
+                    DirectoryTreeColumnResizeBoundsByColumn[column]
+                );
+                setColumnWidths({
+                    ...startWidths,
+                    [column]: width,
+                });
+            };
+            const stopResize = () => {
+                window.removeEventListener("pointermove", handlePointerMove);
+                window.removeEventListener("pointerup", stopResize);
+                window.removeEventListener("pointercancel", stopResize);
+            };
+
+            window.addEventListener("pointermove", handlePointerMove);
+            window.addEventListener("pointerup", stopResize);
+            window.addEventListener("pointercancel", stopResize);
+        },
+        []
+    );
+
+    const treeColumnStyle = useMemo(() => {
+        const style: React.CSSProperties & Record<string, string> = {};
+        if (columnWidths.name != null) {
+            style["--dir-tree-name-width"] = `${columnWidths.name}px`;
+            style["--dir-tree-name-min-width"] = `${columnWidths.name}px`;
+        }
+        if (columnWidths.modified != null) {
+            style["--dir-tree-modified-width"] = `${columnWidths.modified}px`;
+            style["--dir-tree-modified-track-width"] = `${columnWidths.modified}px`;
+        }
+        if (columnWidths.size != null) {
+            style["--dir-tree-size-width"] = `${columnWidths.size}px`;
+        }
+        return style;
+    }, [columnWidths]);
+
     return (
-        <div className="dir-tree-panel">
+        <div className="dir-tree-panel" ref={panelRef} style={treeColumnStyle}>
             {(searchActive || search !== "") && (
                 <div className="flex rounded-[3px] py-1 px-2 bg-warning text-black">
                     <span>{search === "" ? "Type to search (Esc to cancel)" : `Searching for "${search}"`}</span>
@@ -841,7 +939,7 @@ function DirectoryTree({
                     </div>
                 </div>
             )}
-            <DirectoryTreeHeader sortSpec={sortSpec} onSort={handleSort} />
+            <DirectoryTreeHeader sortSpec={sortSpec} onSort={handleSort} onResizeStart={handleColumnResizeStart} />
             <TreeView
                 key={`${dirPath}:${search}:${showHiddenFiles}`}
                 rootIds={treeData.rootIds}
@@ -881,57 +979,96 @@ function getInitialDirectoryTreeSort(defaultSort: string): TreeSortSpec {
     return { field: "name", direction: "asc" };
 }
 
+function getDirectoryTreeHeaderColumnWidth(panel: HTMLElement, column: DirectoryTreeResizableColumn): number {
+    const headerCell = panel.querySelector<HTMLElement>(`.dir-tree-head-${column}`);
+    return Math.round(headerCell?.getBoundingClientRect().width ?? 0);
+}
+
 function DirectoryTreeSortButton({
     field,
     label,
     sortSpec,
     onSort,
+    resizeColumn,
+    onResizeStart,
 }: {
     field: TreeSortField;
     label: string;
     sortSpec: TreeSortSpec;
     onSort: (field: TreeSortField) => void;
+    resizeColumn?: DirectoryTreeResizeHandleColumn;
+    onResizeStart: (column: DirectoryTreeResizeHandleColumn, event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
     const active = sortSpec.field === field;
     return (
-        <button
-            type="button"
-            className={clsx("dir-tree-head-cell", `dir-tree-head-${field}`, active && "active")}
-            aria-sort={active ? (sortSpec.direction === "asc" ? "ascending" : "descending") : "none"}
-            onClick={() => onSort(field)}
-        >
-            <span>{label}</span>
-            {active && (
-                <i
-                    className={clsx(
-                        "fa-solid dir-tree-head-sort",
-                        sortSpec.direction === "asc" ? "fa-chevron-up" : "fa-chevron-down"
-                    )}
+        <div className={clsx("dir-tree-head-cell", `dir-tree-head-${field}`, active && "active")}>
+            <button
+                type="button"
+                className="dir-tree-head-sort-button"
+                aria-sort={active ? (sortSpec.direction === "asc" ? "ascending" : "descending") : "none"}
+                onClick={() => onSort(field)}
+            >
+                <span>{label}</span>
+                {active && (
+                    <i
+                        className={clsx(
+                            "fa-solid dir-tree-head-sort",
+                            sortSpec.direction === "asc" ? "fa-chevron-up" : "fa-chevron-down"
+                        )}
+                    />
+                )}
+            </button>
+            {resizeColumn != null && (
+                <button
+                    type="button"
+                    className="dir-tree-head-resize"
+                    aria-label={`Resize ${label} column`}
+                    onClick={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => onResizeStart(resizeColumn, event)}
                 />
             )}
-        </button>
+        </div>
     );
 }
 
 function DirectoryTreeHeader({
     sortSpec,
     onSort,
+    onResizeStart,
 }: {
     sortSpec: TreeSortSpec;
     onSort: (field: TreeSortField) => void;
+    onResizeStart: (column: DirectoryTreeResizeHandleColumn, event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
+    const modifiedColumn = DirectoryTreeSortColumns[0];
+    const sizeColumn = DirectoryTreeSortColumns[1];
+
     return (
         <div className="dir-tree-head">
-            <DirectoryTreeSortButton field="name" label="Name" sortSpec={sortSpec} onSort={onSort} />
-            {DirectoryTreeSortColumns.map((column) => (
-                <DirectoryTreeSortButton
-                    key={column.field}
-                    field={column.field}
-                    label={column.label}
-                    sortSpec={sortSpec}
-                    onSort={onSort}
-                />
-            ))}
+            <DirectoryTreeSortButton
+                field="name"
+                label="Name"
+                sortSpec={sortSpec}
+                onSort={onSort}
+                resizeColumn="name"
+                onResizeStart={onResizeStart}
+            />
+            <DirectoryTreeSortButton
+                field={modifiedColumn.field}
+                label={modifiedColumn.label}
+                sortSpec={sortSpec}
+                onSort={onSort}
+                resizeColumn="modified"
+                onResizeStart={onResizeStart}
+            />
+            <DirectoryTreeSortButton
+                field={sizeColumn.field}
+                label={sizeColumn.label}
+                sortSpec={sortSpec}
+                onSort={onSort}
+                resizeColumn="size"
+                onResizeStart={onResizeStart}
+            />
         </div>
     );
 }
@@ -975,6 +1112,8 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
     const finfo = useAtomValue(model.statFile);
     const dirPath = finfo?.path ?? "";
     const setErrorMsg = useSetAtom(model.errorMsgAtom);
+    const transferModel = FileTransferModel.getInstance();
+    const [nativeDragActive, setNativeDragActive] = useState(false);
 
     const setSelectedEntry = useCallback((path: string, isDir = false) => {
         setSelectedPath(path);
@@ -1229,18 +1368,94 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                     type: "separator",
                 },
             ];
-            addOpenMenuItems(menu, conn, finfo);
+            addOpenMenuItems(menu, conn, finfo, {
+                onDownloadFile: (remoteUri, downloadInfo) => {
+                    fireAndForget(async () => {
+                        await transferModel.startDownloadFile({
+                            rpc: env.rpc,
+                            electron: env.electron,
+                            sourcePath: remoteUri,
+                            fileInfo: downloadInfo,
+                            onComplete: model.refreshCallback,
+                            onError: (error) =>
+                                setErrorMsg({
+                                    status: "Download Failed",
+                                    text: error.message,
+                                    level: "error",
+                                }),
+                        });
+                    });
+                },
+            });
 
             ContextMenuModel.getInstance().showContextMenu(menu, e);
         },
-        [conn, finfo, newFile, newDirectory]
+        [conn, env.electron, env.rpc, finfo, model, newDirectory, newFile, setErrorMsg, transferModel]
+    );
+
+    const startUpload = useCallback(
+        (file: File) => {
+            fireAndForget(async () => {
+                await transferModel.startUploadFile({
+                    rpc: env.rpc,
+                    file,
+                    destinationDir: dirPath,
+                    formatRemotePath: (path) => model.formatRemoteUri(path, globalStore.get),
+                    onComplete: model.refreshCallback,
+                    onError: (error) =>
+                        setErrorMsg({
+                            status: "Upload Failed",
+                            text: error.message,
+                            level: "error",
+                        }),
+                });
+            });
+        },
+        [dirPath, env.rpc, model, setErrorMsg, transferModel]
+    );
+
+    const handleNativeDragOver = useCallback(
+        (event: React.DragEvent<HTMLDivElement>) => {
+            if (!hasNativeFiles(event.dataTransfer) || dirPath === "") {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            event.dataTransfer.dropEffect = "copy";
+            setNativeDragActive(true);
+        },
+        [dirPath]
+    );
+
+    const handleNativeDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+        const relatedTarget = event.relatedTarget as Node;
+        if (relatedTarget != null && event.currentTarget.contains(relatedTarget)) {
+            return;
+        }
+        setNativeDragActive(false);
+    }, []);
+
+    const handleNativeDrop = useCallback(
+        (event: React.DragEvent<HTMLDivElement>) => {
+            if (!hasNativeFiles(event.dataTransfer) || dirPath === "") {
+                return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+            setNativeDragActive(false);
+            Array.from(event.dataTransfer.files).forEach((file) => startUpload(file));
+        },
+        [dirPath, startUpload]
     );
 
     return (
         <Fragment>
             <div
                 ref={refs.setReference}
-                className="dir-table-container"
+                className={clsx("dir-table-container", nativeDragActive && "dir-native-drop-active")}
+                onDragOver={handleNativeDragOver}
+                onDragLeave={handleNativeDragLeave}
+                onDrop={handleNativeDrop}
                 onChangeCapture={(e) => {
                     const event = e as React.ChangeEvent<HTMLInputElement>;
                     if (!entryManagerProps) {
@@ -1262,6 +1477,12 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                     newFile={newFile}
                     newDirectory={newDirectory}
                 />
+                {nativeDragActive && (
+                    <div className="dir-upload-drop-overlay">
+                        <i className="fa-solid fa-cloud-arrow-up" />
+                        <span>Drop files to upload</span>
+                    </div>
+                )}
             </div>
             {entryManagerProps && (
                 <EntryManagerOverlay

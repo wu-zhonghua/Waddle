@@ -6,6 +6,9 @@ import { SettingsKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv
 export type PreviewEnv = WaddleEnvSubset<{
     electron: {
         onQuicklook: WaddleEnv["electron"]["onQuicklook"];
+        showSaveFileDialog: WaddleEnv["electron"]["showSaveFileDialog"];
+        writeLocalFileChunk: WaddleEnv["electron"]["writeLocalFileChunk"];
+        deleteLocalPath: WaddleEnv["electron"]["deleteLocalPath"];
     };
     rpc: {
         ConnEnsureCommand: WaddleEnv["rpc"]["ConnEnsureCommand"];
@@ -13,6 +16,7 @@ export type PreviewEnv = WaddleEnvSubset<{
         FileReadCommand: WaddleEnv["rpc"]["FileReadCommand"];
         FileListStreamCommand: WaddleEnv["rpc"]["FileListStreamCommand"];
         FileWriteCommand: WaddleEnv["rpc"]["FileWriteCommand"];
+        FileAppendCommand: WaddleEnv["rpc"]["FileAppendCommand"];
         FileMoveCommand: WaddleEnv["rpc"]["FileMoveCommand"];
         FileDeleteCommand: WaddleEnv["rpc"]["FileDeleteCommand"];
         SetConfigCommand: WaddleEnv["rpc"]["SetConfigCommand"];

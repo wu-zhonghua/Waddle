@@ -4,8 +4,31 @@
 .dir-table-container {
     display: flex;
     flex-direction: column;
+    position: relative;
     height: 100%;
     --min-row-width: 35rem;
+
+    &.dir-native-drop-active {
+        outline: 1px solid var(--accent-color);
+        outline-offset: -2px;
+    }
+
+    .dir-upload-drop-overlay {
+        position: absolute;
+        inset: 6px;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px dashed var(--accent-color);
+        border-radius: 4px;
+        background-color: rgb(from var(--background-color) r g b / 0.82);
+        color: var(--main-text-color);
+        font-size: 13px;
+        font-weight: 600;
+        pointer-events: none;
+    }
 
     .dir-table {
         flex: 1 1 auto;
@@ -201,10 +224,14 @@
         --dir-tree-compact-modified-width: 116px;
         --dir-tree-compact-size-width: 56px;
         --dir-tree-modified-width: 132px;
+        --dir-tree-modified-track-width: 1fr;
+        --dir-tree-size-min-width: 48px;
         --dir-tree-size-width: 76px;
         --dir-tree-row-columns: minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))
-            minmax(var(--dir-tree-modified-width), 1fr) var(--dir-tree-size-width);
-        --dir-tree-detail-columns: minmax(var(--dir-tree-modified-width), 1fr) var(--dir-tree-size-width);
+            minmax(var(--dir-tree-modified-width), var(--dir-tree-modified-track-width))
+            minmax(var(--dir-tree-size-min-width), var(--dir-tree-size-width));
+        --dir-tree-detail-columns: minmax(var(--dir-tree-modified-width), var(--dir-tree-modified-track-width))
+            minmax(var(--dir-tree-size-min-width), var(--dir-tree-size-width));
     }
 
     .dir-tree-head,
@@ -224,23 +251,69 @@
     }
 
     .dir-tree-head-cell {
-        display: inline-flex;
+        position: relative;
+        display: flex;
         min-width: 0;
         align-items: center;
         gap: 4px;
-        border: 0;
-        background: transparent;
         color: inherit;
         font-family: Hack;
         font-size: 10px;
         line-height: 1;
         text-align: left;
         text-transform: uppercase;
-        cursor: pointer;
 
-        &:hover,
-        &.active {
+        &.active .dir-tree-head-sort-button {
             color: var(--main-text-color);
+        }
+
+        .dir-tree-head-sort-button {
+            display: inline-flex;
+            min-width: 0;
+            flex: 1 1 auto;
+            align-items: center;
+            gap: 4px;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            line-height: inherit;
+            text-align: inherit;
+            text-transform: inherit;
+            cursor: pointer;
+
+            &:hover {
+                color: var(--main-text-color);
+            }
+        }
+
+        .dir-tree-head-resize {
+            position: absolute;
+            top: 3px;
+            right: -9px;
+            bottom: 3px;
+            z-index: 2;
+            width: 18px;
+            border: 0;
+            background: transparent;
+            cursor: col-resize;
+            touch-action: none;
+
+            &::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                width: 2px;
+                background-color: rgb(from var(--accent-color) r g b / 0.45);
+                transform: translateX(-50%);
+            }
+
+            &:hover::after,
+            &:active::after {
+                background-color: rgb(from var(--accent-color) r g b / 0.9);
+            }
         }
     }
 
@@ -251,7 +324,9 @@
     }
 
     .dir-tree-head-name {
-        padding-left: 42px;
+        .dir-tree-head-sort-button {
+            padding-left: 42px;
+        }
     }
 
     .dir-tree .tree-node-details {
@@ -315,9 +390,12 @@
 
     .dir-tree-head-size {
         grid-column: 3;
-        justify-content: flex-end;
-        padding-right: 8px;
-        text-align: right;
+
+        .dir-tree-head-sort-button {
+            justify-content: flex-end;
+            padding-right: 8px;
+            text-align: right;
+        }
     }
 
     .dir-tree-detail-size {
@@ -329,14 +407,24 @@
     }
 
     @container (max-width: 520px) {
+        .dir-tree-panel {
+            --dir-tree-name-min-width: var(--dir-tree-compact-name-min-width);
+            --dir-tree-modified-width: var(--dir-tree-compact-modified-width);
+            --dir-tree-modified-track-width: var(--dir-tree-compact-modified-width);
+            --dir-tree-size-width: var(--dir-tree-compact-size-width);
+        }
+
         .dir-tree-head,
         .dir-tree .tree-node-row {
-            grid-template-columns: minmax(var(--dir-tree-compact-name-min-width), 1fr)
-                var(--dir-tree-compact-modified-width) var(--dir-tree-compact-size-width);
+            grid-template-columns: var(--dir-tree-row-columns);
         }
 
         .dir-tree .tree-node-details {
-            --dir-tree-detail-columns: var(--dir-tree-compact-modified-width) var(--dir-tree-compact-size-width);
+            --dir-tree-detail-columns: minmax(
+                    var(--dir-tree-modified-width),
+                    var(--dir-tree-modified-track-width)
+                )
+                minmax(var(--dir-tree-size-min-width), var(--dir-tree-size-width));
             grid-column: 2 / 4;
         }
 
@@ -350,12 +438,15 @@
     @container (max-width: 360px) {
         .dir-tree-head,
         .dir-tree .tree-node-row {
-            grid-template-columns: minmax(var(--dir-tree-compact-name-min-width), 1fr)
-                var(--dir-tree-compact-modified-width);
+            grid-template-columns: minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))
+                minmax(var(--dir-tree-modified-width), var(--dir-tree-modified-track-width));
         }
 
         .dir-tree .tree-node-details {
-            --dir-tree-detail-columns: var(--dir-tree-compact-modified-width);
+            --dir-tree-detail-columns: minmax(
+                var(--dir-tree-modified-width),
+                var(--dir-tree-modified-track-width)
+            );
             grid-column: 2 / 3;
         }
 

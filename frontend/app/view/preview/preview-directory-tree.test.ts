@@ -5,7 +5,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { fileInfoToTreeNode, filterDirectoryTreeEntries, normalizeDirectoryViewMode } from "./preview-directory-tree";
+import {
+    fileInfoToTreeNode,
+    filterDirectoryTreeEntries,
+    getResizedDirectoryTreeColumnWidth,
+    normalizeDirectoryViewMode,
+} from "./preview-directory-tree";
 
 const TestDir = dirname(fileURLToPath(import.meta.url));
 
@@ -104,6 +109,14 @@ describe("directory tree helpers", () => {
         });
     });
 
+    it("resizes standalone tree columns within usable widths", () => {
+        const bounds = { min: 48, max: 240 };
+
+        expect(getResizedDirectoryTreeColumnWidth(76, 40, bounds)).toBe(116);
+        expect(getResizedDirectoryTreeColumnWidth(76, -60, bounds)).toBe(48);
+        expect(getResizedDirectoryTreeColumnWidth(76, 300, bounds)).toBe(240);
+    });
+
     it("shows only modified time and size as tree detail columns", () => {
         const directorySource = readFileSync(join(TestDir, "preview-directory.tsx"), "utf8");
         const css = readFileSync(join(TestDir, "directorypreview.scss"), "utf8");
@@ -126,10 +139,9 @@ describe("directory tree helpers", () => {
         expect(directorySource).not.toContain("dir-tree-head-details");
         expect(css).not.toContain("dir-tree-head-details");
         expect(css).toContain("grid-template-columns: var(--dir-tree-detail-columns)");
-        expect(css).toContain(
-            "--dir-tree-detail-columns: var(--dir-tree-compact-modified-width) var(--dir-tree-compact-size-width)"
-        );
-        expect(css).toContain("--dir-tree-detail-columns: var(--dir-tree-compact-modified-width);");
+        expect(css).toContain("--dir-tree-modified-track-width: var(--dir-tree-compact-modified-width);");
+        expect(css).toContain("--dir-tree-detail-columns: minmax(");
+        expect(css).toContain("minmax(var(--dir-tree-size-min-width), var(--dir-tree-size-width))");
         expect(css).toMatch(/\.dir-tree-head-modified\s*\{[\s\S]*?grid-column:\s*2/);
         expect(css).toMatch(/\.dir-tree-head-size\s*\{[\s\S]*?grid-column:\s*3/);
         expect(css).toMatch(/\.dir-tree-detail-modified\s*\{[\s\S]*?grid-column:\s*1/);
@@ -144,10 +156,28 @@ describe("directory tree helpers", () => {
         expect(css).toContain("--dir-tree-compact-name-min-width: 190px;");
         expect(css).toContain("--dir-tree-compact-modified-width: 116px;");
         expect(css).toContain("--dir-tree-compact-size-width: 56px;");
+        expect(css).toContain("--dir-tree-size-min-width: 48px;");
         expect(css).toContain("minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))");
-        expect(css).toContain("minmax(var(--dir-tree-compact-name-min-width), 1fr)");
-        expect(css).toContain("var(--dir-tree-compact-modified-width) var(--dir-tree-compact-size-width)");
+        expect(css).toContain("--dir-tree-name-min-width: var(--dir-tree-compact-name-min-width);");
+        expect(css).toContain("--dir-tree-size-width: var(--dir-tree-compact-size-width);");
         expect(css).toContain("@container (max-width: 360px)");
+    });
+
+    it("exposes draggable resize handles for tree columns", () => {
+        const directorySource = readFileSync(join(TestDir, "preview-directory.tsx"), "utf8");
+        const css = readFileSync(join(TestDir, "directorypreview.scss"), "utf8");
+
+        expect(directorySource).toContain("getResizedDirectoryTreeColumnWidth");
+        expect(directorySource).not.toContain("DirectoryTreeResizeAdjacentColumn");
+        expect(directorySource).not.toContain("getResizedDirectoryTreeColumnWidths");
+        expect(directorySource).toContain("dir-tree-head-resize");
+        expect(directorySource).toContain('resizeColumn="modified"');
+        expect(directorySource).toContain('resizeColumn="size"');
+        expect(directorySource).toContain("onPointerDown={(event) => onResizeStart(resizeColumn, event)}");
+        expect(css).toContain("cursor: col-resize;");
+        expect(css).toContain(".dir-tree-head-resize");
+        expect(css).toContain("width: 18px;");
+        expect(css).toContain("rgb(from var(--accent-color)");
     });
 
     it("aligns tree headers and rows on the same column grid", () => {
