@@ -21,8 +21,8 @@ describe("makeCreateBlockPlacementAction", () => {
 
         expect(action).toMatchObject({
             type: LayoutTreeActionType.InsertLeftSidebar,
-            sidebarSize: 21,
-            mainSize: 79,
+            sidebarSize: 20,
+            mainSize: 80,
             focused: true,
         });
     });
@@ -76,7 +76,7 @@ describe("makeCreateBlockPlacementAction", () => {
             position: "after",
             focused: true,
         });
-        expect(newTermNode.size).toBe(79);
+        expect(newTermNode.size).toBe(80);
     });
 
     it("opens a file preview to the right of a lone files block", () => {
@@ -92,7 +92,7 @@ describe("makeCreateBlockPlacementAction", () => {
             position: "after",
             focused: true,
         });
-        expect(newPreviewNode.size).toBe(79);
+        expect(newPreviewNode.size).toBe(80);
     });
 
     it("opens a file preview at the far right using the original Wave split size", () => {

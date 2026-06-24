@@ -15,8 +15,8 @@ import {
 
 export type CreateBlockPlacement = "default" | "files" | "terminal" | "preview";
 
-const FilesSidebarSize = 21;
-const MainContentSize = 79;
+const FilesSidebarSize = 20;
+const MainContentSize = 80;
 const RootRowSize = 100;
 const StackedBlockHeightFraction = 1 / 3;
 
