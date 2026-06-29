@@ -3,12 +3,14 @@
 
 import { describe, expect, it } from "vitest";
 import { newLayoutNode } from "@/layout/lib/layoutNode";
-import { FlexDirection, LayoutTreeActionType } from "@/layout/lib/types";
+import { splitHorizontal } from "@/layout/lib/layoutTree";
+import { FlexDirection, LayoutTreeActionType, type LayoutTreeSplitHorizontalAction } from "@/layout/lib/types";
 import { applyInheritedBlockLocation, getPlacementForBlockDef, makeCreateBlockPlacementAction } from "./block-placement";
 
 describe("makeCreateBlockPlacementAction", () => {
     const metas: Record<string, MetaType> = {
         files: { view: "preview", file: "~" },
+        git: { view: "git", "cmd:cwd": "/repo" },
         terminal: { view: "term", controller: "shell" },
     };
     const getBlockMeta = (blockId: string) => metas[blockId];
@@ -45,6 +47,23 @@ describe("makeCreateBlockPlacementAction", () => {
         expect(newFilesNode.size).toBeCloseTo(10);
     });
 
+    it("stacks git below an existing files block", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const gitNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-git" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, gitNode, "git", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitVertical,
+            targetNodeId: filesNode.id,
+            newNode: gitNode,
+            position: "after",
+            focused: true,
+        });
+    });
+
     it("stacks terminals below an existing terminal when files are already open", () => {
         const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
         const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
@@ -77,6 +96,28 @@ describe("makeCreateBlockPlacementAction", () => {
             focused: true,
         });
         expect(newTermNode.size).toBe(80);
+    });
+
+    it("keeps a lone files block at the sidebar width when opening the first terminal", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
+        const newTermNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-terminal" });
+        const treeState = { rootNode: filesNode, pendingBackendActions: [] };
+
+        const action = makeCreateBlockPlacementAction(filesNode, newTermNode, "terminal", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: filesNode.id,
+            targetNodeSize: 20,
+            newNode: newTermNode,
+            position: "after",
+            focused: true,
+        });
+
+        splitHorizontal(treeState, action as LayoutTreeSplitHorizontalAction);
+
+        expect(treeState.rootNode.children?.[0].size).toBe(20);
+        expect(treeState.rootNode.children?.[1].size).toBe(80);
     });
 
     it("opens a file preview to the right of a lone files block", () => {
@@ -177,6 +218,19 @@ describe("applyInheritedBlockLocation", () => {
         expect(blockDef.meta.file).toBe("~");
     });
 
+    it("opens new git panels on the focused terminal connection and directory", () => {
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteTerminal" });
+        const blockDef: BlockDef = { meta: { view: "git" } };
+
+        const inherited = applyInheritedBlockLocation(blockDef, terminalNode, terminalNode.id, "git", getBlockMeta);
+
+        expect(inherited.meta).toMatchObject({
+            view: "git",
+            connection: "ssh:web",
+            "cmd:cwd": "/var/www",
+        });
+    });
+
     it("does not override explicit terminal location metadata", () => {
         const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteFiles" });
         const blockDef: BlockDef = {
@@ -228,5 +282,9 @@ describe("getPlacementForBlockDef", () => {
 
     it("uses default placement for other views", () => {
         expect(getPlacementForBlockDef({ meta: { view: "launcher" } })).toBe("default");
+    });
+
+    it("opens git panels in git placement", () => {
+        expect(getPlacementForBlockDef({ meta: { view: "git" } })).toBe("git");
     });
 });

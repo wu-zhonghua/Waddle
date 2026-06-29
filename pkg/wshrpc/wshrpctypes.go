@@ -168,6 +168,15 @@ type WshRpcInterface interface {
 	SetBlockFocusCommand(ctx context.Context, blockId string) error
 	GetFocusedBlockDataCommand(ctx context.Context) (*FocusedBlockData, error)
 
+	// git
+	GitStatusCommand(ctx context.Context, data CommandGitStatusData) (*GitStatusData, error)
+	GitDiffCommand(ctx context.Context, data CommandGitDiffData) (*CommandGitDiffRtnData, error)
+	GitFileDiffCommand(ctx context.Context, data CommandGitFileDiffData) (*CommandGitFileDiffRtnData, error)
+	GitReviewDiffCommand(ctx context.Context, data CommandGitReviewDiffData) (*CommandGitReviewDiffRtnData, error)
+	GitStageCommand(ctx context.Context, data CommandGitStageData) error
+	GitUnstageCommand(ctx context.Context, data CommandGitStageData) error
+	GitCommitCommand(ctx context.Context, data CommandGitCommitData) (*CommandGitCommitRtnData, error)
+
 	// rtinfo
 	GetRTInfoCommand(ctx context.Context, data CommandGetRTInfoData) (*waveobj.ObjRTInfo, error)
 	SetRTInfoCommand(ctx context.Context, data CommandSetRTInfoData) error
@@ -479,6 +488,76 @@ type WaddleInfoData struct {
 type WorkspaceInfoData struct {
 	WindowId      string             `json:"windowid"`
 	WorkspaceData *waveobj.Workspace `json:"workspacedata"`
+}
+
+type CommandGitStatusData struct {
+	Cwd string `json:"cwd"`
+}
+
+type CommandGitDiffData struct {
+	Cwd    string `json:"cwd"`
+	Path   string `json:"path,omitempty"`
+	Staged bool   `json:"staged,omitempty"`
+}
+
+type CommandGitFileDiffData struct {
+	Cwd      string `json:"cwd"`
+	Path     string `json:"path"`
+	OrigPath string `json:"origpath,omitempty"`
+	Staged   bool   `json:"staged,omitempty"`
+}
+
+type CommandGitReviewDiffData struct {
+	Cwd  string `json:"cwd"`
+	Base string `json:"base,omitempty"`
+}
+
+type CommandGitStageData struct {
+	Cwd   string   `json:"cwd"`
+	Paths []string `json:"paths"`
+}
+
+type CommandGitCommitData struct {
+	Cwd     string `json:"cwd"`
+	Message string `json:"message"`
+}
+
+type CommandGitDiffRtnData struct {
+	Diff string `json:"diff"`
+}
+
+type CommandGitFileDiffRtnData struct {
+	Original string `json:"original"`
+	Modified string `json:"modified"`
+}
+
+type CommandGitReviewDiffRtnData struct {
+	Base string `json:"base"`
+	Diff string `json:"diff"`
+}
+
+type CommandGitCommitRtnData struct {
+	Hash   string `json:"hash"`
+	Output string `json:"output"`
+}
+
+type GitFileStatus struct {
+	Path           string `json:"path"`
+	OrigPath       string `json:"origpath,omitempty"`
+	IndexStatus    string `json:"indexstatus,omitempty"`
+	WorktreeStatus string `json:"worktreestatus,omitempty"`
+	Status         string `json:"status"`
+}
+
+type GitStatusData struct {
+	Cwd        string          `json:"cwd"`
+	Root       string          `json:"root"`
+	Branch     string          `json:"branch,omitempty"`
+	Upstream   string          `json:"upstream,omitempty"`
+	Ahead      int             `json:"ahead,omitempty"`
+	Behind     int             `json:"behind,omitempty"`
+	Files      []GitFileStatus `json:"files"`
+	HasChanges bool            `json:"haschanges"`
 }
 
 type BlocksListRequest struct {

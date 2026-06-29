@@ -17,6 +17,8 @@
                   "enum": [
                     "term",
                     "preview",
+                    "git",
+                    "gitdiff",
                     "web",
                     "sysinfo",
                     "launcher"

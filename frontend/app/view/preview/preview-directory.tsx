@@ -45,6 +45,7 @@ import {
     fileInfoEntriesToTreeNodes,
     fileInfoToTreeNode,
     filterDirectoryTreeEntries,
+    getDirectoryTreeSymlinkVisuals,
     getResizedDirectoryTreeColumnWidth,
 } from "./preview-directory-tree";
 import {
@@ -132,6 +133,10 @@ function getFallbackTreeIconColor(fileInfo: FileInfo): string {
 }
 
 function getDirectoryTreeNodeVisuals(fileInfo: FileInfo, fullConfig: FullConfigType): DirectoryTreeNodeVisuals {
+    const symlinkVisuals = getDirectoryTreeSymlinkVisuals(fileInfo);
+    if (symlinkVisuals != null) {
+        return symlinkVisuals;
+    }
     const mimeType = fileInfo.isdir ? "directory" : (fileInfo.mimetype ?? "");
     let icon: string = null;
     let iconColor: string = null;

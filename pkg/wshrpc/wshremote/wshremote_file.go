@@ -279,7 +279,15 @@ func (impl *ServerImpl) RemoteListEntriesCommand(ctx context.Context, data wshrp
 }
 
 func statToFileInfo(fullPath string, finfo fs.FileInfo, extended bool) *wshrpc.FileInfo {
-	mimeType := fileutil.DetectMimeType(fullPath, finfo, extended)
+	targetInfo := finfo
+	isSymlink := finfo.Mode()&os.ModeSymlink != 0
+	if isSymlink {
+		resolvedInfo, err := os.Stat(fullPath)
+		if err == nil {
+			targetInfo = resolvedInfo
+		}
+	}
+	mimeType := fileutil.DetectMimeType(fullPath, targetInfo, extended)
 	rtn := &wshrpc.FileInfo{
 		Path:          wavebase.ReplaceHomeDir(fullPath),
 		Dir:           computeDirPart(fullPath),
@@ -289,11 +297,12 @@ func statToFileInfo(fullPath string, finfo fs.FileInfo, extended bool) *wshrpc.F
 		ModeStr:       finfo.Mode().String(),
 		ModTime:       finfo.ModTime().UnixMilli(),
 		CreateTime:    fileCreateTimeMillis(fullPath, finfo),
-		IsDir:         finfo.IsDir(),
+		IsDir:         targetInfo.IsDir(),
+		Symlink:       isSymlink,
 		MimeType:      mimeType,
 		SupportsMkdir: true,
 	}
-	if finfo.IsDir() {
+	if targetInfo.IsDir() {
 		rtn.Size = -1
 	}
 	return rtn

@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
     fileInfoToTreeNode,
     filterDirectoryTreeEntries,
+    getDirectoryTreeSymlinkVisuals,
     getResizedDirectoryTreeColumnWidth,
     normalizeDirectoryViewMode,
 } from "./preview-directory-tree";
@@ -109,6 +110,26 @@ describe("directory tree helpers", () => {
         });
     });
 
+    it("marks directory symlinks as expandable link nodes", () => {
+        const symlinkDir = {
+            name: "current",
+            path: "/repo/current",
+            isdir: true,
+            symlink: true,
+            mimetype: "directory",
+        } as FileInfo & { symlink: boolean };
+
+        expect(fileInfoToTreeNode(symlinkDir, "/repo")).toMatchObject({
+            isDirectory: true,
+            isSymlink: true,
+            childrenStatus: "unloaded",
+        });
+        expect(getDirectoryTreeSymlinkVisuals(symlinkDir)).toEqual({
+            icon: "folder-tree",
+            iconColor: "var(--term-bright-cyan)",
+        });
+    });
+
     it("resizes standalone tree columns within usable widths", () => {
         const bounds = { min: 48, max: 240 };
 
@@ -148,19 +169,28 @@ describe("directory tree helpers", () => {
         expect(css).toMatch(/\.dir-tree-detail-size\s*\{[\s\S]*?grid-column:\s*2/);
     });
 
-    it("keeps size visible before giving extra room to tree names", () => {
+    it("opens modified and size at their minimum usable widths", () => {
         const css = readFileSync(join(TestDir, "directorypreview.scss"), "utf8");
 
         expect(css).toContain("--dir-tree-name-min-width: 300px;");
-        expect(css).toContain("--dir-tree-name-width: 55%;");
+        expect(css).toContain("--dir-tree-name-width: 1fr;");
         expect(css).toContain("--dir-tree-compact-name-min-width: 190px;");
-        expect(css).toContain("--dir-tree-compact-modified-width: 116px;");
-        expect(css).toContain("--dir-tree-compact-size-width: 56px;");
+        expect(css).toContain("--dir-tree-compact-modified-width: 92px;");
+        expect(css).toContain("--dir-tree-compact-size-width: 48px;");
+        expect(css).toContain("--dir-tree-modified-width: 92px;");
+        expect(css).toContain("--dir-tree-modified-track-width: var(--dir-tree-modified-width);");
         expect(css).toContain("--dir-tree-size-min-width: 48px;");
+        expect(css).toContain("--dir-tree-size-width: 48px;");
         expect(css).toContain("minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))");
         expect(css).toContain("--dir-tree-name-min-width: var(--dir-tree-compact-name-min-width);");
         expect(css).toContain("--dir-tree-size-width: var(--dir-tree-compact-size-width);");
-        expect(css).toContain("@container (max-width: 360px)");
+        expect(css).not.toContain("@container (max-width: 360px)");
+        expect(css).not.toMatch(
+            /@container[\s\S]*?\.dir-tree-head-size,\s*\.dir-tree-detail-size\s*\{[\s\S]*?display:\s*none/
+        );
+        expect(css).not.toMatch(
+            /@container \(max-width: 520px\)[\s\S]*?\.dir-tree-head-size,\s*\.dir-tree-detail-size\s*\{[\s\S]*?(display|padding-right)/
+        );
     });
 
     it("exposes draggable resize handles for tree columns", () => {
@@ -178,6 +208,8 @@ describe("directory tree helpers", () => {
         expect(css).toContain(".dir-tree-head-resize");
         expect(css).toContain("width: 18px;");
         expect(css).toContain("rgb(from var(--accent-color)");
+        expect(css).toMatch(/\.dir-tree-head-size\s*\{[\s\S]*?\.dir-tree-head-resize\s*\{[\s\S]*?right:\s*0;/);
+        expect(css).toMatch(/\.dir-tree-head-size\s*\{[\s\S]*?\.dir-tree-head-resize\s*\{[\s\S]*?width:\s*10px;/);
     });
 
     it("aligns tree headers and rows on the same column grid", () => {

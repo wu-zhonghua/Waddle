@@ -418,6 +418,67 @@ declare global {
         chatid: string;
     };
 
+    // wshrpc.CommandGitCommitData
+    type CommandGitCommitData = {
+        cwd: string;
+        message: string;
+    };
+
+    // wshrpc.CommandGitCommitRtnData
+    type CommandGitCommitRtnData = {
+        hash: string;
+        output: string;
+    };
+
+    // wshrpc.CommandGitDiffData
+    type CommandGitDiffData = {
+        cwd: string;
+        path?: string;
+        staged?: boolean;
+    };
+
+    // wshrpc.CommandGitDiffRtnData
+    type CommandGitDiffRtnData = {
+        diff: string;
+    };
+
+    // wshrpc.CommandGitFileDiffData
+    type CommandGitFileDiffData = {
+        cwd: string;
+        path: string;
+        origpath?: string;
+        staged?: boolean;
+    };
+
+    // wshrpc.CommandGitFileDiffRtnData
+    type CommandGitFileDiffRtnData = {
+        original: string;
+        modified: string;
+    };
+
+    // wshrpc.CommandGitReviewDiffData
+    type CommandGitReviewDiffData = {
+        cwd: string;
+        base?: string;
+    };
+
+    // wshrpc.CommandGitReviewDiffRtnData
+    type CommandGitReviewDiffRtnData = {
+        base: string;
+        diff: string;
+    };
+
+    // wshrpc.CommandGitStageData
+    type CommandGitStageData = {
+        cwd: string;
+        paths: string[];
+    };
+
+    // wshrpc.CommandGitStatusData
+    type CommandGitStatusData = {
+        cwd: string;
+    };
+
     // wshrpc.CommandJobCmdExitedData
     type CommandJobCmdExitedData = {
         jobid: string;
@@ -967,6 +1028,7 @@ declare global {
         modtime?: number;
         createtime?: number;
         isdir?: boolean;
+        symlink?: boolean;
         supportsmkdir?: boolean;
         mimetype?: string;
         readonly?: boolean;
@@ -1023,6 +1085,27 @@ declare global {
         configerrors: ConfigError[];
         version: string;
         buildtime: string;
+    };
+
+    // wshrpc.GitFileStatus
+    type GitFileStatus = {
+        path: string;
+        origpath?: string;
+        indexstatus?: string;
+        worktreestatus?: string;
+        status: string;
+    };
+
+    // wshrpc.GitStatusData
+    type GitStatusData = {
+        cwd: string;
+        root: string;
+        branch?: string;
+        upstream?: string;
+        ahead?: number;
+        behind?: number;
+        files: GitFileStatus[];
+        haschanges: boolean;
     };
 
     // waveobj.Job
@@ -1146,6 +1229,9 @@ declare global {
         "ai:timeoutms"?: number;
         "aifilediff:chatid"?: string;
         "aifilediff:toolcallid"?: string;
+        "git:path"?: string;
+        "git:origpath"?: string;
+        "git:staged"?: boolean;
         "editor:*"?: boolean;
         "editor:minimapenabled"?: boolean;
         "editor:stickyscrollenabled"?: boolean;

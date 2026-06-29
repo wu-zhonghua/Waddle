@@ -56,6 +56,16 @@ export function filterDirectoryTreeEntries(
     });
 }
 
+export function getDirectoryTreeSymlinkVisuals(fileInfo: FileInfo): DirectoryTreeNodeVisuals {
+    if (!fileInfo.symlink) {
+        return null;
+    }
+    return {
+        icon: fileInfo.isdir ? "folder-tree" : "link",
+        iconColor: "var(--term-bright-cyan)",
+    };
+}
+
 export function fileInfoToTreeNode(
     fileInfo: FileInfo,
     parentId: string,
@@ -75,6 +85,7 @@ export function fileInfoToTreeNode(
         createTime: fileInfo.createtime,
         icon: visuals.icon,
         iconColor: visuals.iconColor,
+        isSymlink: fileInfo.symlink,
         childrenStatus: fileInfo.isdir && !isParentDirectory ? "unloaded" : "loaded",
         clickAction: isParentDirectory ? "open" : undefined,
     };

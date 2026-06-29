@@ -1,7 +1,13 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { buildVisibleRows, getTreeNodeClickAction, mergeInitialTreeNodes, TreeNodeData } from "@/app/treeview/treeview";
+import {
+    buildVisibleRows,
+    getTreeNodeClickAction,
+    mergeInitialTreeNodes,
+    mergeTreeNodeRefresh,
+    TreeNodeData,
+} from "@/app/treeview/treeview";
 import { describe, expect, it } from "vitest";
 
 function makeNodes(entries: TreeNodeData[]): Map<string, TreeNodeData> {
@@ -132,6 +138,53 @@ describe("treeview visible rows", () => {
             childrenIds: ["/repo/src/app.ts"],
         });
         expect(rows.map((row) => row.id)).toEqual(["/repo/src", "/repo/src/app.ts", "/repo/new.txt", "/repo/README.md"]);
+    });
+
+    it("preserves loaded descendants when parent refresh returns the child directory again", () => {
+        const refreshedChild = mergeTreeNodeRefresh(
+            {
+                id: "/repo/src/lib",
+                parentId: "/repo/src",
+                label: "lib",
+                isDirectory: true,
+                childrenStatus: "loaded",
+                childrenIds: ["/repo/src/lib/index.ts"],
+            },
+            {
+                id: "/repo/src/lib",
+                parentId: "/repo/src",
+                label: "lib",
+                isDirectory: true,
+                childrenStatus: "unloaded",
+                size: 99,
+            }
+        );
+        const nodes = makeNodes([
+            {
+                id: "/repo/src",
+                label: "src",
+                isDirectory: true,
+                childrenStatus: "loaded",
+                childrenIds: ["/repo/src/lib"],
+            },
+            refreshedChild,
+            {
+                id: "/repo/src/lib/index.ts",
+                parentId: "/repo/src/lib",
+                label: "index.ts",
+                isDirectory: false,
+                size: 10,
+            },
+        ]);
+
+        const rows = buildVisibleRows(nodes, ["/repo/src"], new Set(["/repo/src", "/repo/src/lib"]));
+
+        expect(refreshedChild).toMatchObject({
+            size: 99,
+            childrenStatus: "loaded",
+            childrenIds: ["/repo/src/lib/index.ts"],
+        });
+        expect(rows.map((row) => row.id)).toEqual(["/repo/src", "/repo/src/lib", "/repo/src/lib/index.ts"]);
     });
 });
 

@@ -1,4 +1,4 @@
-// Copyright 2024, Command Line Inc.
+// Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
 .dir-table-container {
@@ -219,14 +219,14 @@
         padding: 4px 5px 5px;
         container-type: inline-size;
         --dir-tree-name-min-width: 300px;
-        --dir-tree-name-width: 55%;
+        --dir-tree-name-width: 1fr;
         --dir-tree-compact-name-min-width: 190px;
-        --dir-tree-compact-modified-width: 116px;
-        --dir-tree-compact-size-width: 56px;
-        --dir-tree-modified-width: 132px;
-        --dir-tree-modified-track-width: 1fr;
+        --dir-tree-compact-modified-width: 92px;
+        --dir-tree-compact-size-width: 48px;
+        --dir-tree-modified-width: 92px;
+        --dir-tree-modified-track-width: var(--dir-tree-modified-width);
         --dir-tree-size-min-width: 48px;
-        --dir-tree-size-width: 76px;
+        --dir-tree-size-width: 48px;
         --dir-tree-row-columns: minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))
             minmax(var(--dir-tree-modified-width), var(--dir-tree-modified-track-width))
             minmax(var(--dir-tree-size-min-width), var(--dir-tree-size-width));
@@ -396,6 +396,11 @@
             padding-right: 8px;
             text-align: right;
         }
+
+        .dir-tree-head-resize {
+            right: 0;
+            width: 10px;
+        }
     }
 
     .dir-tree-detail-size {
@@ -428,33 +433,8 @@
             grid-column: 2 / 4;
         }
 
-        .dir-tree-head-size,
-        .dir-tree-detail-size {
-            display: inline-flex;
-            padding-right: 2px;
-        }
     }
 
-    @container (max-width: 360px) {
-        .dir-tree-head,
-        .dir-tree .tree-node-row {
-            grid-template-columns: minmax(var(--dir-tree-name-min-width), var(--dir-tree-name-width))
-                minmax(var(--dir-tree-modified-width), var(--dir-tree-modified-track-width));
-        }
-
-        .dir-tree .tree-node-details {
-            --dir-tree-detail-columns: minmax(
-                var(--dir-tree-modified-width),
-                var(--dir-tree-modified-track-width)
-            );
-            grid-column: 2 / 3;
-        }
-
-        .dir-tree-head-size,
-        .dir-tree-detail-size {
-            display: none;
-        }
-    }
 }
 
 .entry-manager-overlay {

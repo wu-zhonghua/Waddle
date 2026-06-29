@@ -47,10 +47,12 @@ const StalledOverlay = React.memo(
     ({
         connName,
         connStatus,
+        onReconnect,
         overlayRefCallback,
     }: {
         connName: string;
         connStatus: ConnStatus;
+        onReconnect: () => void;
         overlayRefCallback: (el: HTMLDivElement | null) => void;
     }) => {
         const [elapsedTime, setElapsedTime] = React.useState<string>("");
@@ -79,6 +81,9 @@ const StalledOverlay = React.memo(
             return () => clearInterval(interval);
         }, [connStatus.lastactivitybeforestalledtime]);
 
+        const buttonClassName =
+            "outlined grey text-[11px] py-[3px] px-[7px] @max-w350:text-[12px] @max-w350:py-[5px] @max-w350:px-[6px]";
+
         return (
             <div
                 className="@container absolute top-[calc(var(--header-height)+6px)] left-1.5 right-1.5 z-[var(--zindex-block-mask-inner)] overflow-hidden rounded-md bg-[var(--conn-status-overlay-bg-color)] backdrop-blur-[50px] shadow-lg opacity-90"
@@ -95,7 +100,15 @@ const StalledOverlay = React.memo(
                     </div>
                     <div className="flex-1 hidden @max-xxs:block"></div>
                     <Button
-                        className="outlined grey text-[11px] py-[3px] px-[7px] @max-w350:text-[12px] @max-w350:py-[5px] @max-w350:px-[6px]"
+                        className={buttonClassName}
+                        onClick={onReconnect}
+                        title="Reconnect"
+                    >
+                        <span className="@max-w350:hidden!">Reconnect</span>
+                        <i className="fa-sharp fa-solid fa-rotate-right hidden! @max-w350:inline!"></i>
+                    </Button>
+                    <Button
+                        className={buttonClassName}
                         onClick={handleDisconnect}
                         title="Disconnect"
                     >
@@ -223,7 +236,12 @@ export const ConnStatusOverlay = React.memo(
 
         if (showStalled && !showWshError) {
             return (
-                <StalledOverlay connName={connName} connStatus={connStatus} overlayRefCallback={overlayRefCallback} />
+                <StalledOverlay
+                    connName={connName}
+                    connStatus={connStatus}
+                    onReconnect={handleTryReconnect}
+                    overlayRefCallback={overlayRefCallback}
+                />
             );
         }
 

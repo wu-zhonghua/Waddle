@@ -508,6 +508,48 @@ func GetWaddleAIRateLimitCommand(w *wshutil.WshRpc, opts *wshrpc.RpcOpts) (*ucty
 	return resp, err
 }
 
+// command "gitcommit", wshserver.GitCommitCommand
+func GitCommitCommand(w *wshutil.WshRpc, data wshrpc.CommandGitCommitData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitCommitRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitCommitRtnData](w, "gitcommit", data, opts)
+	return resp, err
+}
+
+// command "gitdiff", wshserver.GitDiffCommand
+func GitDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandGitDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitDiffRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitDiffRtnData](w, "gitdiff", data, opts)
+	return resp, err
+}
+
+// command "gitfilediff", wshserver.GitFileDiffCommand
+func GitFileDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandGitFileDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitFileDiffRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitFileDiffRtnData](w, "gitfilediff", data, opts)
+	return resp, err
+}
+
+// command "gitreviewdiff", wshserver.GitReviewDiffCommand
+func GitReviewDiffCommand(w *wshutil.WshRpc, data wshrpc.CommandGitReviewDiffData, opts *wshrpc.RpcOpts) (*wshrpc.CommandGitReviewDiffRtnData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.CommandGitReviewDiffRtnData](w, "gitreviewdiff", data, opts)
+	return resp, err
+}
+
+// command "gitstage", wshserver.GitStageCommand
+func GitStageCommand(w *wshutil.WshRpc, data wshrpc.CommandGitStageData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "gitstage", data, opts)
+	return err
+}
+
+// command "gitstatus", wshserver.GitStatusCommand
+func GitStatusCommand(w *wshutil.WshRpc, data wshrpc.CommandGitStatusData, opts *wshrpc.RpcOpts) (*wshrpc.GitStatusData, error) {
+	resp, err := sendRpcRequestCallHelper[*wshrpc.GitStatusData](w, "gitstatus", data, opts)
+	return resp, err
+}
+
+// command "gitunstage", wshserver.GitUnstageCommand
+func GitUnstageCommand(w *wshutil.WshRpc, data wshrpc.CommandGitStageData, opts *wshrpc.RpcOpts) error {
+	_, err := sendRpcRequestCallHelper[any](w, "gitunstage", data, opts)
+	return err
+}
+
 // command "jobcmdexited", wshserver.JobCmdExitedCommand
 func JobCmdExitedCommand(w *wshutil.WshRpc, data wshrpc.CommandJobCmdExitedData, opts *wshrpc.RpcOpts) error {
 	_, err := sendRpcRequestCallHelper[any](w, "jobcmdexited", data, opts)

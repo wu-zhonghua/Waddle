@@ -48,3 +48,13 @@ func TestGenerateWshCommandDeclMap_TestMultiArgCommand(t *testing.T) {
 		t.Fatalf("expected 3 command args, got %d", len(decl.GetCommandDataTypes()))
 	}
 }
+
+func TestGenerateWshCommandDeclMap_GitCommands(t *testing.T) {
+	declMap := GenerateWshCommandDeclMap()
+	for _, command := range []string{"gitstatus", "gitdiff", "gitfilediff", "gitreviewdiff", "gitstage", "gitunstage", "gitcommit"} {
+		decl := declMap[command]
+		if decl == nil {
+			t.Fatalf("expected %s command declaration", command)
+		}
+	}
+}

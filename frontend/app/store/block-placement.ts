@@ -13,7 +13,7 @@ import {
     LayoutTreeSplitVerticalAction,
 } from "@/layout/lib/types";
 
-export type CreateBlockPlacement = "default" | "files" | "terminal" | "preview";
+export type CreateBlockPlacement = "default" | "files" | "git" | "terminal" | "preview";
 
 const FilesSidebarSize = 20;
 const MainContentSize = 80;
@@ -88,6 +88,10 @@ function isTerminalMeta(meta: MetaType): boolean {
     return meta.view === "term" || meta.controller === "shell";
 }
 
+function isGitMeta(meta: MetaType): boolean {
+    return meta.view === "git";
+}
+
 function isTerminalLikeMeta(meta: MetaType): boolean {
     if (meta == null) {
         return false;
@@ -99,6 +103,9 @@ export function getPlacementForBlockDef(blockDef: BlockDef): CreateBlockPlacemen
     const meta = blockDef?.meta;
     if (meta?.view === "preview" && meta.file != null) {
         return "files";
+    }
+    if (isGitMeta(meta)) {
+        return "git";
     }
     if (isTerminalLikeMeta(meta)) {
         return "terminal";
@@ -126,6 +133,9 @@ function getBlockLocation(meta: MetaType): BlockLocation | null {
     }
     if (isFilesMeta(meta)) {
         return { connection: meta.connection, path: meta.file };
+    }
+    if (isGitMeta(meta)) {
+        return { connection: meta.connection, path: meta["cmd:cwd"] };
     }
     return null;
 }
@@ -165,6 +175,13 @@ function shouldInheritFilesLocation(meta: MetaType, placement: CreateBlockPlacem
     return placement === "files" || meta.file == null || meta.file === "~";
 }
 
+function shouldInheritGitLocation(meta: MetaType): boolean {
+    if (!isGitMeta(meta)) {
+        return false;
+    }
+    return meta["cmd:cwd"] == null || meta["cmd:cwd"] === "~";
+}
+
 export function applyInheritedBlockLocation(
     blockDef: BlockDef,
     rootNode: LayoutNode,
@@ -179,7 +196,8 @@ export function applyInheritedBlockLocation(
 
     const inheritsTerminalLocation = isTerminalMeta(meta);
     const inheritsFilesLocation = shouldInheritFilesLocation(meta, placement);
-    if (!inheritsTerminalLocation && !inheritsFilesLocation) {
+    const inheritsGitLocation = shouldInheritGitLocation(meta);
+    if (!inheritsTerminalLocation && !inheritsFilesLocation && !inheritsGitLocation) {
         return blockDef;
     }
 
@@ -198,6 +216,9 @@ export function applyInheritedBlockLocation(
     }
     if (inheritsFilesLocation && (inheritedMeta.file == null || inheritedMeta.file === "~") && location.path != null) {
         inheritedMeta.file = location.path;
+    }
+    if (inheritsGitLocation && (inheritedMeta["cmd:cwd"] == null || inheritedMeta["cmd:cwd"] === "~") && location.path != null) {
+        inheritedMeta["cmd:cwd"] = location.path;
     }
 
     return { ...blockDef, meta: inheritedMeta };
@@ -251,6 +272,24 @@ export function makeCreateBlockPlacementAction(
             mainSize: MainContentSize,
         } as LayoutTreeInsertLeftSidebarAction;
     }
+    if (placement === "git") {
+        const existingGit = findLeafByMeta(rootNode, getBlockMeta, isGitMeta);
+        if (existingGit != null) {
+            return makeSplitVerticalAction(existingGit, newNode);
+        }
+        const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
+        if (existingFiles != null) {
+            return makeSplitVerticalAction(existingFiles, newNode);
+        }
+        return {
+            type: LayoutTreeActionType.InsertLeftSidebar,
+            node: newNode,
+            magnified: false,
+            focused: true,
+            sidebarSize: FilesSidebarSize,
+            mainSize: MainContentSize,
+        } as LayoutTreeInsertLeftSidebarAction;
+    }
     if (placement === "terminal") {
         const existingTerminal = findLeafByMeta(rootNode, getBlockMeta, isTerminalMeta);
         if (existingTerminal != null) {
@@ -259,7 +298,7 @@ export function makeCreateBlockPlacementAction(
         const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
         if (existingFiles != null) {
             newNode.size = MainContentSize;
-            return makeSplitHorizontalAction(existingFiles, newNode);
+            return makeSplitHorizontalAction(existingFiles, newNode, FilesSidebarSize);
         }
     }
     if (placement === "preview") {

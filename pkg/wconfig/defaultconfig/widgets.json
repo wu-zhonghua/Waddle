@@ -21,6 +21,16 @@
             }
         }
     },
+    "defwidget@git": {
+        "display:order": -3.5,
+        "icon": "code-branch",
+        "label": "git",
+        "blockdef": {
+            "meta": {
+                "view": "git"
+            }
+        }
+    },
     "defwidget@web": {
         "display:order": -3,
         "icon": "globe",

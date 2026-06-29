@@ -43,6 +43,7 @@ export interface TreeNodeData {
     isReadonly?: boolean;
     notfound?: boolean;
     staterror?: string;
+    isSymlink?: boolean;
     childrenStatus?: TreeNodeChildrenStatus;
     childrenIds?: string[];
     capInfo?: { max: number; totalKnown?: number };
@@ -183,6 +184,23 @@ function makeInitialTreeNodeMap(initialNodes: Record<string, TreeNodeData>): Map
     return new Map(Object.entries(initialNodes).map(([id, node]) => [id, normalizeInitialTreeNode(node)]));
 }
 
+export function mergeTreeNodeRefresh(
+    currentNode: TreeNodeData | undefined,
+    refreshedNode: TreeNodeData
+): TreeNodeData {
+    const normalizedNode = normalizeInitialTreeNode(refreshedNode);
+    if (!currentNode?.isDirectory || !normalizedNode.isDirectory || currentNode.childrenStatus === "unloaded") {
+        return normalizedNode;
+    }
+    return {
+        ...normalizedNode,
+        childrenIds: currentNode.childrenIds,
+        childrenStatus: currentNode.childrenStatus,
+        capInfo: currentNode.capInfo,
+        staterror: currentNode.staterror,
+    };
+}
+
 export function mergeInitialTreeNodes(
     currentNodes: Map<string, TreeNodeData>,
     initialNodes: Record<string, TreeNodeData>
@@ -190,19 +208,7 @@ export function mergeInitialTreeNodes(
     const next = new Map(currentNodes);
 
     Object.entries(initialNodes).forEach(([id, node]) => {
-        const currentNode = currentNodes.get(id);
-        const refreshedNode = normalizeInitialTreeNode(node);
-        if (!currentNode?.isDirectory || !refreshedNode.isDirectory || currentNode.childrenStatus === "unloaded") {
-            next.set(id, refreshedNode);
-            return;
-        }
-        next.set(id, {
-            ...refreshedNode,
-            childrenIds: currentNode.childrenIds,
-            childrenStatus: currentNode.childrenStatus,
-            capInfo: currentNode.capInfo,
-            staterror: currentNode.staterror,
-        });
+        next.set(id, mergeTreeNodeRefresh(currentNodes.get(id), node));
     });
 
     return next;
@@ -295,6 +301,9 @@ export function getTreeNodeClickAction(row: TreeViewVisibleRow): TreeNodeClickAc
 function getNodeIcon(node: TreeNodeData, isExpanded: boolean): string {
     if (node.notfound || node.staterror) {
         return "triangle-exclamation";
+    }
+    if (node.isSymlink) {
+        return node.isDirectory ? "folder-tree" : "link";
     }
     if (node.icon) {
         return node.icon;
@@ -417,11 +426,12 @@ export const TreeView = forwardRef<TreeViewRef, TreeViewProps>((props, ref) => {
                 const next = new Map(prev);
                 const source = next.get(id) ?? currentNode;
                 result.nodes.forEach((node) => {
-                    const merged: TreeNodeData = {
+                    const refreshedNode: TreeNodeData = {
                         ...node,
                         parentId: node.parentId ?? id,
                         childrenStatus: node.childrenStatus ?? (node.isDirectory ? "unloaded" : "loaded"),
                     };
+                    const merged = mergeTreeNodeRefresh(next.get(refreshedNode.id), refreshedNode);
                     next.set(merged.id, merged);
                 });
                 const childrenIds = sortIdsByNode(
