@@ -1,10 +1,11 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { createBlock } from "@/app/store/global";
 import { type CreateBlockPlacement } from "@/app/store/block-placement";
+import { createBlock } from "@/app/store/global";
 import { globalStore } from "@/app/store/jotaiStore";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
+import { PlatformMacOS } from "@/util/platformutil";
 import { fireAndForget, isBlank } from "@/util/util";
 import dayjs from "dayjs";
 import React from "react";
@@ -21,6 +22,10 @@ type CreateBlockFn = (
     ephemeral?: boolean,
     placement?: CreateBlockPlacement
 ) => Promise<string>;
+type NativePreviewElectron = {
+    onQuicklook: (filePath: string) => void;
+    openNativePath: (filePath: string) => void;
+};
 
 export const displaySuffixes = {
     B: "b",
@@ -113,6 +118,22 @@ export async function openDirectoryEntry(
         },
     };
     await createBlockFn(blockDef, false, false, "preview");
+}
+
+export function openNativePreviewForPlatform(
+    electron: NativePreviewElectron,
+    platform: NodeJS.Platform,
+    path: string
+): boolean {
+    if (isBlank(path)) {
+        return false;
+    }
+    if (platform == PlatformMacOS) {
+        electron.onQuicklook(path);
+        return true;
+    }
+    electron.openNativePath(path);
+    return true;
 }
 
 export function handleRename(

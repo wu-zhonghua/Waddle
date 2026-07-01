@@ -11,10 +11,10 @@ import {
     type TreeSortField,
     type TreeSortSpec,
 } from "@/app/treeview/treeview";
-import { FileTransferModel } from "@/app/workspace/file-transfer";
 import { useWaddleEnv } from "@/app/waveenv/waveenv";
+import { FileTransferModel } from "@/app/workspace/file-transfer";
 import { checkKeyPressed, isCharacterKeyEvent } from "@/util/keyutil";
-import { PLATFORM, PlatformMacOS } from "@/util/platformutil";
+import { PLATFORM } from "@/util/platformutil";
 import { addOpenMenuItems } from "@/util/previewutil";
 import { fireAndForget } from "@/util/util";
 import { formatRemoteUri } from "@/util/waveutil";
@@ -40,13 +40,13 @@ import { debounce } from "throttle-debounce";
 import "./directorypreview.scss";
 import { EntryManagerOverlay, EntryManagerOverlayProps, EntryManagerType } from "./entry-manager";
 import {
-    type DirectoryTreeColumnResizeBounds,
-    type DirectoryTreeNodeVisuals,
     fileInfoEntriesToTreeNodes,
     fileInfoToTreeNode,
     filterDirectoryTreeEntries,
     getDirectoryTreeSymlinkVisuals,
     getResizedDirectoryTreeColumnWidth,
+    type DirectoryTreeColumnResizeBounds,
+    type DirectoryTreeNodeVisuals,
 } from "./preview-directory-tree";
 import {
     cleanMimetype,
@@ -59,6 +59,7 @@ import {
     makeDirectoryDefaultMenuItems,
     mergeError,
     openDirectoryEntry,
+    openNativePreviewForPlatform,
     overwriteError,
 } from "./preview-directory-utils";
 import { type PreviewModel } from "./preview-model";
@@ -1201,14 +1202,8 @@ function DirectoryPreview({ model }: DirectoryPreviewProps) {
                 setSearchText((current) => current.slice(0, -1));
                 return true;
             }
-            if (
-                checkKeyPressed(waveEvent, "Space") &&
-                searchText == "" &&
-                PLATFORM == PlatformMacOS &&
-                !blockData?.meta?.connection
-            ) {
-                env.electron.onQuicklook(selectedPath);
-                return true;
+            if (checkKeyPressed(waveEvent, "Space") && searchText == "" && !blockData?.meta?.connection) {
+                return openNativePreviewForPlatform(env.electron, PLATFORM, selectedPath);
             }
             if (isCharacterKeyEvent(waveEvent)) {
                 setSearchText((current) => current + waveEvent.key);

@@ -3,8 +3,8 @@
 
 import { WaddleAIModel } from "@/app/aipanel/waveai-model";
 import { BlockNodeModel } from "@/app/block/blocktypes";
-import { appHandleKeyDown } from "@/app/store/keymodel";
 import { getPlacementForBlockDef } from "@/app/store/block-placement";
+import { appHandleKeyDown } from "@/app/store/keymodel";
 import { modalsModel } from "@/app/store/modalmodel";
 import type { TabModel } from "@/app/store/tab-model";
 import { waveEventSubscribeSingle } from "@/app/store/wps";
@@ -41,6 +41,7 @@ import { boundNumber, fireAndForget, stringToBase64 } from "@/util/util";
 import * as jotai from "jotai";
 import * as React from "react";
 import { getBlockingCommand } from "./shellblocking";
+import { getTerminalMainKeyAction } from "./term-keyutil";
 import { computeTheme, DefaultTermTheme, isLikelyOnSameHost, trimTerminalSelection } from "./termutil";
 import { TermWrap, WebGLSupported } from "./termwrap";
 
@@ -646,13 +647,14 @@ export class TermViewModel implements ViewModel {
             }
             return true;
         }
-        if (isMacOS() && keyutil.checkKeyPressed(waveEvent, "Cmd:End")) {
+        const mainKeyAction = getTerminalMainKeyAction(waveEvent);
+        if (mainKeyAction == "scrollbottom") {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollToBottom();
             }
             return true;
         }
-        if (isMacOS() && keyutil.checkKeyPressed(waveEvent, "Cmd:Home")) {
+        if (mainKeyAction == "scrolltop") {
             if (this.termRef?.current?.terminal) {
                 this.termRef.current.terminal.scrollToLine(0);
             }
@@ -709,19 +711,18 @@ export class TermViewModel implements ViewModel {
             return false;
         }
 
-        if (isMacOS()) {
-            if (keyutil.checkKeyPressed(waveEvent, "Cmd:ArrowLeft")) {
-                this.sendDataToController("\x01"); // Ctrl-A (beginning of line)
-                event.preventDefault();
-                event.stopPropagation();
-                return false;
-            }
-            if (keyutil.checkKeyPressed(waveEvent, "Cmd:ArrowRight")) {
-                this.sendDataToController("\x05"); // Ctrl-E (end of line)
-                event.preventDefault();
-                event.stopPropagation();
-                return false;
-            }
+        const mainKeyAction = getTerminalMainKeyAction(waveEvent);
+        if (mainKeyAction == "linebegin") {
+            this.sendDataToController("\x01"); // Ctrl-A (beginning of line)
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+        if (mainKeyAction == "lineend") {
+            this.sendDataToController("\x05"); // Ctrl-E (end of line)
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
         }
         if (keyutil.checkKeyPressed(waveEvent, "Shift:Enter")) {
             const shiftEnterNewlineAtom = getOverrideConfigAtom(this.blockId, "term:shiftenternewline");

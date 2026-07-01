@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from "vitest";
-import { openDirectoryEntry } from "./preview-directory-utils";
+import { openDirectoryEntry, openNativePreviewForPlatform } from "./preview-directory-utils";
 
 describe("openDirectoryEntry", () => {
     it("opens directories in the current preview block", async () => {
@@ -22,12 +22,47 @@ describe("openDirectoryEntry", () => {
         await openDirectoryEntry(model, "/repo/README.md", false, "remote", createBlock);
 
         expect(model.goHistory).not.toHaveBeenCalled();
-        expect(createBlock).toHaveBeenCalledWith({
-            meta: {
-                view: "preview",
-                file: "/repo/README.md",
-                connection: "remote",
+        expect(createBlock).toHaveBeenCalledWith(
+            {
+                meta: {
+                    view: "preview",
+                    file: "/repo/README.md",
+                    connection: "remote",
+                },
             },
-        }, false, false, "preview");
+            false,
+            false,
+            "preview"
+        );
+    });
+});
+
+describe("openNativePreviewForPlatform", () => {
+    it("uses Quick Look on macOS", () => {
+        const electron = {
+            onQuicklook: vi.fn(),
+            openNativePath: vi.fn(),
+        };
+
+        const handled = openNativePreviewForPlatform(electron, "darwin", "/repo/README.md");
+
+        expect(handled).toBe(true);
+        expect(electron.onQuicklook).toHaveBeenCalledWith("/repo/README.md");
+        expect(electron.openNativePath).not.toHaveBeenCalled();
+    });
+
+    it("uses the native opener on Linux and Windows", () => {
+        for (const platform of ["linux", "win32"] as NodeJS.Platform[]) {
+            const electron = {
+                onQuicklook: vi.fn(),
+                openNativePath: vi.fn(),
+            };
+
+            const handled = openNativePreviewForPlatform(electron, platform, "/repo/README.md");
+
+            expect(handled).toBe(true);
+            expect(electron.onQuicklook).not.toHaveBeenCalled();
+            expect(electron.openNativePath).toHaveBeenCalledWith("/repo/README.md");
+        }
     });
 });

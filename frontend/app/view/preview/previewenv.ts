@@ -6,6 +6,7 @@ import { SettingsKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv
 export type PreviewEnv = WaddleEnvSubset<{
     electron: {
         onQuicklook: WaddleEnv["electron"]["onQuicklook"];
+        openNativePath: WaddleEnv["electron"]["openNativePath"];
         showSaveFileDialog: WaddleEnv["electron"]["showSaveFileDialog"];
         writeLocalFileChunk: WaddleEnv["electron"]["writeLocalFileChunk"];
         deleteLocalPath: WaddleEnv["electron"]["deleteLocalPath"];
