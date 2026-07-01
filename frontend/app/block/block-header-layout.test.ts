@@ -39,15 +39,15 @@ describe("preview block header layout", () => {
         const source = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
 
         expect(source).toContain('elemtype: "input"');
-        expect(source).toContain("className: \"preview-filename\"");
+        expect(source).toContain('className: "preview-filename"');
         expect(source).toContain("onKeyDown: this.handlePathInputKeyDown.bind(this)");
     });
 
     it("keeps preview headers as a single editable path without an open path button", () => {
         const source = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
 
-        expect(source).toContain("className: \"preview-filename\"");
-        expect(source).not.toContain("className: \"preview-open-path-button\"");
+        expect(source).toContain('className: "preview-filename"');
+        expect(source).not.toContain('className: "preview-open-path-button"');
         expect(source).not.toContain("click: () => this.toggleOpenFileModal()");
     });
 
@@ -65,5 +65,25 @@ describe("preview block header layout", () => {
         expect(css).not.toContain(".block-frame-div.preview-directory-header-row");
         expect(css).not.toContain(".block-frame-div.preview-path-controls");
         expect(css).not.toContain(".block-frame-div.dir-view-mode-toggle");
+    });
+
+    it("keeps editable header controls from starting layout drags", () => {
+        const layoutSource = readFileSync(join(TestDir, "../../layout/lib/TileLayout.tsx"), "utf8");
+        const blockUtilSource = readBlockSource("blockutil.tsx");
+
+        expect(layoutSource).toContain("isTileDragExcludedTarget(event.target)");
+        expect(layoutSource).toContain("input, textarea, select, button, a");
+        expect(layoutSource).toContain("canDrag: () => !(isEphemeral || isMagnified) && dragStartAllowedRef.current");
+        expect(blockUtilSource).toContain('data-layout-drag-exclude="true"');
+    });
+
+    it("lets pointer drags in the preview path input adjust the text selection", () => {
+        const previewModelSource = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
+        const blockUtilSource = readBlockSource("blockutil.tsx");
+
+        expect(previewModelSource).toContain("pathInputPointerDownRef");
+        expect(previewModelSource).toContain("onPointerDown: this.handlePathInputPointerDown.bind(this)");
+        expect(previewModelSource).toContain("if (!this.pathInputPointerDownRef.current)");
+        expect(blockUtilSource).toContain("onPointerDown={(e) => onPointerDown?.(e)}");
     });
 });

@@ -12,6 +12,7 @@ import { useAtomValue } from "jotai";
 import { OverlayScrollbars } from "overlayscrollbars";
 import { createRef, memo, useCallback, useEffect, useRef, useState } from "react";
 import { debounce } from "throttle-debounce";
+import { AppVersionBadge } from "./app-version-badge";
 import { Tab } from "./tab";
 import "./tabbar.scss";
 import { TabBarEnv } from "./tabbarenv";
@@ -134,6 +135,8 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     const confirmClose = useAtomValue(env.getSettingsKeyAtom("tab:confirmclose")) ?? false;
     const hideAiButton = useAtomValue(env.getSettingsKeyAtom("app:hideaibutton"));
     const appUpdateStatus = useAtomValue(env.atoms.updaterStatusAtom);
+    const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
+    const appVersion = fullConfig?.version;
 
     let prevDelta: number;
     let prevDragDirection: string;
@@ -290,6 +293,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
         saveTabsPosition,
         hideAiButton,
         appUpdateStatus,
+        appVersion,
         zoomFactor,
         showMenuBar,
     ]);
@@ -576,9 +580,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
     // Calculate window drag left width based on platform and state
     let windowDragLeftWidth = 10;
     if (env.isMacOS() && !isFullScreen) {
-        const trafficLightsWidth = isMacOSTahoeOrLater()
-            ? MacOSTahoeTrafficLightsWidth
-            : MacOSTrafficLightsWidth;
+        const trafficLightsWidth = isMacOSTahoeOrLater() ? MacOSTahoeTrafficLightsWidth : MacOSTrafficLightsWidth;
         if (zoomFactor > 0) {
             windowDragLeftWidth = trafficLightsWidth / zoomFactor;
         } else {
@@ -666,6 +668,7 @@ const TabBar = memo(({ workspace, noTabs }: TabBarProps) => {
             </button>
             <div className="flex-1" />
             <div ref={rightContainerRef} className="flex flex-row gap-1 items-end">
+                <AppVersionBadge version={appVersion} />
                 <UpdateStatusBanner />
                 <div
                     className="h-full shrink-0 z-window-drag"

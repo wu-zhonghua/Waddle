@@ -245,6 +245,9 @@ declare global {
         onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
         onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
         onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+        onPointerDown?: (e: React.PointerEvent<HTMLInputElement>) => void;
+        onPointerUp?: (e: React.PointerEvent<HTMLInputElement>) => void;
+        onPointerCancel?: (e: React.PointerEvent<HTMLInputElement>) => void;
     };
 
     type HeaderDiv = {

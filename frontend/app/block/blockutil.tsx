@@ -2,11 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Button } from "@/app/element/button";
-import {
-    MetaKeyAtomFnType,
-    WaddleEnv,
-    WaddleEnvSubset,
-} from "@/app/waveenv/waveenv";
+import { MetaKeyAtomFnType, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import { IconButton, ToggleIconButton } from "@/element/iconbutton";
 import { MagnifyIcon } from "@/element/magnify";
 import { MenuButton } from "@/element/menubutton";
@@ -199,9 +195,20 @@ export function useTabBackground(
 
 export const Input = React.memo(
     ({ decl, className, preview }: { decl: HeaderInput; className: string; preview: boolean }) => {
-        const { value, ref, isDisabled, onChange, onKeyDown, onFocus, onBlur } = decl;
+        const {
+            value,
+            ref,
+            isDisabled,
+            onChange,
+            onKeyDown,
+            onFocus,
+            onBlur,
+            onPointerDown,
+            onPointerUp,
+            onPointerCancel,
+        } = decl;
         return (
-            <div className="input-wrapper">
+            <div className="input-wrapper" data-layout-drag-exclude="true">
                 <input
                     ref={
                         !preview
@@ -215,7 +222,14 @@ export const Input = React.memo(
                     onKeyDown={(e) => onKeyDown(e)}
                     onFocus={(e) => onFocus(e)}
                     onBlur={(e) => onBlur(e)}
-                    onDragStart={(e) => e.preventDefault()}
+                    onPointerDown={(e) => onPointerDown?.(e)}
+                    onPointerUp={(e) => onPointerUp?.(e)}
+                    onPointerCancel={(e) => onPointerCancel?.(e)}
+                    draggable={false}
+                    onDragStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
                 />
             </div>
         );

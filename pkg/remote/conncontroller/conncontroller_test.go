@@ -6,8 +6,11 @@ package conncontroller
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
 func TestWshInstallContextIgnoresParentDeadline(t *testing.T) {
@@ -47,6 +50,54 @@ func TestIsWshVersionUpToDateTreatsSegfaultAsNeedsInstall(t *testing.T) {
 	}
 	if osArchStr != "" {
 		t.Fatalf("segfaulting wsh should force platform reprobe, got %q", osArchStr)
+	}
+}
+
+func TestIsWshVersionUpToDateRequiresExactLocalVersion(t *testing.T) {
+	origVersion := wavebase.WaddleVersion
+	wavebase.WaddleVersion = "1.2.3"
+	t.Cleanup(func() {
+		wavebase.WaddleVersion = origVersion
+	})
+
+	tests := []struct {
+		name     string
+		line     string
+		expected bool
+	}{
+		{
+			name:     "matching remote version is up-to-date",
+			line:     "wsh v1.2.3",
+			expected: true,
+		},
+		{
+			name:     "older remote version needs update",
+			line:     "wsh v1.2.2",
+			expected: false,
+		},
+		{
+			name:     "newer remote version still needs local version sync",
+			line:     "wsh v1.2.4",
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			isUpToDate, clientVersion, osArchStr, err := IsWshVersionUpToDate(context.Background(), test.line)
+			if err != nil {
+				t.Fatalf("checking wsh version should not error: %v", err)
+			}
+			if isUpToDate != test.expected {
+				t.Fatalf("expected up-to-date=%v for %q, got %v", test.expected, test.line, isUpToDate)
+			}
+			if clientVersion != strings.Fields(test.line)[1] {
+				t.Fatalf("expected client version from line, got %q", clientVersion)
+			}
+			if osArchStr != "" {
+				t.Fatalf("versioned wsh output should not include os/arch, got %q", osArchStr)
+			}
+		})
 	}
 }
 

@@ -12,6 +12,7 @@ import { validateCssColor } from "@/util/color-validator";
 import { cn, fireAndForget } from "@/util/util";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { AppVersionBadge } from "./app-version-badge";
 import { buildTabBarContextMenu, buildTabContextMenu } from "./tabcontextmenu";
 import { UpdateStatusBanner } from "./updatebanner";
 import { VTab, VTabItem } from "./vtab";
@@ -51,6 +52,8 @@ VTabBarAIButton.displayName = "VTabBarAIButton";
 const MacOSHeader = memo(() => {
     const env = useWaddleEnv<VTabBarEnv>();
     const isFullScreen = useAtomValue(env.atoms.isFullScreen);
+    const fullConfig = useAtomValue(env.atoms.fullConfigAtom);
+    const appVersion = fullConfig?.version;
     return (
         <>
             {!isFullScreen && (
@@ -72,6 +75,7 @@ const MacOSHeader = memo(() => {
                 <Tooltip content="Workspace Switcher" placement="bottom" hideOnClick divClassName="flex items-center">
                     <WorkspaceSwitcher />
                 </Tooltip>
+                <AppVersionBadge version={appVersion} />
                 <UpdateStatusBanner />
             </div>
         </>

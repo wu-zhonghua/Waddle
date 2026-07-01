@@ -358,7 +358,7 @@ func IsWshVersionUpToDate(logCtx context.Context, wshVersionLine string) (bool, 
 	}
 	clientVersion := parts[1]
 	expectedVersion := fmt.Sprintf("v%s", wavebase.WaddleVersion)
-	if semver.Compare(clientVersion, expectedVersion) < 0 {
+	if semver.Compare(clientVersion, expectedVersion) != 0 {
 		return false, clientVersion, "", nil
 	}
 	return true, clientVersion, "", nil

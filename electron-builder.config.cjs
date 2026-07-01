@@ -4,6 +4,29 @@ const fs = require("fs");
 const path = require("path");
 
 const windowsShouldSign = !!process.env.SM_CODE_SIGNING_CERT_SHA1_HASH;
+const defaultUpdateUrl = "https://dl.waddle.dev/releases-w2";
+
+function getPublishConfig() {
+    if (process.env.WADDLE_UPDATE_URL) {
+        return {
+            provider: "generic",
+            url: process.env.WADDLE_UPDATE_URL,
+        };
+    }
+
+    const githubRepository = process.env.WADDLE_UPDATE_GITHUB_REPOSITORY || process.env.GITHUB_REPOSITORY;
+    if (githubRepository && /^[^/\s]+\/[^/\s]+$/.test(githubRepository)) {
+        return {
+            provider: "generic",
+            url: `https://github.com/${githubRepository}/releases/latest/download`,
+        };
+    }
+
+    return {
+        provider: "generic",
+        url: defaultUpdateUrl,
+    };
+}
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -117,10 +140,7 @@ const config = {
         // this should remove /usr/lib/.build-id/ links which can conflict with other electron apps like slack
         fpm: ["--rpm-rpmbuild-define", "_build_id_links none"],
     },
-    publish: {
-        provider: "generic",
-        url: "https://dl.waddle.dev/releases-w2",
-    },
+    publish: getPublishConfig(),
     afterPack: (context) => {
         // This is a workaround to restore file permissions to the wavesrv binaries on macOS after packaging the universal binary.
         if (context.electronPlatformName === "darwin" && context.arch === Arch.universal) {

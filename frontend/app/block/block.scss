@@ -90,6 +90,15 @@
                 border-bottom: 1px solid var(--border-color);
                 border-radius: var(--block-border-radius) var(--block-border-radius) 0 0;
 
+                input,
+                textarea,
+                select,
+                button,
+                a,
+                [data-layout-drag-exclude="true"] {
+                    -webkit-app-region: no-drag;
+                }
+
                 &.block-frame-preview-header {
                     min-height: var(--preview-header-height);
                     max-height: var(--preview-header-height);
@@ -258,6 +267,8 @@
                                 opacity: 1;
                                 padding: 2px 5px;
                                 text-align: left;
+                                user-select: text;
+                                -webkit-user-select: text;
                             }
 
                             input.preview-filename:focus {

@@ -189,15 +189,17 @@ jobs:
               with:
                   path: make
                   merge-multiple: true
-            - name: Create draft release
+            - name: Create release
               uses: softprops/action-gh-release@v2
               with:
                   prerelease: ${{ contains(github.ref_name, '-beta') }}
-                  name: Pengu ${{ github.ref_name }} Release
+                  name: Waddle ${{ github.ref_name }} Release
                   generate_release_notes: true
-                  draft: true
+                  draft: false
                   files: |
                       make/*.zip
+                      make/*.blockmap
+                      make/*.yml
                       make/*.dmg
                       make/*.exe
                       make/*.msi

@@ -131,6 +131,7 @@ export class PreviewModel implements ViewModel {
     endIconButtons: Atom<IconButtonDecl[]>;
     hideViewName: Atom<boolean>;
     pathInputRef: React.RefObject<HTMLInputElement>;
+    pathInputPointerDownRef: React.RefObject<boolean>;
     pathInputValue: PrimitiveAtom<string>;
     pathInputFocused: PrimitiveAtom<boolean>;
     editMode: Atom<boolean>;
@@ -179,11 +180,12 @@ export class PreviewModel implements ViewModel {
         this.nodeModel = nodeModel;
         this.tabModel = tabModel;
         this.env = waveEnv;
-        let showHiddenFiles = globalStore.get(this.env.getSettingsKeyAtom("preview:showhiddenfiles")) ?? true;
+        const showHiddenFiles = globalStore.get(this.env.getSettingsKeyAtom("preview:showhiddenfiles")) ?? true;
         this.showHiddenFiles = atom<boolean>(showHiddenFiles);
         this.refreshVersion = atom(0);
         this.directorySearchActive = atom(false);
         this.pathInputRef = createRef();
+        this.pathInputPointerDownRef = { current: false };
         this.pathInputValue = atom("");
         this.pathInputFocused = atom(false);
         this.openFileModal = atom(false);
@@ -261,6 +263,9 @@ export class PreviewModel implements ViewModel {
                     onKeyDown: this.handlePathInputKeyDown.bind(this),
                     onFocus: this.handlePathInputFocus.bind(this),
                     onBlur: this.handlePathInputBlur.bind(this),
+                    onPointerDown: this.handlePathInputPointerDown.bind(this),
+                    onPointerUp: this.handlePathInputPointerEnd.bind(this),
+                    onPointerCancel: this.handlePathInputPointerEnd.bind(this),
                 },
             ];
             const viewTextChildren = pathControlChildren;
@@ -590,6 +595,14 @@ export class PreviewModel implements ViewModel {
         globalStore.set(this.pathInputValue, event.target.value);
     }
 
+    handlePathInputPointerDown() {
+        this.pathInputPointerDownRef.current = true;
+    }
+
+    handlePathInputPointerEnd() {
+        this.pathInputPointerDownRef.current = false;
+    }
+
     handlePathInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
         const waveEvent = adaptFromReactOrNativeKeyEvent(event);
         if (checkKeyPressed(waveEvent, "Enter")) {
@@ -617,10 +630,13 @@ export class PreviewModel implements ViewModel {
     handlePathInputFocus(event: React.FocusEvent<HTMLInputElement>) {
         globalStore.set(this.pathInputFocused, true);
         globalStore.set(this.pathInputValue, event.target.value);
-        event.target.select();
+        if (!this.pathInputPointerDownRef.current) {
+            event.target.select();
+        }
     }
 
     handlePathInputBlur() {
+        this.pathInputPointerDownRef.current = false;
         globalStore.set(this.pathInputFocused, false);
         globalStore.set(this.pathInputValue, this.getHeaderPath());
     }

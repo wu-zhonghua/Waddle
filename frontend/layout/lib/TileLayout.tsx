@@ -32,6 +32,8 @@ import {
 import { determineDropDirection } from "./utils";
 
 const tileItemType = "TILE_ITEM";
+const TileDragExcludedSelector =
+    'input, textarea, select, button, a, [contenteditable="true"], [data-layout-drag-exclude="true"]';
 
 export interface TileLayoutProps {
     /**
@@ -53,6 +55,13 @@ export interface TileLayoutProps {
 
 const DragPreviewWidth = 300;
 const DragPreviewHeight = 300;
+
+function isTileDragExcludedTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+    return target.closest(TileDragExcludedSelector) != null;
+}
 
 function TileLayoutComponent({ tabAtom, contents, getCursorPoint }: TileLayoutProps) {
     const layoutModel = useTileLayout(tabAtom, contents);
@@ -229,11 +238,20 @@ const DisplayNode = ({ layoutModel, node }: DisplayNodeProps) => {
     const devicePixelRatio = useDevicePixelRatio();
     const isEphemeral = useAtomValue(nodeModel.isEphemeral);
     const isMagnified = useAtomValue(nodeModel.isMagnified);
+    const dragStartAllowedRef = useRef(true);
+
+    const updateDragStartAllowed = useCallback((event: MouseEvent | PointerEvent | TouchEvent | DragEvent) => {
+        dragStartAllowedRef.current = !isTileDragExcludedTarget(event.target);
+    }, []);
+
+    const resetDragStartAllowed = useCallback(() => {
+        dragStartAllowedRef.current = true;
+    }, []);
 
     const [{ isDragging }, drag, dragPreview] = useDrag(
         () => ({
             type: tileItemType,
-            canDrag: () => !(isEphemeral || isMagnified),
+            canDrag: () => !(isEphemeral || isMagnified) && dragStartAllowedRef.current,
             item: () => node,
             collect: (monitor) => ({
                 isDragging: monitor.isDragging(),
@@ -298,7 +316,29 @@ const DisplayNode = ({ layoutModel, node }: DisplayNodeProps) => {
     // Register the display node as a draggable item
     useEffect(() => {
         drag(nodeModel.dragHandleRef);
-    }, [drag, nodeModel.dragHandleRef.current]);
+        const dragHandle = nodeModel.dragHandleRef.current;
+        if (dragHandle == null) {
+            return;
+        }
+        dragHandle.addEventListener("pointerdown", updateDragStartAllowed, true);
+        dragHandle.addEventListener("mousedown", updateDragStartAllowed, true);
+        dragHandle.addEventListener("touchstart", updateDragStartAllowed, true);
+        dragHandle.addEventListener("dragstart", updateDragStartAllowed, true);
+        window.addEventListener("pointerup", resetDragStartAllowed, true);
+        window.addEventListener("mouseup", resetDragStartAllowed, true);
+        window.addEventListener("touchend", resetDragStartAllowed, true);
+        window.addEventListener("dragend", resetDragStartAllowed, true);
+        return () => {
+            dragHandle.removeEventListener("pointerdown", updateDragStartAllowed, true);
+            dragHandle.removeEventListener("mousedown", updateDragStartAllowed, true);
+            dragHandle.removeEventListener("touchstart", updateDragStartAllowed, true);
+            dragHandle.removeEventListener("dragstart", updateDragStartAllowed, true);
+            window.removeEventListener("pointerup", resetDragStartAllowed, true);
+            window.removeEventListener("mouseup", resetDragStartAllowed, true);
+            window.removeEventListener("touchend", resetDragStartAllowed, true);
+            window.removeEventListener("dragend", resetDragStartAllowed, true);
+        };
+    }, [drag, nodeModel.dragHandleRef.current, updateDragStartAllowed, resetDragStartAllowed]);
 
     return (
         <div
@@ -454,7 +494,7 @@ const ResizeHandle = memo(({ resizeHandleAtom, layoutModel }: ResizeHandleCompon
 
     // We want to wait a bit before committing the pending resize operation in case some events haven't arrived yet.
     const onPointerRelease = useCallback(
-        debounce(30, (event: React.PointerEvent<HTMLDivElement>) => {
+        debounce(30, () => {
             setTrackingPointer(undefined);
             layoutModel.onResizeEnd();
         }),
