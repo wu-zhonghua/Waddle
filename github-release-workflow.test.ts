@@ -34,4 +34,17 @@ describe("GitHub release workflow", () => {
 
         expect(workflow).toContain("sudo snap install snapcraft --classic --channel=8.x/stable");
     });
+
+    it("documents updater asset requirements in the release skill", () => {
+        const agents = readFileSync("AGENTS.md", "utf8");
+        const claude = readFileSync("CLAUDE.md", "utf8");
+        const skill = readFileSync(".kilocode/skills/github-release/SKILL.md", "utf8");
+
+        expect(agents).toContain(".kilocode/skills/github-release/SKILL.md");
+        expect(claude).toContain(".kilocode/skills/github-release/SKILL.md");
+        expect(skill).toContain("make/*.yml");
+        expect(skill).toContain("make/*.blockmap");
+        expect(skill).toContain("latest/download");
+        expect(skill).toContain("generateUpdatesFilesForAllChannels");
+    });
 });

@@ -15,12 +15,10 @@ type UpdateBannerEnv = WaddleEnvSubset<{
     };
 }>;
 
-function getUpdateStatusMessage(status: string): string {
+export function getUpdateStatusMessage(status: UpdaterStatus): string {
     switch (status) {
         case "ready":
             return "Update";
-        case "downloading":
-            return "Downloading";
         case "installing":
             return "Installing";
         default:
