@@ -28,4 +28,10 @@ describe("GitHub release workflow", () => {
         );
         expect(workflow).toContain("if: github.event_name != 'workflow_dispatch' && env.S3_UPLOAD_ENABLED == 'true'");
     });
+
+    it("pins snapcraft to a version compatible with electron-builder", () => {
+        const workflow = readFileSync(".github/workflows/build-helper.yml", "utf8");
+
+        expect(workflow).toContain("sudo snap install snapcraft --classic --channel=8.x/stable");
+    });
 });
