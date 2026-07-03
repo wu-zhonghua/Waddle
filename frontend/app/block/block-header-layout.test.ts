@@ -68,11 +68,19 @@ describe("preview block header layout", () => {
     });
 
     it("keeps editable header controls from starting layout drags", () => {
+        const blockHeaderSource = readBlockSource("blockframe-header.tsx");
         const layoutSource = readFileSync(join(TestDir, "../../layout/lib/TileLayout.tsx"), "utf8");
         const blockUtilSource = readBlockSource("blockutil.tsx");
 
+        expect(blockHeaderSource).toContain("const headerDragHandleRef = preview || isPreviewHeader ? null : nodeModel.dragHandleRef;");
+        expect(blockHeaderSource).toContain(
+            "const previewHeaderDragHandleRef = !preview && isPreviewHeader ? nodeModel.dragHandleRef : null;"
+        );
+        expect(blockHeaderSource).toContain("ref={previewHeaderDragHandleRef}");
         expect(layoutSource).toContain("isTileDragExcludedTarget(event.target)");
         expect(layoutSource).toContain("input, textarea, select, button, a");
+        expect(layoutSource).toContain("dragHandle.draggable = !isExcludedTarget");
+        expect(layoutSource).toContain("dragHandle.draggable = true");
         expect(layoutSource).toContain("canDrag: () => !(isEphemeral || isMagnified) && dragStartAllowedRef.current");
         expect(blockUtilSource).toContain('data-layout-drag-exclude="true"');
     });
@@ -80,10 +88,23 @@ describe("preview block header layout", () => {
     it("lets pointer drags in the preview path input adjust the text selection", () => {
         const previewModelSource = readFileSync(join(TestDir, "../view/preview/preview-model.tsx"), "utf8");
         const blockUtilSource = readBlockSource("blockutil.tsx");
+        const customTypesSource = readFileSync(join(TestDir, "../../types/custom.d.ts"), "utf8");
+        const appSource = readFileSync(join(TestDir, "../app.tsx"), "utf8");
 
         expect(previewModelSource).toContain("pathInputPointerDownRef");
         expect(previewModelSource).toContain("onPointerDown: this.handlePathInputPointerDown.bind(this)");
         expect(previewModelSource).toContain("if (!this.pathInputPointerDownRef.current)");
+        expect(previewModelSource).toContain("if (this.pathInputPointerDownRef.current) {");
+        expect(previewModelSource).toContain("return;");
         expect(blockUtilSource).toContain("onPointerDown={(e) => onPointerDown?.(e)}");
+        expect(customTypesSource).toContain("onMouseDown?: (e: React.MouseEvent<HTMLInputElement>) => void;");
+        expect(customTypesSource).toContain("onMouseUp?: (e: React.MouseEvent<HTMLInputElement>) => void;");
+        expect(previewModelSource).toContain("onMouseDown: this.handlePathInputPointerDown.bind(this)");
+        expect(previewModelSource).toContain("onMouseUp: this.handlePathInputMouseUp.bind(this)");
+        expect(previewModelSource).toContain("shouldSelectPreviewPathInputOnMouseUp");
+        expect(blockUtilSource).toContain("onMouseDown={(e) => onMouseDown?.(e)}");
+        expect(blockUtilSource).toContain("onMouseUp={(e) => onMouseUp?.(e)}");
+        expect(appSource).toContain("isMacOSFirstClickPassthroughTarget(e.target)");
+        expect(appSource).toContain("input, textarea, select, button, a");
     });
 });

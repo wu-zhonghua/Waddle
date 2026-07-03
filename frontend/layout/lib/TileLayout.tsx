@@ -241,12 +241,21 @@ const DisplayNode = ({ layoutModel, node }: DisplayNodeProps) => {
     const dragStartAllowedRef = useRef(true);
 
     const updateDragStartAllowed = useCallback((event: MouseEvent | PointerEvent | TouchEvent | DragEvent) => {
-        dragStartAllowedRef.current = !isTileDragExcludedTarget(event.target);
+        const isExcludedTarget = isTileDragExcludedTarget(event.target);
+        dragStartAllowedRef.current = !isExcludedTarget;
+        const dragHandle = event.currentTarget;
+        if (dragHandle instanceof HTMLElement) {
+            dragHandle.draggable = !isExcludedTarget;
+        }
     }, []);
 
     const resetDragStartAllowed = useCallback(() => {
         dragStartAllowedRef.current = true;
-    }, []);
+        const dragHandle = nodeModel.dragHandleRef.current;
+        if (dragHandle != null) {
+            dragHandle.draggable = true;
+        }
+    }, [nodeModel.dragHandleRef]);
 
     const [{ isDragging }, drag, dragPreview] = useDrag(
         () => ({

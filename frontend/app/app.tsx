@@ -41,6 +41,8 @@ import "../tailwindsetup.css";
 
 const dlog = debug("wave:app");
 const focusLog = debug("wave:focus");
+const MacOSFirstClickPassthroughSelector =
+    'input, textarea, select, button, a, [contenteditable="true"], [data-layout-drag-exclude="true"]';
 
 const App = ({ onFirstRender }: { onFirstRender: () => void }) => {
     const tabId = useAtomValue(atoms.staticTabId);
@@ -84,6 +86,13 @@ function canEnableCut(): boolean {
         return false;
     }
     return !util.isBlank(sel?.toString()) && canEnablePaste();
+}
+
+function isMacOSFirstClickPassthroughTarget(target: EventTarget): boolean {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+    return target.closest(MacOSFirstClickPassthroughSelector) != null;
 }
 
 async function getClipboardURL(): Promise<URL> {
@@ -239,6 +248,10 @@ const MacOSFirstClickHandler = () => {
         const handleMouseDown = (e: MouseEvent) => {
             const timeDiff = Date.now() - windowFocusTime;
             if (windowFocusTime != null && timeDiff < 50) {
+                if (isMacOSFirstClickPassthroughTarget(e.target)) {
+                    cancelNextClick = false;
+                    return;
+                }
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();

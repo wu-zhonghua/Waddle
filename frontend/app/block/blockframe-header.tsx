@@ -231,9 +231,10 @@ const BlockFrame_Header = ({
     const prevMagifiedState = React.useRef(magnified);
     const manageConnection = util.useAtomValueSafe(viewModel?.manageConnection);
     const iconColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
-    const dragHandleRef = preview ? null : nodeModel.dragHandleRef;
     const isTerminalBlock = metaView === "term";
     const isPreviewHeader = metaView === "preview" && !useTermHeader;
+    const headerDragHandleRef = preview || isPreviewHeader ? null : nodeModel.dragHandleRef;
+    const previewHeaderDragHandleRef = !preview && isPreviewHeader ? nodeModel.dragHandleRef : null;
     viewName = metaFrameTitle ?? viewName;
     viewIconUnion = metaFrameIcon ?? viewIconUnion;
 
@@ -255,13 +256,13 @@ const BlockFrame_Header = ({
                 isPreviewHeader && "block-frame-preview-header"
             )}
             data-role="block-header"
-            ref={dragHandleRef}
+            ref={headerDragHandleRef}
             onContextMenu={(e) => handleHeaderContextMenu(e, nodeModel.blockId, viewModel, nodeModel, waveEnv)}
         >
             {!useTermHeader && (
                 <>
                     {preIconButton && <IconButton decl={preIconButton} className="block-frame-preicon-button" />}
-                    <div className="block-frame-default-header-iconview">
+                    <div className="block-frame-default-header-iconview" ref={previewHeaderDragHandleRef}>
                         {viewIconElem}
                         {viewName && !hideViewName && <div className="block-frame-view-type">{viewName}</div>}
                     </div>

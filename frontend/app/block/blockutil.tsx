@@ -203,6 +203,8 @@ export const Input = React.memo(
             onKeyDown,
             onFocus,
             onBlur,
+            onMouseDown,
+            onMouseUp,
             onPointerDown,
             onPointerUp,
             onPointerCancel,
@@ -222,6 +224,8 @@ export const Input = React.memo(
                     onKeyDown={(e) => onKeyDown(e)}
                     onFocus={(e) => onFocus(e)}
                     onBlur={(e) => onBlur(e)}
+                    onMouseDown={(e) => onMouseDown?.(e)}
+                    onMouseUp={(e) => onMouseUp?.(e)}
                     onPointerDown={(e) => onPointerDown?.(e)}
                     onPointerUp={(e) => onPointerUp?.(e)}
                     onPointerCancel={(e) => onPointerCancel?.(e)}

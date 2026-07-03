@@ -20,7 +20,11 @@ import type * as MonacoTypes from "monaco-editor";
 import { createRef } from "react";
 import { PreviewView } from "./preview";
 import { makeDirectoryDefaultMenuItems } from "./preview-directory-utils";
-import { formatPreviewHeaderPath } from "./preview-header-utils";
+import {
+    didDragPreviewPathInput,
+    formatPreviewHeaderPath,
+    shouldSelectPreviewPathInputOnMouseUp,
+} from "./preview-header-utils";
 import type { PreviewEnv } from "./previewenv";
 
 // TODO drive this using config
@@ -132,6 +136,8 @@ export class PreviewModel implements ViewModel {
     hideViewName: Atom<boolean>;
     pathInputRef: React.RefObject<HTMLInputElement>;
     pathInputPointerDownRef: React.RefObject<boolean>;
+    pathInputPointerDownPointRef: React.RefObject<Point>;
+    pathInputFocusedOnPointerDownRef: React.RefObject<boolean>;
     pathInputValue: PrimitiveAtom<string>;
     pathInputFocused: PrimitiveAtom<boolean>;
     editMode: Atom<boolean>;
@@ -186,6 +192,8 @@ export class PreviewModel implements ViewModel {
         this.directorySearchActive = atom(false);
         this.pathInputRef = createRef();
         this.pathInputPointerDownRef = { current: false };
+        this.pathInputPointerDownPointRef = { current: null };
+        this.pathInputFocusedOnPointerDownRef = { current: false };
         this.pathInputValue = atom("");
         this.pathInputFocused = atom(false);
         this.openFileModal = atom(false);
@@ -263,6 +271,8 @@ export class PreviewModel implements ViewModel {
                     onKeyDown: this.handlePathInputKeyDown.bind(this),
                     onFocus: this.handlePathInputFocus.bind(this),
                     onBlur: this.handlePathInputBlur.bind(this),
+                    onMouseDown: this.handlePathInputPointerDown.bind(this),
+                    onMouseUp: this.handlePathInputMouseUp.bind(this),
                     onPointerDown: this.handlePathInputPointerDown.bind(this),
                     onPointerUp: this.handlePathInputPointerEnd.bind(this),
                     onPointerCancel: this.handlePathInputPointerEnd.bind(this),
@@ -595,7 +605,11 @@ export class PreviewModel implements ViewModel {
         globalStore.set(this.pathInputValue, event.target.value);
     }
 
-    handlePathInputPointerDown() {
+    handlePathInputPointerDown(event: React.PointerEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>) {
+        if (!this.pathInputPointerDownRef.current) {
+            this.pathInputFocusedOnPointerDownRef.current = document.activeElement === event.currentTarget;
+            this.pathInputPointerDownPointRef.current = { x: event.clientX, y: event.clientY };
+        }
         this.pathInputPointerDownRef.current = true;
     }
 
@@ -603,8 +617,38 @@ export class PreviewModel implements ViewModel {
         this.pathInputPointerDownRef.current = false;
     }
 
+    handlePathInputMouseUp(event: React.MouseEvent<HTMLInputElement>) {
+        const pointerDragged = didDragPreviewPathInput(
+            this.pathInputPointerDownPointRef.current,
+            event.clientX,
+            event.clientY
+        );
+        const shouldSelect = shouldSelectPreviewPathInputOnMouseUp(
+            this.pathInputFocusedOnPointerDownRef.current,
+            event.currentTarget.selectionStart,
+            event.currentTarget.selectionEnd,
+            pointerDragged
+        );
+        globalStore.set(this.pathInputFocused, true);
+        globalStore.set(this.pathInputValue, event.currentTarget.value);
+        if (shouldSelect) {
+            event.currentTarget.select();
+        }
+        this.pathInputFocusedOnPointerDownRef.current = false;
+        this.pathInputPointerDownPointRef.current = null;
+        this.handlePathInputPointerEnd();
+    }
+
     handlePathInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
         const waveEvent = adaptFromReactOrNativeKeyEvent(event);
+        if (
+            !globalStore.get(this.pathInputFocused) &&
+            !checkKeyPressed(waveEvent, "Enter") &&
+            !checkKeyPressed(waveEvent, "Escape")
+        ) {
+            globalStore.set(this.pathInputFocused, true);
+            globalStore.set(this.pathInputValue, event.currentTarget.value);
+        }
         if (checkKeyPressed(waveEvent, "Enter")) {
             event.preventDefault();
             event.stopPropagation();
@@ -628,15 +672,18 @@ export class PreviewModel implements ViewModel {
     }
 
     handlePathInputFocus(event: React.FocusEvent<HTMLInputElement>) {
+        if (this.pathInputPointerDownRef.current) {
+            return;
+        }
         globalStore.set(this.pathInputFocused, true);
         globalStore.set(this.pathInputValue, event.target.value);
-        if (!this.pathInputPointerDownRef.current) {
-            event.target.select();
-        }
+        event.target.select();
     }
 
     handlePathInputBlur() {
         this.pathInputPointerDownRef.current = false;
+        this.pathInputPointerDownPointRef.current = null;
+        this.pathInputFocusedOnPointerDownRef.current = false;
         globalStore.set(this.pathInputFocused, false);
         globalStore.set(this.pathInputValue, this.getHeaderPath());
     }
