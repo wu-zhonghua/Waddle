@@ -13,6 +13,8 @@ env:
     GO_VERSION: "1.25.6"
     NODE_VERSION: 22
     NODE_OPTIONS: --max-old-space-size=4096
+    WINDOWS_SIGNING_ENABLED: ${{ secrets.SM_HOST != '' && secrets.SM_API_KEY != '' && secrets.SM_CLIENT_CERT_FILE_B64 != '' && secrets.SM_CLIENT_CERT_PASSWORD != '' && secrets.SM_CODE_SIGNING_CERT_SHA1_HASH != '' }}
+    S3_UPLOAD_ENABLED: ${{ secrets.ARTIFACTS_KEY_ID != '' && secrets.ARTIFACTS_KEY_SECRET != '' }}
 jobs:
     build-app:
         outputs:
@@ -97,12 +99,12 @@ jobs:
 
             # Windows Code Signing Setup
             - name: Set up certificate (Windows only)
-              if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch'
+              if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch' && env.WINDOWS_SIGNING_ENABLED == 'true'
               run: |
                   echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12
               shell: bash
             - name: Set signing variables (Windows only)
-              if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch'
+              if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch' && env.WINDOWS_SIGNING_ENABLED == 'true'
               id: variables
               run: |
                   echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV"
@@ -116,7 +118,7 @@ jobs:
                   echo "C:\Program Files\DigiCert\DigiCert Keylocker Tools" >> $GITHUB_PATH
               shell: bash
             - name: Setup Keylocker KSP (Windows only)
-              if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch'
+              if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch' && env.WINDOWS_SIGNING_ENABLED == 'true'
               run: |
                   curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/Keylockertools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o Keylockertools-windows-x64.msi
                   msiexec /i Keylockertools-windows-x64.msi /quiet /qn
@@ -160,7 +162,7 @@ jobs:
 
             # Upload artifacts to the S3 staging and to the workflow output for the draft release job
             - name: Upload to S3 staging
-              if: github.event_name != 'workflow_dispatch'
+              if: github.event_name != 'workflow_dispatch' && env.S3_UPLOAD_ENABLED == 'true'
               run: task artifacts:upload
               env:
                   AWS_ACCESS_KEY_ID: "${{ secrets.ARTIFACTS_KEY_ID }}"
