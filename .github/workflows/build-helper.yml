@@ -13,6 +13,7 @@ env:
     GO_VERSION: "1.25.6"
     NODE_VERSION: 22
     NODE_OPTIONS: --max-old-space-size=4096
+    MAC_SIGNING_ENABLED: ${{ secrets.PROD_MACOS_CERTIFICATE_2 != '' && secrets.PROD_MACOS_CERTIFICATE_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_APPLE_ID_2 != '' && secrets.PROD_MACOS_NOTARIZATION_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_TEAM_ID_2 != '' }}
     WINDOWS_SIGNING_ENABLED: ${{ secrets.SM_HOST != '' && secrets.SM_API_KEY != '' && secrets.SM_CLIENT_CERT_FILE_B64 != '' && secrets.SM_CLIENT_CERT_PASSWORD != '' && secrets.SM_CODE_SIGNING_CERT_SHA1_HASH != '' }}
     S3_UPLOAD_ENABLED: ${{ secrets.ARTIFACTS_KEY_ID != '' && secrets.ARTIFACTS_KEY_SECRET != '' }}
 jobs:
@@ -135,8 +136,8 @@ jobs:
                   SNAPCRAFT_BUILD_ENVIRONMENT: host
             # Retry Darwin build in case of notarization failures
             - uses: nick-fields/retry@v4
-              name: Build (Darwin)
-              if: matrix.platform == 'darwin'
+              name: Build (Darwin signed)
+              if: matrix.platform == 'darwin' && env.MAC_SIGNING_ENABLED == 'true'
               with:
                   command: task package
                   timeout_minutes: 120
@@ -149,6 +150,17 @@ jobs:
                   APPLE_ID: ${{ matrix.platform == 'darwin' && secrets.PROD_MACOS_NOTARIZATION_APPLE_ID_2 }}
                   APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.platform == 'darwin' && secrets.PROD_MACOS_NOTARIZATION_PWD_2 }}
                   APPLE_TEAM_ID: ${{ matrix.platform == 'darwin' && secrets.PROD_MACOS_NOTARIZATION_TEAM_ID_2 }}
+                  STATIC_DOCSITE_PATH: ${{env.STATIC_DOCSITE_PATH}}
+            - uses: nick-fields/retry@v4
+              name: Build (Darwin fallback)
+              if: matrix.platform == 'darwin' && env.MAC_SIGNING_ENABLED != 'true'
+              with:
+                  command: task package
+                  timeout_minutes: 120
+                  retry_on: error
+                  max_attempts: 3
+              env:
+                  USE_SYSTEM_FPM: true # Ensure that the installed version of FPM is used rather than the bundled one.
                   STATIC_DOCSITE_PATH: ${{env.STATIC_DOCSITE_PATH}}
             - name: Build (Windows)
               if: matrix.platform == 'windows'

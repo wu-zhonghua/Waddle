@@ -18,6 +18,9 @@ describe("GitHub release workflow", () => {
         const workflow = readFileSync(".github/workflows/build-helper.yml", "utf8");
 
         expect(workflow).toContain(
+            "MAC_SIGNING_ENABLED: ${{ secrets.PROD_MACOS_CERTIFICATE_2 != '' && secrets.PROD_MACOS_CERTIFICATE_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_APPLE_ID_2 != '' && secrets.PROD_MACOS_NOTARIZATION_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_TEAM_ID_2 != '' }}"
+        );
+        expect(workflow).toContain(
             "WINDOWS_SIGNING_ENABLED: ${{ secrets.SM_HOST != '' && secrets.SM_API_KEY != '' && secrets.SM_CLIENT_CERT_FILE_B64 != '' && secrets.SM_CLIENT_CERT_PASSWORD != '' && secrets.SM_CODE_SIGNING_CERT_SHA1_HASH != '' }}"
         );
         expect(workflow).toContain(
@@ -25,6 +28,12 @@ describe("GitHub release workflow", () => {
         );
         expect(workflow).toContain(
             "if: matrix.platform == 'windows' && github.event_name != 'workflow_dispatch' && env.WINDOWS_SIGNING_ENABLED == 'true'"
+        );
+        expect(workflow).toContain(
+            "if: matrix.platform == 'darwin' && env.MAC_SIGNING_ENABLED == 'true'"
+        );
+        expect(workflow).toContain(
+            "if: matrix.platform == 'darwin' && env.MAC_SIGNING_ENABLED != 'true'"
         );
         expect(workflow).toContain("if: github.event_name != 'workflow_dispatch' && env.S3_UPLOAD_ENABLED == 'true'");
     });
