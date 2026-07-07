@@ -5,6 +5,16 @@ import { isLocalConnName } from "@/util/util";
 
 export const ConnectionChangeTimeoutMs = 60 * 60 * 1000;
 
+export function formatSshConnectionLabel(connName: string): string {
+    const atIndex = connName.lastIndexOf("@");
+    const hostAndPort = atIndex >= 0 ? connName.slice(atIndex + 1) : connName;
+    const hostName = hostAndPort.split(":")[0];
+    if (hostName == "" || hostName == connName) {
+        return connName;
+    }
+    return `${hostName} (${connName})`;
+}
+
 export type ChangeBlockConnectionRpc = {
     ConnEnsureCommand: (
         client: unknown,

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from "vitest";
-import { changeBlockConnection, ConnectionChangeTimeoutMs } from "./conntypeahead-utils";
+import { changeBlockConnection, ConnectionChangeTimeoutMs, formatSshConnectionLabel } from "./conntypeahead-utils";
 
 describe("changeBlockConnection", () => {
     it("ensures remote connections before updating block metadata", async () => {
@@ -73,5 +73,16 @@ describe("changeBlockConnection", () => {
                 meta: { connection: null, file: "~", "cmd:cwd": null },
             }
         );
+    });
+});
+
+describe("formatSshConnectionLabel", () => {
+    it("puts the ssh config host at the front of remote connection labels", () => {
+        expect(formatSshConnectionLabel("root@sgres:1001")).toBe("sgres (root@sgres:1001)");
+        expect(formatSshConnectionLabel("zhwu@A6000")).toBe("A6000 (zhwu@A6000)");
+    });
+
+    it("keeps bare host connections readable", () => {
+        expect(formatSshConnectionLabel("sgres")).toBe("sgres");
     });
 });

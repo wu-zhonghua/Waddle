@@ -233,8 +233,7 @@ const BlockFrame_Header = ({
     const iconColor = jotai.useAtomValue(waveEnv.getBlockMetaKeyAtom(nodeModel.blockId, "icon:color"));
     const isTerminalBlock = metaView === "term";
     const isPreviewHeader = metaView === "preview" && !useTermHeader;
-    const headerDragHandleRef = preview || isPreviewHeader ? null : nodeModel.dragHandleRef;
-    const previewHeaderDragHandleRef = !preview && isPreviewHeader ? nodeModel.dragHandleRef : null;
+    const headerDragHandleRef = preview ? null : nodeModel.dragHandleRef;
     viewName = metaFrameTitle ?? viewName;
     viewIconUnion = metaFrameIcon ?? viewIconUnion;
 
@@ -262,7 +261,7 @@ const BlockFrame_Header = ({
             {!useTermHeader && (
                 <>
                     {preIconButton && <IconButton decl={preIconButton} className="block-frame-preicon-button" />}
-                    <div className="block-frame-default-header-iconview" ref={previewHeaderDragHandleRef}>
+                    <div className="block-frame-default-header-iconview">
                         {viewIconElem}
                         {viewName && !hideViewName && <div className="block-frame-view-type">{viewName}</div>}
                     </div>

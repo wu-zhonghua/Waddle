@@ -1269,43 +1269,27 @@ func resolveSshConfigPatterns(configFiles []string) ([]string, error) {
 }
 
 func GetConnectionsList() ([]string, error) {
-	existing := GetAllConnStatus()
-	var currentlyRunning []string
-	var hasConnected []string
-
-	// populate all lists
-	for _, stat := range existing {
-		if stat.Connected {
-			currentlyRunning = append(currentlyRunning, stat.Connection)
-		}
-
-		if stat.HasConnected {
-			hasConnected = append(hasConnected, stat.Connection)
-		}
-	}
-
-	fromInternal := GetConnectionsFromInternalConfig()
-
 	fromConfig, err := GetConnectionsFromConfig()
 	if err != nil {
 		// this is not a fatal error. do not return
 		log.Printf("warning: no connections from ssh config found: %v", err)
 	}
 
-	// sort into one final list and remove duplicates
+	return makeConnectionsList(fromConfig), nil
+}
+
+func makeConnectionsList(fromConfig []string) []string {
 	alreadyUsed := make(map[string]struct{})
 	var connList []string
 
-	for _, subList := range [][]string{currentlyRunning, hasConnected, fromInternal, fromConfig} {
-		for _, pattern := range subList {
-			if _, used := alreadyUsed[pattern]; !used {
-				connList = append(connList, pattern)
-				alreadyUsed[pattern] = struct{}{}
-			}
+	for _, pattern := range fromConfig {
+		if _, used := alreadyUsed[pattern]; !used {
+			connList = append(connList, pattern)
+			alreadyUsed[pattern] = struct{}{}
 		}
 	}
 
-	return connList, nil
+	return connList
 }
 
 func GetConnectionsFromInternalConfig() []string {

@@ -72,11 +72,8 @@ describe("preview block header layout", () => {
         const layoutSource = readFileSync(join(TestDir, "../../layout/lib/TileLayout.tsx"), "utf8");
         const blockUtilSource = readBlockSource("blockutil.tsx");
 
-        expect(blockHeaderSource).toContain("const headerDragHandleRef = preview || isPreviewHeader ? null : nodeModel.dragHandleRef;");
-        expect(blockHeaderSource).toContain(
-            "const previewHeaderDragHandleRef = !preview && isPreviewHeader ? nodeModel.dragHandleRef : null;"
-        );
-        expect(blockHeaderSource).toContain("ref={previewHeaderDragHandleRef}");
+        expect(blockHeaderSource).toContain("const headerDragHandleRef = preview ? null : nodeModel.dragHandleRef;");
+        expect(blockHeaderSource).toContain("ref={headerDragHandleRef}");
         expect(layoutSource).toContain("isTileDragExcludedTarget(event.target)");
         expect(layoutSource).toContain("input, textarea, select, button, a");
         expect(layoutSource).toContain("dragHandle.draggable = !isExcludedTarget");

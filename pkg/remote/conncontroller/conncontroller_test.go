@@ -156,3 +156,13 @@ func TestShouldNotRetryWshFailureForUserOrConfigDecisions(t *testing.T) {
 		}
 	}
 }
+
+func TestMakeConnectionsListUsesOnlySshConfigEntries(t *testing.T) {
+	connList := makeConnectionsList(
+		[]string{"root@sgres:1001", "zhwu@A6000", "root@sgres:1001"},
+	)
+
+	if strings.Join(connList, ",") != "root@sgres:1001,zhwu@A6000" {
+		t.Fatalf("expected only ssh config entries, got %v", connList)
+	}
+}

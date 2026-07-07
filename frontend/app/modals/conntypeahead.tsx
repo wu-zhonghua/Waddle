@@ -20,7 +20,7 @@ import * as keyutil from "@/util/keyutil";
 import * as util from "@/util/util";
 import * as jotai from "jotai";
 import * as React from "react";
-import { changeBlockConnection } from "./conntypeahead-utils";
+import { changeBlockConnection, formatSshConnectionLabel } from "./conntypeahead-utils";
 
 // newConnList -> connList => filteredList -> remoteItems -> sortedRemoteItems => remoteSuggestion
 // filteredList -> createNew
@@ -67,7 +67,7 @@ function createRemoteSuggestionItems(
             iconColor:
                 connStatus?.status == "connected" ? `var(--conn-icon-color-${connColorNum})` : "var(--grey-text-color)",
             value: connName,
-            label: connName,
+            label: formatSshConnectionLabel(connName),
             current: connName == connection,
         };
         return item;
