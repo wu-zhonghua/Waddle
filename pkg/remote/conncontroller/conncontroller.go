@@ -207,8 +207,6 @@ func (conn *SSHConn) closeInternal_withlifecyclelock() {
 	})
 	client := conn.GetClient()
 	if client != nil {
-		// this MUST go first to force close the connection.
-		// the DomainSockListener.Close() sends SSH protocol packets which can block on a dead network conn
 		startTime := time.Now()
 		client.Close()
 		duration := time.Since(startTime).Milliseconds()
@@ -219,21 +217,12 @@ func (conn *SSHConn) closeInternal_withlifecyclelock() {
 			conn.Client = nil
 		})
 	}
-	listener := WithLockRtn(conn, func() net.Listener {
-		return conn.DomainSockListener
+	conn.WithLock(func() {
+		// DomainSockListener.Close() sends SSH protocol packets, which can spin on a dead mux.
+		// Client.Close()/Wait() closes the forwarding channel for full connection teardown.
+		conn.DomainSockListener = nil
+		conn.DomainSockName = ""
 	})
-	if listener != nil {
-		startTime := time.Now()
-		listener.Close()
-		duration := time.Since(startTime).Milliseconds()
-		if duration > 100 {
-			log.Printf("[conncontroller] conn:%s DomainSockListener.Close() took %d ms", conn.GetName(), duration)
-		}
-		conn.WithLock(func() {
-			conn.DomainSockListener = nil
-			conn.DomainSockName = ""
-		})
-	}
 	controller := WithLockRtn(conn, func() *ssh.Session {
 		return conn.ConnController
 	})

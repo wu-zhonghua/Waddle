@@ -6,12 +6,42 @@ package conncontroller
 import (
 	"context"
 	"errors"
+	"net"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/waddledev/waddle/pkg/remote"
 	"github.com/waddledev/waddle/pkg/wavebase"
 )
+
+type recordingListener struct {
+	closeCount int
+	lock       sync.Mutex
+}
+
+func (l *recordingListener) Accept() (net.Conn, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (l *recordingListener) Close() error {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	l.closeCount++
+	return nil
+}
+
+func (l *recordingListener) Addr() net.Addr {
+	return &net.UnixAddr{Name: "/tmp/waddle-test.sock", Net: "unix"}
+}
+
+func (l *recordingListener) CloseCount() int {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	return l.closeCount
+}
 
 func TestWshInstallContextIgnoresParentDeadline(t *testing.T) {
 	parentCtx, cancelFn := context.WithTimeout(context.Background(), time.Nanosecond)
@@ -154,6 +184,54 @@ func TestShouldNotRetryWshFailureForUserOrConfigDecisions(t *testing.T) {
 		if shouldRetryWshFailure(WshCheckResult{NoWshCode: code}) {
 			t.Fatalf("expected %s not to retry", code)
 		}
+	}
+}
+
+func TestCloseInternalClearsDomainSocketListenerWithoutClosingIt(t *testing.T) {
+	listener := &recordingListener{}
+	conn := &SSHConn{
+		lock:               &sync.Mutex{},
+		lifecycleLock:      &sync.Mutex{},
+		Opts:               &remote.SSHOpts{SSHHost: "example.com", SSHUser: "test"},
+		WshEnabled:         &atomic.Bool{},
+		DomainSockListener: listener,
+		DomainSockName:     "/tmp/waddle-test.sock",
+	}
+
+	conn.closeInternal_withlifecyclelock()
+
+	if listener.CloseCount() != 0 {
+		t.Fatalf("full connection close should not close SSH domain socket listener, got %d calls", listener.CloseCount())
+	}
+	if conn.DomainSockListener != nil {
+		t.Fatal("full connection close should clear domain socket listener")
+	}
+	if conn.DomainSockName != "" {
+		t.Fatalf("full connection close should clear domain socket name, got %q", conn.DomainSockName)
+	}
+}
+
+func TestCloseWshTransportClosesDomainSocketListener(t *testing.T) {
+	listener := &recordingListener{}
+	conn := &SSHConn{
+		lock:               &sync.Mutex{},
+		lifecycleLock:      &sync.Mutex{},
+		Opts:               &remote.SSHOpts{SSHHost: "example.com", SSHUser: "test"},
+		WshEnabled:         &atomic.Bool{},
+		DomainSockListener: listener,
+		DomainSockName:     "/tmp/waddle-test.sock",
+	}
+
+	conn.closeWshTransport()
+
+	if listener.CloseCount() != 1 {
+		t.Fatalf("wsh transport close should close domain socket listener once, got %d calls", listener.CloseCount())
+	}
+	if conn.DomainSockListener != nil {
+		t.Fatal("wsh transport close should clear domain socket listener")
+	}
+	if conn.DomainSockName != "" {
+		t.Fatalf("wsh transport close should clear domain socket name, got %q", conn.DomainSockName)
 	}
 }
 
