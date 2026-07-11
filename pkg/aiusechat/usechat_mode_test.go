@@ -39,10 +39,21 @@ func TestApplyProviderDefaultsKeepsProxyURL(t *testing.T) {
 }
 
 func TestApplyProviderDefaultsWaddleUsesWaveCloudEndpoint(t *testing.T) {
+	t.Setenv(uctypes.WaddleAIEndpointEnvName, "")
 	config := wconfig.AIModeConfigType{Provider: uctypes.AIProvider_Waddle}
 	applyProviderDefaults(&config)
 	const expected = "https://cfapi.waveterm.dev/api/waveai"
 	if config.Endpoint != expected {
 		t.Fatalf("expected endpoint %q, got %q", expected, config.Endpoint)
+	}
+}
+
+func TestApplyProviderDefaultsWaddleKeepsEndpointOverride(t *testing.T) {
+	const expected = "https://ai.example.test/v1/responses"
+	t.Setenv(uctypes.WaddleAIEndpointEnvName, expected)
+	config := wconfig.AIModeConfigType{Provider: uctypes.AIProvider_Waddle}
+	applyProviderDefaults(&config)
+	if config.Endpoint != expected {
+		t.Fatalf("expected endpoint override %q, got %q", expected, config.Endpoint)
 	}
 }
