@@ -171,17 +171,17 @@ func buildAnthropicHTTPRequest(ctx context.Context, msgs []anthropicInputMessage
 	}
 	req.Header.Set("anthropic-version", AnthropicDefaultAPIVersion)
 	req.Header.Set("accept", "text/event-stream")
-	// Only send Waddle-specific headers when using Waddle provider
+	// Only send Wave Cloud protocol headers when using the built-in provider
 	if opts.Provider == uctypes.AIProvider_Waddle {
 		if chatOpts.ClientId != "" {
-			req.Header.Set("X-Waddle-ClientId", chatOpts.ClientId)
+			req.Header.Set("X-Wave-ClientId", chatOpts.ClientId)
 		}
 		if chatOpts.ChatId != "" {
-			req.Header.Set("X-Waddle-ChatId", chatOpts.ChatId)
+			req.Header.Set("X-Wave-ChatId", chatOpts.ChatId)
 		}
-		req.Header.Set("X-Waddle-Version", wavebase.WaddleVersion)
-		req.Header.Set("X-Waddle-APIType", uctypes.APIType_AnthropicMessages)
-		req.Header.Set("X-Waddle-RequestType", chatOpts.GetWaddleRequestType())
+		req.Header.Set("X-Wave-Version", wavebase.WaddleVersion)
+		req.Header.Set("X-Wave-APIType", uctypes.APIType_AnthropicMessages)
+		req.Header.Set("X-Wave-RequestType", chatOpts.GetWaddleRequestType())
 	}
 
 	return req, nil

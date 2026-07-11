@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const DefaultAIEndpoint = "https://cfapi.waddle.dev/api/waveai"
+const DefaultAIEndpoint = "https://cfapi.waveterm.dev/api/waveai"
 const WaddleAIEndpointEnvName = "WADDLE_WAVEAI_ENDPOINT"
 const DefaultAnthropicModel = "claude-sonnet-4-5"
 const DefaultOpenAIModel = "gpt-5-mini"
@@ -556,9 +556,9 @@ type RateLimitInfo struct {
 	Unknown    bool  `json:"unknown,omitempty"`
 }
 
-// ParseRateLimitHeader parses the X-Waddle-RateLimit header
-// Format: X-Waddle-RateLimit: req=<remaining>, reqlimit=<max_requests>, preq=<premium_remaining>, preqlimit=<max_premium>, reset=<expiration_epoch_seconds>
-// Example: X-Waddle-RateLimit: req=180, reqlimit=200, preq=45, preqlimit=50, reset=1727818382
+// ParseRateLimitHeader parses the X-Wave-RateLimit header
+// Format: X-Wave-RateLimit: req=<remaining>, reqlimit=<max_requests>, preq=<premium_remaining>, preqlimit=<max_premium>, reset=<expiration_epoch_seconds>
+// Example: X-Wave-RateLimit: req=180, reqlimit=200, preq=45, preqlimit=50, reset=1727818382
 // - req: remaining regular requests in the current window
 // - reqlimit: maximum regular requests allowed in the window
 // - preq: remaining premium requests in the current window

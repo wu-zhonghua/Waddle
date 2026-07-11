@@ -37,3 +37,12 @@ func TestApplyProviderDefaultsKeepsProxyURL(t *testing.T) {
 		t.Fatalf("expected proxy URL to be preserved, got %q", config.ProxyURL)
 	}
 }
+
+func TestApplyProviderDefaultsWaddleUsesWaveCloudEndpoint(t *testing.T) {
+	config := wconfig.AIModeConfigType{Provider: uctypes.AIProvider_Waddle}
+	applyProviderDefaults(&config)
+	const expected = "https://cfapi.waveterm.dev/api/waveai"
+	if config.Endpoint != expected {
+		t.Fatalf("expected endpoint %q, got %q", expected, config.Endpoint)
+	}
+}

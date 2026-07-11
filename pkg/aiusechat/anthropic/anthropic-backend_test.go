@@ -4,11 +4,73 @@
 package anthropic
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
 	"github.com/waddledev/waddle/pkg/aiusechat/chatstore"
 	"github.com/waddledev/waddle/pkg/aiusechat/uctypes"
+	"github.com/waddledev/waddle/pkg/wavebase"
 )
+
+func TestBuildAnthropicHTTPRequestUsesWaveCloudHeaders(t *testing.T) {
+	chatOpts := uctypes.WaddleChatOpts{
+		ClientId: "client-1",
+		ChatId:   "chat-1",
+		Config: uctypes.AIOptsType{
+			Provider: uctypes.AIProvider_Waddle,
+			APIType:  uctypes.APIType_AnthropicMessages,
+			Model:    "claude-sonnet-4-5",
+			Endpoint: uctypes.DefaultAIEndpoint,
+		},
+	}
+	req, err := buildAnthropicHTTPRequest(context.Background(), nil, chatOpts)
+	if err != nil {
+		t.Fatalf("build request: %v", err)
+	}
+
+	want := map[string]string{
+		"X-Wave-ClientId":    "client-1",
+		"X-Wave-ChatId":      "chat-1",
+		"X-Wave-Version":     wavebase.WaddleVersion,
+		"X-Wave-APIType":     uctypes.APIType_AnthropicMessages,
+		"X-Wave-RequestType": "waveai",
+	}
+	assertWaveCloudHeaders(t, req.Header, want)
+}
+
+func TestBuildAnthropicHTTPRequestOmitsWaveCloudHeadersForDirectProvider(t *testing.T) {
+	chatOpts := uctypes.WaddleChatOpts{
+		ClientId: "client-1",
+		ChatId:   "chat-1",
+		Config: uctypes.AIOptsType{
+			Provider: uctypes.AIProvider_Custom,
+			APIType:  uctypes.APIType_AnthropicMessages,
+			Model:    "claude-sonnet-4-5",
+			Endpoint: "https://api.anthropic.com/v1/messages",
+		},
+	}
+	req, err := buildAnthropicHTTPRequest(context.Background(), nil, chatOpts)
+	if err != nil {
+		t.Fatalf("build request: %v", err)
+	}
+
+	assertWaveCloudHeaders(t, req.Header, map[string]string{})
+}
+
+func assertWaveCloudHeaders(t *testing.T, headers http.Header, want map[string]string) {
+	t.Helper()
+	for _, name := range []string{"X-Wave-ClientId", "X-Wave-ChatId", "X-Wave-Version", "X-Wave-APIType", "X-Wave-RequestType"} {
+		if actual := headers.Get(name); actual != want[name] {
+			t.Errorf("header %s: expected %q, got %q", name, want[name], actual)
+		}
+	}
+	for _, name := range []string{"X-Waddle-ClientId", "X-Waddle-ChatId", "X-Waddle-Version", "X-Waddle-APIType", "X-Waddle-RequestType"} {
+		if actual := headers.Get(name); actual != "" {
+			t.Errorf("obsolete header %s was set to %q", name, actual)
+		}
+	}
+}
 
 func TestConvertPartsToAnthropicBlocks_TextOnly(t *testing.T) {
 	parts := []uctypes.UIMessagePart{

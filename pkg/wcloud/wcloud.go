@@ -23,9 +23,9 @@ import (
 	"github.com/waddledev/waddle/pkg/wavebase"
 )
 
-const WCloudEndpoint = "https://api.waddle.dev/central"
+const WCloudEndpoint = "https://api.waveterm.dev/central"
 const WCloudEndpointVarName = "WCLOUD_ENDPOINT"
-const WCloudPingEndpoint = "https://ping.waddle.dev/central"
+const WCloudPingEndpoint = "https://ping.waveterm.dev/central"
 const WCloudPingEndpointVarName = "WCLOUD_PING_ENDPOINT"
 
 var WCloudEndpoint_VarCache string
