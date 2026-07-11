@@ -13,6 +13,7 @@ import * as jotai from "jotai";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import * as React from "react";
 import { BlockEnv } from "./blockenv";
+import { makeWshReconnect } from "./connstatusreconnect";
 
 function formatElapsedTime(elapsedMs: number): string {
     if (elapsedMs <= 0) {
@@ -143,6 +144,7 @@ export const ConnStatusOverlay = React.memo(
         const wshConfigEnabled =
             jotai.useAtomValue(waveEnv.getConnConfigKeyAtom(connName, "conn:wshenabled")) ?? true;
         const [showWshError, setShowWshError] = React.useState(false);
+        const [isReconnecting, setIsReconnecting] = React.useState(false);
 
         React.useEffect(() => {
             if (width) {
@@ -161,20 +163,37 @@ export const ConnStatusOverlay = React.memo(
             prtn.catch((e) => console.log("error reconnecting", connName, e));
         }, [connName, nodeModel.blockId, waveEnv]);
 
-        const handleDisableWsh = React.useCallback(async () => {
-            const metamaptype: unknown = {
-                "conn:wshenabled": false,
-            };
-            const data: ConnConfigRequest = {
-                host: connName,
-                metamaptype: metamaptype,
-            };
+        const reconnectWsh = React.useMemo(
+            () =>
+                makeWshReconnect({
+                    reinstall: () =>
+                        waveEnv.rpc.ConnReinstallWshCommand(
+                            TabRpcClient,
+                            { connname: connName, logblockid: nodeModel.blockId },
+                            { timeout: 120000 }
+                        ),
+                    disconnect: () =>
+                        waveEnv.rpc.ConnDisconnectCommand(TabRpcClient, connName, { timeout: 30000 }),
+                    connect: () =>
+                        waveEnv.rpc.ConnConnectCommand(
+                            TabRpcClient,
+                            { host: connName, logblockid: nodeModel.blockId },
+                            { timeout: 120000 }
+                        ),
+                }),
+            [connName, nodeModel.blockId, waveEnv]
+        );
+
+        const handleReconnectWsh = React.useCallback(async () => {
+            setIsReconnecting(true);
             try {
-                await waveEnv.rpc.SetConnectionsConfigCommand(TabRpcClient, data);
+                await reconnectWsh();
             } catch (e) {
-                console.log("problem setting connection config: ", e);
+                console.log("error reconnecting wsh", connName, e);
+            } finally {
+                setIsReconnecting(false);
             }
-        }, [connName, waveEnv]);
+        }, [connName, reconnectWsh]);
 
         const handleRemoveWshError = React.useCallback(async () => {
             try {
@@ -192,6 +211,9 @@ export const ConnStatusOverlay = React.memo(
         }
         if (connStatus.status == "connected") {
             showReconnect = false;
+        }
+        if (showWshError) {
+            statusText = `Remote helper error on "${connName}"`;
         }
         let reconDisplay = null;
         let reconClassName = "outlined grey";
@@ -263,8 +285,8 @@ export const ConnStatusOverlay = React.memo(
                                 </OverlayScrollbarsComponent>
                             )}
                             {showWshError && (
-                                <Button className={reconClassName} onClick={handleDisableWsh}>
-                                    always disable wsh
+                                <Button className={reconClassName} onClick={handleReconnectWsh} disabled={isReconnecting}>
+                                    {isReconnecting ? "Reconnecting..." : "Reconnect"}
                                 </Button>
                             )}
                         </div>

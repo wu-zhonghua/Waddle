@@ -30,7 +30,7 @@ export type BlockEnv = WaddleEnvSubset<{
         ConnEnsureCommand: WaddleEnv["rpc"]["ConnEnsureCommand"];
         ConnDisconnectCommand: WaddleEnv["rpc"]["ConnDisconnectCommand"];
         ConnConnectCommand: WaddleEnv["rpc"]["ConnConnectCommand"];
-        SetConnectionsConfigCommand: WaddleEnv["rpc"]["SetConnectionsConfigCommand"];
+        ConnReinstallWshCommand: WaddleEnv["rpc"]["ConnReinstallWshCommand"];
         DismissWshFailCommand: WaddleEnv["rpc"]["DismissWshFailCommand"];
     };
     wos: WaddleEnv["wos"];

@@ -18,6 +18,15 @@ describe("connection status overlay", () => {
         expect(source).toContain("onReconnect={handleTryReconnect}");
     });
 
+    it("offers reconnect instead of disabling wsh after a helper error", () => {
+        const source = readFileSync(join(TestDir, "connstatusoverlay.tsx"), "utf8");
+
+        expect(source).toContain("handleReconnectWsh");
+        expect(source).toContain('isReconnecting ? "Reconnecting..." : "Reconnect"');
+        expect(source).not.toContain("always disable wsh");
+        expect(source).not.toContain("handleDisableWsh");
+    });
+
     it("defaults new remote terminals to durable sessions", () => {
         const settings = JSON.parse(
             readFileSync(join(TestDir, "../../../pkg/wconfig/defaultconfig/settings.json"), "utf8")
