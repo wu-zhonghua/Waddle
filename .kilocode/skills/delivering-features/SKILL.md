@@ -11,7 +11,18 @@ Deliver the approved behavior and only the approved scope. Evidence gates every 
 
 ## Execution Record
 
-Record acceptance criteria, included paths/hunks, preserved work, verification, local-install requirement, and target ref before editing. Update the record when the user changes scope; never infer mixed-file ownership from filenames alone.
+Before editing, emit exactly these six slots in this order; never combine or omit one:
+
+```text
+Acceptance criteria: <observable behavior and delivery outcome>
+Included paths/hunks: <approved feature work, including approved shared-file hunks>
+Preserved work: <every unrelated staged, unstaged, untracked, or shared-file change>
+Required verification: <RED/GREEN evidence plus focused and repository-wide checks>
+Local installation: <requested gates, or "not requested">
+Target ref: <remote and branch; state whether direct push is authorized>
+```
+
+Mark unknown values as blockers. Write `not requested` for local installation when absent. Update the record when scope changes; never infer mixed-file ownership from filenames alone.
 
 ## Workflow
 
