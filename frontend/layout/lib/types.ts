@@ -179,8 +179,12 @@ export interface LayoutTreeInsertLeftSidebarAction extends LayoutTreeAction, Ins
 }
 
 export interface LayoutTreeRootRowRebalance {
-    fixedNodeId: string;
-    fixedSize: number;
+    fixedNodeId?: string;
+    fixedSize?: number;
+    fixedNodes?: Array<{
+        nodeId: string;
+        size: number;
+    }>;
     remainingSize: number;
 }
 

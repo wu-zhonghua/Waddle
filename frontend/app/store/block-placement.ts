@@ -72,11 +72,46 @@ function findRootRowRightmostChild(rootNode: LayoutNode): LayoutNode {
     return findRightmostLeaf(rootNode);
 }
 
+function findRightSidebarStackTarget(rootNode: LayoutNode, getBlockMeta: BlockMetaResolver): LayoutNode {
+    if (rootNode?.flexDirection !== FlexDirection.Row || !rootNode.children?.length) {
+        return null;
+    }
+    const rightmostRootChild = rootNode.children[rootNode.children.length - 1];
+    if (rightmostRootChild.size !== RightSidebarSize) {
+        return null;
+    }
+    const rightmostLeaf = findRightmostLeaf(rightmostRootChild);
+    const meta = getNodeMeta(rightmostLeaf, getBlockMeta);
+    if (!isGitMeta(meta) && meta?.view !== "web") {
+        return null;
+    }
+    return rightmostLeaf;
+}
+
 function makeRootRowRebalance(sidebarNode: LayoutNode): LayoutTreeRootRowRebalance {
     const fixedSize = sidebarNode?.size ?? FilesSidebarSize;
     return {
         fixedNodeId: sidebarNode.id,
         fixedSize,
+        remainingSize: Math.max(0, RootRowSize - fixedSize),
+    };
+}
+
+function makeRightSidebarRebalance(
+    rootNode: LayoutNode,
+    newNode: LayoutNode,
+    getBlockMeta: BlockMetaResolver
+): LayoutTreeRootRowRebalance {
+    const fixedNodes = [{ nodeId: newNode.id, size: RightSidebarSize }];
+    if (rootNode?.flexDirection === FlexDirection.Row && rootNode.children?.length) {
+        const leftmostRootChild = rootNode.children[0];
+        if (findLeafByMeta(leftmostRootChild, getBlockMeta, isFilesMeta) != null) {
+            fixedNodes.unshift({ nodeId: leftmostRootChild.id, size: leftmostRootChild.size ?? FilesSidebarSize });
+        }
+    }
+    const fixedSize = fixedNodes.reduce((total, fixedNode) => total + fixedNode.size, 0);
+    return {
+        fixedNodes,
         remainingSize: Math.max(0, RootRowSize - fixedSize),
     };
 }
@@ -259,12 +294,13 @@ function makeSplitHorizontalAction(
 function makeRightSidebarAction(
     rootNode: LayoutNode,
     targetNode: LayoutNode,
-    newNode: LayoutNode
+    newNode: LayoutNode,
+    getBlockMeta: BlockMetaResolver
 ): LayoutTreeSplitHorizontalAction {
     newNode.size = RightSidebarSize;
-    const currentSize = rootNode?.id === targetNode?.id ? RootRowSize : (targetNode?.size ?? RootRowSize);
-    const targetSize = Math.max(0, currentSize - RightSidebarSize);
-    return makeSplitHorizontalAction(targetNode, newNode, targetSize);
+    const currentSize = rootNode?.id === targetNode?.id ? RootRowSize : targetNode?.size;
+    const targetSize = currentSize == null ? undefined : Math.max(0, currentSize - RightSidebarSize);
+    return makeSplitHorizontalAction(targetNode, newNode, targetSize, makeRightSidebarRebalance(rootNode, newNode, getBlockMeta));
 }
 
 export function makeCreateBlockPlacementAction(
@@ -288,11 +324,16 @@ export function makeCreateBlockPlacementAction(
         } as LayoutTreeInsertLeftSidebarAction;
     }
     if (placement === "git" || placement === "web") {
-        const targetNode = findRootRowRightmostChild(rootNode);
+        const stackTarget = findRightSidebarStackTarget(rootNode, getBlockMeta);
+        if (stackTarget != null) {
+            return makeSplitVerticalAction(stackTarget, newNode);
+        }
+        const targetNode =
+            rootNode?.flexDirection === FlexDirection.Row ? findRootRowRightmostChild(rootNode) : rootNode;
         if (targetNode == null) {
             return null;
         }
-        return makeRightSidebarAction(rootNode, targetNode, newNode);
+        return makeRightSidebarAction(rootNode, targetNode, newNode, getBlockMeta);
     }
     if (placement === "terminal") {
         const existingTerminal = findLeafByMeta(rootNode, getBlockMeta, isTerminalMeta);

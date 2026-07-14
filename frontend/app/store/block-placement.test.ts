@@ -3,8 +3,13 @@
 
 import { describe, expect, it } from "vitest";
 import { newLayoutNode } from "@/layout/lib/layoutNode";
-import { splitHorizontal } from "@/layout/lib/layoutTree";
-import { FlexDirection, LayoutTreeActionType, type LayoutTreeSplitHorizontalAction } from "@/layout/lib/types";
+import { splitHorizontal, splitVertical } from "@/layout/lib/layoutTree";
+import {
+    FlexDirection,
+    LayoutTreeActionType,
+    type LayoutTreeSplitHorizontalAction,
+    type LayoutTreeSplitVerticalAction,
+} from "@/layout/lib/types";
 import { applyInheritedBlockLocation, getPlacementForBlockDef, makeCreateBlockPlacementAction } from "./block-placement";
 
 describe("makeCreateBlockPlacementAction", () => {
@@ -12,6 +17,8 @@ describe("makeCreateBlockPlacementAction", () => {
         files: { view: "preview", file: "~" },
         git: { view: "git", "cmd:cwd": "/repo" },
         terminal: { view: "term", controller: "shell" },
+        "terminal-2": { view: "term", controller: "shell" },
+        web: { view: "web" },
     };
     const getBlockMeta = (blockId: string) => metas[blockId];
 
@@ -138,6 +145,75 @@ describe("makeCreateBlockPlacementAction", () => {
             targetNodeSize: 80,
         });
         expect(webNode.size).toBe(20);
+    });
+
+    it("opens web to the right of the entire vertically stacked root", () => {
+        const firstTerminal = newLayoutNode(undefined, 50, undefined, { blockId: "terminal" });
+        const secondTerminal = newLayoutNode(undefined, 50, undefined, { blockId: "terminal-2" });
+        const rootNode = newLayoutNode(FlexDirection.Column, undefined, [firstTerminal, secondTerminal]);
+        const webNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-web" });
+        const treeState = { rootNode, pendingBackendActions: [] };
+
+        const action = makeCreateBlockPlacementAction(rootNode, webNode, "web", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: rootNode.id,
+            targetNodeSize: 80,
+            newNode: webNode,
+            position: "after",
+            focused: true,
+        });
+
+        splitHorizontal(treeState, action as LayoutTreeSplitHorizontalAction);
+
+        expect(treeState.rootNode.flexDirection).toBe(FlexDirection.Row);
+        expect(treeState.rootNode.children?.[0]).toBe(rootNode);
+        expect(treeState.rootNode.children?.[0].size).toBe(80);
+        expect(treeState.rootNode.children?.[1]).toBe(webNode);
+        expect(treeState.rootNode.children?.[1].size).toBe(20);
+    });
+
+    it("stacks another web block inside the existing right sidebar", () => {
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+        const existingWebNode = newLayoutNode(undefined, 20, undefined, { blockId: "web" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [terminalNode, existingWebNode]);
+        const webNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-web" });
+        const treeState = { rootNode, pendingBackendActions: [] };
+
+        const action = makeCreateBlockPlacementAction(rootNode, webNode, "web", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitVertical,
+            targetNodeId: existingWebNode.id,
+            newNode: webNode,
+            position: "after",
+            focused: true,
+        });
+
+        splitVertical(treeState, action as LayoutTreeSplitVerticalAction);
+
+        expect(treeState.rootNode.children).toHaveLength(2);
+        expect(treeState.rootNode.children?.[0].size).toBe(80);
+        expect(treeState.rootNode.children?.[1].flexDirection).toBe(FlexDirection.Column);
+        expect(treeState.rootNode.children?.[1].size).toBe(20);
+        expect(treeState.rootNode.children?.[1].children?.every((node) => node.size > 0)).toBe(true);
+    });
+
+    it("normalizes the root row when the main pane has no explicit size", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+        terminalNode.size = undefined;
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const webNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-web" });
+        const treeState = { rootNode, pendingBackendActions: [] };
+
+        const action = makeCreateBlockPlacementAction(rootNode, webNode, "web", getBlockMeta);
+
+        splitHorizontal(treeState, action as LayoutTreeSplitHorizontalAction);
+
+        expect(treeState.rootNode.children?.map((node) => node.size)).toEqual([20, 60, 20]);
+        expect(treeState.rootNode.children?.reduce((total, node) => total + node.size, 0)).toBe(100);
     });
 
     it("stacks terminals below an existing terminal when files are already open", () => {

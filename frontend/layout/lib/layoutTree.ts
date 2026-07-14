@@ -408,15 +408,26 @@ function rebalanceRootRow(layoutState: LayoutTreeState, rebalance?: LayoutTreeRo
     if (layoutState.rootNode.flexDirection !== FlexDirection.Row) {
         return;
     }
-    const fixedNode = layoutState.rootNode.children.find((child) => child.id === rebalance.fixedNodeId);
-    if (fixedNode == null) {
+    const fixedNodeSizes =
+        rebalance.fixedNodes ??
+        (rebalance.fixedNodeId != null && rebalance.fixedSize != null
+            ? [{ nodeId: rebalance.fixedNodeId, size: rebalance.fixedSize }]
+            : []);
+    if (fixedNodeSizes.length === 0) {
         return;
     }
-    const flexibleNodes = layoutState.rootNode.children.filter((child) => child.id !== fixedNode.id);
+    const fixedSizeByNodeId = new Map(fixedNodeSizes.map((fixedNode) => [fixedNode.nodeId, fixedNode.size]));
+    const fixedNodes = layoutState.rootNode.children.filter((child) => fixedSizeByNodeId.has(child.id));
+    if (fixedNodes.length !== fixedNodeSizes.length) {
+        return;
+    }
+    const flexibleNodes = layoutState.rootNode.children.filter((child) => !fixedSizeByNodeId.has(child.id));
+    fixedNodes.forEach((node) => {
+        node.size = fixedSizeByNodeId.get(node.id);
+    });
     if (flexibleNodes.length === 0) {
         return;
     }
-    fixedNode.size = rebalance.fixedSize;
     const flexibleSize = rebalance.remainingSize / flexibleNodes.length;
     flexibleNodes.forEach((node) => {
         node.size = flexibleSize;
