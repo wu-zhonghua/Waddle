@@ -13,9 +13,10 @@ import {
     LayoutTreeSplitVerticalAction,
 } from "@/layout/lib/types";
 
-export type CreateBlockPlacement = "default" | "files" | "git" | "terminal" | "preview";
+export type CreateBlockPlacement = "default" | "files" | "git" | "web" | "terminal" | "preview";
 
 const FilesSidebarSize = 20;
+const RightSidebarSize = 20;
 const MainContentSize = 80;
 const RootRowSize = 100;
 const StackedBlockHeightFraction = 1 / 3;
@@ -96,7 +97,7 @@ function isTerminalLikeMeta(meta: MetaType): boolean {
     if (meta == null) {
         return false;
     }
-    return isTerminalMeta(meta) || meta.view === "web" || meta.view === "sysinfo";
+    return isTerminalMeta(meta) || meta.view === "sysinfo";
 }
 
 export function getPlacementForBlockDef(blockDef: BlockDef): CreateBlockPlacement {
@@ -106,6 +107,9 @@ export function getPlacementForBlockDef(blockDef: BlockDef): CreateBlockPlacemen
     }
     if (isGitMeta(meta)) {
         return "git";
+    }
+    if (meta?.view === "web") {
+        return "web";
     }
     if (isTerminalLikeMeta(meta)) {
         return "terminal";
@@ -252,6 +256,17 @@ function makeSplitHorizontalAction(
     };
 }
 
+function makeRightSidebarAction(
+    rootNode: LayoutNode,
+    targetNode: LayoutNode,
+    newNode: LayoutNode
+): LayoutTreeSplitHorizontalAction {
+    newNode.size = RightSidebarSize;
+    const currentSize = rootNode?.id === targetNode?.id ? RootRowSize : (targetNode?.size ?? RootRowSize);
+    const targetSize = Math.max(0, currentSize - RightSidebarSize);
+    return makeSplitHorizontalAction(targetNode, newNode, targetSize);
+}
+
 export function makeCreateBlockPlacementAction(
     rootNode: LayoutNode,
     newNode: LayoutNode,
@@ -272,23 +287,12 @@ export function makeCreateBlockPlacementAction(
             mainSize: MainContentSize,
         } as LayoutTreeInsertLeftSidebarAction;
     }
-    if (placement === "git") {
-        const existingGit = findLeafByMeta(rootNode, getBlockMeta, isGitMeta);
-        if (existingGit != null) {
-            return makeSplitVerticalAction(existingGit, newNode);
+    if (placement === "git" || placement === "web") {
+        const targetNode = findRootRowRightmostChild(rootNode);
+        if (targetNode == null) {
+            return null;
         }
-        const existingFiles = findLeafByMeta(rootNode, getBlockMeta, isFilesMeta);
-        if (existingFiles != null) {
-            return makeSplitVerticalAction(existingFiles, newNode);
-        }
-        return {
-            type: LayoutTreeActionType.InsertLeftSidebar,
-            node: newNode,
-            magnified: false,
-            focused: true,
-            sidebarSize: FilesSidebarSize,
-            mainSize: MainContentSize,
-        } as LayoutTreeInsertLeftSidebarAction;
+        return makeRightSidebarAction(rootNode, targetNode, newNode);
     }
     if (placement === "terminal") {
         const existingTerminal = findLeafByMeta(rootNode, getBlockMeta, isTerminalMeta);

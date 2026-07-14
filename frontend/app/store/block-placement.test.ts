@@ -47,21 +47,97 @@ describe("makeCreateBlockPlacementAction", () => {
         expect(newFilesNode.size).toBeCloseTo(10);
     });
 
-    it("stacks git below an existing files block", () => {
+    it("opens git at the far right when files are already open", () => {
         const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
-        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
         const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
         const gitNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-git" });
 
         const action = makeCreateBlockPlacementAction(rootNode, gitNode, "git", getBlockMeta);
 
         expect(action).toMatchObject({
-            type: LayoutTreeActionType.SplitVertical,
-            targetNodeId: filesNode.id,
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: terminalNode.id,
             newNode: gitNode,
             position: "after",
             focused: true,
+            targetNodeSize: 60,
         });
+        expect(gitNode.size).toBe(20);
+    });
+
+    it("opens the first git panel to the right of the current pane", () => {
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+        const gitNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-git" });
+
+        const action = makeCreateBlockPlacementAction(terminalNode, gitNode, "git", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: terminalNode.id,
+            newNode: gitNode,
+            position: "after",
+            focused: true,
+            targetNodeSize: 80,
+        });
+        expect(gitNode.size).toBe(20);
+    });
+
+    it("opens git at the far right even if an older git panel is stacked with files", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
+        const oldGitNode = newLayoutNode(undefined, undefined, undefined, { blockId: "git" });
+        const filesStackNode = newLayoutNode(FlexDirection.Column, 20, [filesNode, oldGitNode]);
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesStackNode, terminalNode]);
+        const gitNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-git" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, gitNode, "git", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: terminalNode.id,
+            newNode: gitNode,
+            position: "after",
+            focused: true,
+            targetNodeSize: 60,
+        });
+        expect(gitNode.size).toBe(20);
+    });
+
+    it("opens web at the far right when files are already open", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const webNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-web" });
+
+        const action = makeCreateBlockPlacementAction(rootNode, webNode, "web", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: terminalNode.id,
+            newNode: webNode,
+            position: "after",
+            focused: true,
+            targetNodeSize: 60,
+        });
+        expect(webNode.size).toBe(20);
+    });
+
+    it("opens the first web panel to the right of the current pane", () => {
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+        const webNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-web" });
+
+        const action = makeCreateBlockPlacementAction(terminalNode, webNode, "web", getBlockMeta);
+
+        expect(action).toMatchObject({
+            type: LayoutTreeActionType.SplitHorizontal,
+            targetNodeId: terminalNode.id,
+            newNode: webNode,
+            position: "after",
+            focused: true,
+            targetNodeSize: 80,
+        });
+        expect(webNode.size).toBe(20);
     });
 
     it("stacks terminals below an existing terminal when files are already open", () => {
@@ -272,8 +348,11 @@ describe("applyInheritedBlockLocation", () => {
 describe("getPlacementForBlockDef", () => {
     it("opens terminal-like widgets with terminal placement", () => {
         expect(getPlacementForBlockDef({ meta: { view: "term", controller: "shell" } })).toBe("terminal");
-        expect(getPlacementForBlockDef({ meta: { view: "web" } })).toBe("terminal");
         expect(getPlacementForBlockDef({ meta: { view: "sysinfo" } })).toBe("terminal");
+    });
+
+    it("opens web panels in web placement", () => {
+        expect(getPlacementForBlockDef({ meta: { view: "web" } })).toBe("web");
     });
 
     it("keeps file previews in the files placement", () => {

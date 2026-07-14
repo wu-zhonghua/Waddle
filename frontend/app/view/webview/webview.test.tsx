@@ -1,12 +1,27 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { globalStore } from "@/app/store/jotaiStore";
 import { makeMockWaddleEnv } from "@/preview/mock/mockwaveenv";
+import { atom } from "jotai";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { atom } from "jotai";
 import { getWebPreviewDisplayUrl, WebViewModel, WebViewPreviewFallback } from "./webview";
+
+const TestDir = dirname(fileURLToPath(import.meta.url));
+
+describe("web homepage default", () => {
+    it("defaults to GitHub", () => {
+        const settings = JSON.parse(
+            readFileSync(join(TestDir, "../../../../pkg/wconfig/defaultconfig/settings.json"), "utf8")
+        );
+
+        expect(settings["web:defaulturl"]).toBe("https://github.com");
+    });
+});
 
 describe("webview preview fallback", () => {
     it("shows the requested URL", () => {
