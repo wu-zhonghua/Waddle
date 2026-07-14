@@ -1,0 +1,4 @@
+interface:
+  display_name: "Delivering Waddle Features"
+  short_description: "Deliver verified Waddle features safely"
+  default_prompt: "Use $delivering-features to implement and push this Waddle feature."
