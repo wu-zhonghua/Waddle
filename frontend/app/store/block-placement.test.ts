@@ -216,6 +216,21 @@ describe("makeCreateBlockPlacementAction", () => {
         expect(treeState.rootNode.children?.reduce((total, node) => total + node.size, 0)).toBe(100);
     });
 
+    it("preserves explicit pane widths when adding the right sidebar", () => {
+        const filesNode = newLayoutNode(undefined, 20, undefined, { blockId: "files" });
+        const firstTerminal = newLayoutNode(undefined, 40, undefined, { blockId: "terminal" });
+        const secondTerminal = newLayoutNode(undefined, 40, undefined, { blockId: "terminal-2" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, firstTerminal, secondTerminal]);
+        const webNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-web" });
+        const treeState = { rootNode, pendingBackendActions: [] };
+
+        const action = makeCreateBlockPlacementAction(rootNode, webNode, "web", getBlockMeta);
+
+        splitHorizontal(treeState, action as LayoutTreeSplitHorizontalAction);
+
+        expect(treeState.rootNode.children?.map((node) => node.size)).toEqual([20, 40, 20, 20]);
+    });
+
     it("stacks terminals below an existing terminal when files are already open", () => {
         const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "files" });
         const terminalNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });

@@ -99,16 +99,23 @@ function makeRootRowRebalance(sidebarNode: LayoutNode): LayoutTreeRootRowRebalan
 
 function makeRightSidebarRebalance(
     rootNode: LayoutNode,
+    targetNode: LayoutNode,
     newNode: LayoutNode,
-    getBlockMeta: BlockMetaResolver
-): LayoutTreeRootRowRebalance {
-    const fixedNodes = [{ nodeId: newNode.id, size: RightSidebarSize }];
-    if (rootNode?.flexDirection === FlexDirection.Row && rootNode.children?.length) {
-        const leftmostRootChild = rootNode.children[0];
-        if (findLeafByMeta(leftmostRootChild, getBlockMeta, isFilesMeta) != null) {
-            fixedNodes.unshift({ nodeId: leftmostRootChild.id, size: leftmostRootChild.size ?? FilesSidebarSize });
-        }
+    targetNodeSize?: number
+): LayoutTreeRootRowRebalance | undefined {
+    if (
+        rootNode?.flexDirection !== FlexDirection.Row ||
+        !rootNode.children?.some((child) => child.size == null)
+    ) {
+        return undefined;
     }
+    const fixedNodes = [{ nodeId: newNode.id, size: RightSidebarSize }];
+    rootNode.children.forEach((child) => {
+        const size = child.id === targetNode.id ? targetNodeSize : child.size;
+        if (size != null) {
+            fixedNodes.unshift({ nodeId: child.id, size });
+        }
+    });
     const fixedSize = fixedNodes.reduce((total, fixedNode) => total + fixedNode.size, 0);
     return {
         fixedNodes,
@@ -294,13 +301,17 @@ function makeSplitHorizontalAction(
 function makeRightSidebarAction(
     rootNode: LayoutNode,
     targetNode: LayoutNode,
-    newNode: LayoutNode,
-    getBlockMeta: BlockMetaResolver
+    newNode: LayoutNode
 ): LayoutTreeSplitHorizontalAction {
     newNode.size = RightSidebarSize;
     const currentSize = rootNode?.id === targetNode?.id ? RootRowSize : targetNode?.size;
     const targetSize = currentSize == null ? undefined : Math.max(0, currentSize - RightSidebarSize);
-    return makeSplitHorizontalAction(targetNode, newNode, targetSize, makeRightSidebarRebalance(rootNode, newNode, getBlockMeta));
+    return makeSplitHorizontalAction(
+        targetNode,
+        newNode,
+        targetSize,
+        makeRightSidebarRebalance(rootNode, targetNode, newNode, targetSize)
+    );
 }
 
 export function makeCreateBlockPlacementAction(
@@ -333,7 +344,7 @@ export function makeCreateBlockPlacementAction(
         if (targetNode == null) {
             return null;
         }
-        return makeRightSidebarAction(rootNode, targetNode, newNode, getBlockMeta);
+        return makeRightSidebarAction(rootNode, targetNode, newNode);
     }
     if (placement === "terminal") {
         const existingTerminal = findLeafByMeta(rootNode, getBlockMeta, isTerminalMeta);
