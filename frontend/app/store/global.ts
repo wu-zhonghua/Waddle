@@ -428,7 +428,8 @@ async function createBlock(
         layoutModel.treeState?.rootNode,
         layoutModel.treeState?.focusedNodeId,
         placement,
-        getBlockMeta
+        getBlockMeta,
+        layoutModel.focusedNodeIdHistory
     );
     const blockId = await ObjectService.CreateBlock(resolvedBlockDef, rtOpts);
     if (ephemeral) {

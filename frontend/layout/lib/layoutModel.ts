@@ -911,6 +911,10 @@ export class LayoutModel {
         return this.focusedNodeIdStack[0];
     }
 
+    get focusedNodeIdHistory(): readonly string[] {
+        return [...this.focusedNodeIdStack];
+    }
+
     /**
      * Checks whether the focused node id has changed and, if so, whether to update the focused node stack. If the focused node was deleted, will pop the latest value from the stack.
      * @param leafOrder The new leaf order array to use when searching for stale nodes in the stack.
