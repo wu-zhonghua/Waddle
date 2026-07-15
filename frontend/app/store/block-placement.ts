@@ -27,7 +27,11 @@ type BlockLocation = {
     path?: string;
 };
 
-function findLeafByMeta(rootNode: LayoutNode, getBlockMeta: BlockMetaResolver, predicate: (meta: MetaType) => boolean): LayoutNode {
+function findLeafByMeta(
+    rootNode: LayoutNode,
+    getBlockMeta: BlockMetaResolver,
+    predicate: (meta: MetaType) => boolean
+): LayoutNode {
     let match: LayoutNode = null;
     walkNodes(rootNode, (node) => {
         if (match != null || node.data?.blockId == null) {
@@ -103,10 +107,7 @@ function makeRightSidebarRebalance(
     newNode: LayoutNode,
     targetNodeSize?: number
 ): LayoutTreeRootRowRebalance | undefined {
-    if (
-        rootNode?.flexDirection !== FlexDirection.Row ||
-        !rootNode.children?.some((child) => child.size == null)
-    ) {
+    if (rootNode?.flexDirection !== FlexDirection.Row || !rootNode.children?.some((child) => child.size == null)) {
         return undefined;
     }
     const fixedNodes = [{ nodeId: newNode.id, size: RightSidebarSize }];
@@ -194,6 +195,40 @@ function getNodeLocation(node: LayoutNode, getBlockMeta: BlockMetaResolver): Blo
     return location;
 }
 
+function getFilesNodeLocation(node: LayoutNode, getBlockMeta: BlockMetaResolver): BlockLocation | null {
+    const meta = getNodeMeta(node, getBlockMeta);
+    if (meta == null || !isFilesMeta(meta)) {
+        return null;
+    }
+    const location = getBlockLocation(meta);
+    if (!isUsableLocation(location)) {
+        return null;
+    }
+    return location;
+}
+
+function findPreferredGitLocation(
+    rootNode: LayoutNode,
+    focusedNodeIds: readonly string[],
+    getBlockMeta: BlockMetaResolver
+): BlockLocation | null {
+    for (const nodeId of focusedNodeIds ?? []) {
+        const location = getFilesNodeLocation(findNode(rootNode, nodeId), getBlockMeta);
+        if (location != null) {
+            return location;
+        }
+    }
+
+    let match: BlockLocation = null;
+    walkNodes(rootNode, (node) => {
+        if (match != null) {
+            return;
+        }
+        match = getFilesNodeLocation(node, getBlockMeta);
+    });
+    return match;
+}
+
 function findInheritedBlockLocation(
     rootNode: LayoutNode,
     focusedNodeId: string,
@@ -233,7 +268,8 @@ export function applyInheritedBlockLocation(
     rootNode: LayoutNode,
     focusedNodeId: string,
     placement: CreateBlockPlacement,
-    getBlockMeta: BlockMetaResolver
+    getBlockMeta: BlockMetaResolver,
+    focusedNodeIds: readonly string[] = []
 ): BlockDef {
     const meta = blockDef?.meta;
     if (meta == null || rootNode == null) {
@@ -247,7 +283,10 @@ export function applyInheritedBlockLocation(
         return blockDef;
     }
 
-    const location = findInheritedBlockLocation(rootNode, focusedNodeId, getBlockMeta);
+    const location = inheritsGitLocation
+        ? (findPreferredGitLocation(rootNode, focusedNodeIds, getBlockMeta) ??
+          findInheritedBlockLocation(rootNode, focusedNodeId, getBlockMeta))
+        : findInheritedBlockLocation(rootNode, focusedNodeId, getBlockMeta);
     if (location == null) {
         return blockDef;
     }
@@ -263,7 +302,11 @@ export function applyInheritedBlockLocation(
     if (inheritsFilesLocation && (inheritedMeta.file == null || inheritedMeta.file === "~") && location.path != null) {
         inheritedMeta.file = location.path;
     }
-    if (inheritsGitLocation && (inheritedMeta["cmd:cwd"] == null || inheritedMeta["cmd:cwd"] === "~") && location.path != null) {
+    if (
+        inheritsGitLocation &&
+        (inheritedMeta["cmd:cwd"] == null || inheritedMeta["cmd:cwd"] === "~") &&
+        location.path != null
+    ) {
         inheritedMeta["cmd:cwd"] = location.path;
     }
 
@@ -363,7 +406,9 @@ export function makeCreateBlockPlacementAction(
             const sidebarNode = findRootRowChildContaining(rootNode, existingFiles);
             const targetNode = findRootRowRightmostChild(rootNode);
             const sidebarIsRootLeftChild =
-                rootNode?.children == null || rootNode.children.length === 0 || rootNode.children[0].id === sidebarNode?.id;
+                rootNode?.children == null ||
+                rootNode.children.length === 0 ||
+                rootNode.children[0].id === sidebarNode?.id;
             if (sidebarNode != null && targetNode != null && sidebarIsRootLeftChild) {
                 if (sidebarNode.id === targetNode.id) {
                     newNode.size = MainContentSize;

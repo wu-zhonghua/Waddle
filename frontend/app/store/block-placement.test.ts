@@ -1,7 +1,6 @@
 // Copyright 2026, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from "vitest";
 import { newLayoutNode } from "@/layout/lib/layoutNode";
 import { splitHorizontal, splitVertical } from "@/layout/lib/layoutTree";
 import {
@@ -10,7 +9,12 @@ import {
     type LayoutTreeSplitHorizontalAction,
     type LayoutTreeSplitVerticalAction,
 } from "@/layout/lib/types";
-import { applyInheritedBlockLocation, getPlacementForBlockDef, makeCreateBlockPlacementAction } from "./block-placement";
+import { describe, expect, it } from "vitest";
+import {
+    applyInheritedBlockLocation,
+    getPlacementForBlockDef,
+    makeCreateBlockPlacementAction,
+} from "./block-placement";
 
 describe("makeCreateBlockPlacementAction", () => {
     const metas: Record<string, MetaType> = {
@@ -351,6 +355,8 @@ describe("makeCreateBlockPlacementAction", () => {
 
 describe("applyInheritedBlockLocation", () => {
     const metas: Record<string, MetaType> = {
+        olderFiles: { view: "preview", file: "/srv/older", connection: "ssh:older" },
+        recentFiles: { view: "preview", file: "/srv/recent", connection: "ssh:recent" },
         remoteFiles: { view: "preview", file: "/srv/app", connection: "ssh:prod" },
         remoteTerminal: { view: "term", controller: "shell", "cmd:cwd": "/var/www", connection: "ssh:web" },
     };
@@ -396,6 +402,59 @@ describe("applyInheritedBlockLocation", () => {
             connection: "ssh:web",
             "cmd:cwd": "/var/www",
         });
+    });
+
+    it("opens git on the most recently focused files directory", () => {
+        const olderFilesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "olderFiles" });
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteTerminal" });
+        const recentFilesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "recentFiles" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [olderFilesNode, terminalNode, recentFilesNode]);
+        const blockDef: BlockDef = { meta: { view: "git" } };
+
+        const inherited = applyInheritedBlockLocation(blockDef, rootNode, terminalNode.id, "git", getBlockMeta, [
+            terminalNode.id,
+            recentFilesNode.id,
+            olderFilesNode.id,
+        ]);
+
+        expect(inherited.meta).toMatchObject({
+            view: "git",
+            connection: "ssh:recent",
+            "cmd:cwd": "/srv/recent",
+        });
+    });
+
+    it("falls back to the first files block when files are absent from focus history", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteFiles" });
+        const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteTerminal" });
+        const rootNode = newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]);
+        const blockDef: BlockDef = { meta: { view: "git" } };
+
+        const inherited = applyInheritedBlockLocation(blockDef, rootNode, terminalNode.id, "git", getBlockMeta, [
+            terminalNode.id,
+        ]);
+
+        expect(inherited.meta).toMatchObject({
+            connection: "ssh:prod",
+            "cmd:cwd": "/srv/app",
+        });
+    });
+
+    it("does not override an explicit git directory", () => {
+        const filesNode = newLayoutNode(undefined, undefined, undefined, { blockId: "remoteFiles" });
+        const blockDef: BlockDef = {
+            meta: {
+                view: "git",
+                connection: "ssh:manual",
+                "cmd:cwd": "/opt/manual",
+            },
+        };
+
+        const inherited = applyInheritedBlockLocation(blockDef, filesNode, filesNode.id, "git", getBlockMeta, [
+            filesNode.id,
+        ]);
+
+        expect(inherited).toBe(blockDef);
     });
 
     it("does not override explicit terminal location metadata", () => {
