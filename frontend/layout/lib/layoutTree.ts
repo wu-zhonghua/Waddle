@@ -15,6 +15,7 @@ import {
     DefaultNodeSize,
     DropDirection,
     FlexDirection,
+    LayoutNode,
     LayoutTreeActionType,
     LayoutTreeComputeMoveNodeAction,
     LayoutTreeDeleteNodeAction,
@@ -42,7 +43,11 @@ export const DEFAULT_MAX_CHILDREN = 5;
  * @param layoutState The state of the tree.
  * @param computeInsertAction The operation to compute.
  */
-export function computeMoveNode(layoutState: LayoutTreeState, computeInsertAction: LayoutTreeComputeMoveNodeAction) {
+export function computeMoveNode(
+    layoutState: LayoutTreeState,
+    computeInsertAction: LayoutTreeComputeMoveNodeAction,
+    nodeToMoveOverride?: LayoutNode
+) {
     const rootNode = layoutState.rootNode;
     const { nodeId, nodeToMoveId, direction } = computeInsertAction;
     if (!nodeId || !nodeToMoveId) {
@@ -61,9 +66,12 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
 
     let newMoveOperation: MoveOperation;
     const parent = lazy(() => findParent(rootNode, nodeId));
-    const grandparent = lazy(() => findParent(rootNode, parent().id));
+    const grandparent = lazy(() => {
+        const parentNode = parent();
+        return parentNode == null ? null : findParent(rootNode, parentNode.id);
+    });
     const indexInParent = lazy(() => parent()?.children.findIndex((child) => nodeId === child.id));
-    const indexInGrandparent = lazy(() => grandparent()?.children.findIndex((child) => parent().id === child.id));
+    const indexInGrandparent = lazy(() => grandparent()?.children.findIndex((child) => parent()?.id === child.id));
     const nodeToMoveParent = lazy(() => findParent(rootNode, nodeToMoveId));
     const nodeToMoveIndexInParent = lazy(() =>
         nodeToMoveParent()?.children.findIndex((child) => nodeToMoveId === child.id)
@@ -72,7 +80,7 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
 
     // TODO: this should not be necessary. The drag layer is having trouble tracking changes to the LayoutNode fields, so I need to grab the node again here to get the latest data.
     const node = findNode(rootNode, nodeId);
-    const nodeToMove = findNode(rootNode, nodeToMoveId);
+    const nodeToMove = nodeToMoveOverride ?? findNode(rootNode, nodeToMoveId);
 
     if (!node || !nodeToMove) {
         console.warn("node or nodeToMove not set", nodeId, nodeToMoveId);
@@ -227,6 +235,32 @@ export function computeMoveNode(layoutState: LayoutTreeState, computeInsertActio
             type: LayoutTreeActionType.Move,
             ...newMoveOperation,
         } as LayoutTreeMoveNodeAction;
+}
+
+export function computeInsertNode(
+    layoutState: LayoutTreeState,
+    targetNodeId: string,
+    nodeToInsert: LayoutNode,
+    direction: DropDirection
+): LayoutTreeMoveNodeAction | undefined {
+    if (
+        targetNodeId == null ||
+        nodeToInsert == null ||
+        direction === DropDirection.Center ||
+        findNode(layoutState.rootNode, targetNodeId) == null
+    ) {
+        return undefined;
+    }
+    return computeMoveNode(
+        layoutState,
+        {
+            type: LayoutTreeActionType.ComputeMove,
+            nodeId: targetNodeId,
+            nodeToMoveId: nodeToInsert.id,
+            direction,
+        },
+        nodeToInsert
+    ) as LayoutTreeMoveNodeAction | undefined;
 }
 
 export function moveNode(layoutState: LayoutTreeState, action: LayoutTreeMoveNodeAction) {

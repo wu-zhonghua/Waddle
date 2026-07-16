@@ -5,6 +5,7 @@ import { TileLayout } from "./lib/TileLayout";
 import { LayoutModel } from "./lib/layoutModel";
 import { deleteLayoutModelForTab, getLayoutModelForStaticTab, useDebouncedNodeInnerRect } from "./lib/layoutModelHooks";
 import { newLayoutNode } from "./lib/layoutNode";
+import { computeInsertNode } from "./lib/layoutTree";
 import type {
     ContentRenderer,
     LayoutNode,
@@ -29,6 +30,7 @@ import type {
 import { DropDirection, LayoutTreeActionType, NavigateDirection } from "./lib/types";
 
 export {
+    computeInsertNode,
     deleteLayoutModelForTab,
     DropDirection,
     getLayoutModelForStaticTab,

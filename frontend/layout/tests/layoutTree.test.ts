@@ -1,9 +1,16 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { assert, test } from "vitest";
+import { assert, expect, test } from "vitest";
 import { newLayoutNode } from "../lib/layoutNode";
-import { computeMoveNode, deleteNode, insertLeftSidebar, moveNode, splitHorizontal } from "../lib/layoutTree";
+import {
+    computeInsertNode,
+    computeMoveNode,
+    deleteNode,
+    insertLeftSidebar,
+    moveNode,
+    splitHorizontal,
+} from "../lib/layoutTree";
 import {
     DropDirection,
     LayoutTreeActionType,
@@ -82,6 +89,38 @@ test("computeMove - noop action", () => {
 
     pendingAction = computeMoveNode(treeState, moveAction);
     assert(pendingAction === undefined, "inserting a node to the right of itself should not produce a pendingAction");
+});
+
+test.each([
+    [DropDirection.Top, 0],
+    [DropDirection.OuterTop, 0],
+    [DropDirection.Left, 0],
+    [DropDirection.OuterLeft, 0],
+    [DropDirection.Bottom, 1],
+    [DropDirection.OuterBottom, 1],
+    [DropDirection.Right, 1],
+    [DropDirection.OuterRight, 1],
+])("computeInsertNode inserts an external node for direction %s", (direction, expectedIndex) => {
+    const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+    const newNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-widget" });
+    const treeState = newLayoutTreeState(terminalNode);
+
+    const action = computeInsertNode(treeState, terminalNode.id, newNode, direction);
+
+    expect(action).toMatchObject({
+        type: LayoutTreeActionType.Move,
+        node: newNode,
+        index: expectedIndex,
+    });
+});
+
+test("computeInsertNode rejects center and missing targets", () => {
+    const terminalNode = newLayoutNode(undefined, undefined, undefined, { blockId: "terminal" });
+    const newNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-widget" });
+    const treeState = newLayoutTreeState(terminalNode);
+
+    expect(computeInsertNode(treeState, terminalNode.id, newNode, DropDirection.Center)).toBeUndefined();
+    expect(computeInsertNode(treeState, "missing", newNode, DropDirection.Left)).toBeUndefined();
 });
 
 test("insertLeftSidebar wraps existing layout on the right", () => {
