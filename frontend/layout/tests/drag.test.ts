@@ -39,6 +39,18 @@ describe("dispatchExternalTileDrop", () => {
         expect(onDrop).toHaveBeenCalledWith("target", DropDirection.Left);
     });
 
+    it("ignores duplicate callbacks for the same drag item", async () => {
+        const onDrop = vi.fn().mockResolvedValue(undefined);
+        const item = {
+            node: newLayoutNode(undefined, undefined, undefined, { blockId: "external-widget" }),
+            onDrop,
+        };
+
+        await expect(dispatchExternalTileDrop(item, "target", DropDirection.Left)).resolves.toBe(true);
+        await expect(dispatchExternalTileDrop(item, "target", DropDirection.Left)).resolves.toBe(false);
+        expect(onDrop).toHaveBeenCalledOnce();
+    });
+
     it("does not invoke center drops", async () => {
         const onDrop = vi.fn().mockResolvedValue(undefined);
         const item = {

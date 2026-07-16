@@ -11,6 +11,8 @@ type ExternalTileDragItem = {
     onDrop: (targetNodeId?: string, direction?: DropDirection) => Promise<void>;
 };
 
+const HandledExternalTileDrops = new WeakSet<ExternalTileDragItem>();
+
 function isExternalTileDropDirection(direction?: DropDirection): boolean {
     return direction != null && direction !== DropDirection.Center;
 }
@@ -24,6 +26,10 @@ async function dispatchExternalTileDrop(
     if (!emptyLayout && !isExternalTileDropDirection(direction)) {
         return false;
     }
+    if (HandledExternalTileDrops.has(item)) {
+        return false;
+    }
+    HandledExternalTileDrops.add(item);
     await item.onDrop(targetNodeId, direction);
     return true;
 }
