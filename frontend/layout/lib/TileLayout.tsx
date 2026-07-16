@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getSettingsKeyAtom } from "@/app/store/global";
+import { fireAndForget } from "@/util/util";
 import clsx from "clsx";
 import { toPng } from "html-to-image";
 import { Atom, useAtomValue, useSetAtom } from "jotai";
@@ -19,19 +20,27 @@ import React, {
 import { DropTargetMonitor, XYCoord, useDrag, useDragLayer, useDrop } from "react-dnd";
 import { debounce, throttle } from "throttle-debounce";
 import { useDevicePixelRatio } from "use-device-pixel-ratio";
+import {
+    dispatchExternalTileDrop,
+    ExternalTileDragItem,
+    ExternalTileDragItemType,
+    isExternalTileDropDirection,
+    TileDragItemType,
+} from "./drag";
 import { LayoutModel } from "./layoutModel";
 import { useNodeModel, useTileLayout } from "./layoutModelHooks";
+import { computeInsertNode } from "./layoutTree";
 import "./tilelayout.scss";
 import {
     LayoutNode,
     LayoutTreeActionType,
     LayoutTreeComputeMoveNodeAction,
+    LayoutTreeSetPendingAction,
     ResizeHandleProps,
     TileLayoutContents,
 } from "./types";
 import { determineDropDirection } from "./utils";
 
-const tileItemType = "TILE_ITEM";
 const TileDragExcludedSelector =
     'input, textarea, select, button, a, [contenteditable="true"], [data-layout-drag-exclude="true"]';
 
@@ -69,6 +78,7 @@ function TileLayoutComponent({ tabAtom, contents, getCursorPoint }: TileLayoutPr
     const setActiveDrag = useSetAtom(layoutModel.activeDrag);
     const setReady = useSetAtom(layoutModel.ready);
     const isResizing = useAtomValue(layoutModel.isResizing);
+    const wasActiveLayoutDragRef = useRef(false);
 
     const { activeDrag, dragClientOffset, dragItemType } = useDragLayer((monitor) => ({
         activeDrag: monitor.isDragging(),
@@ -77,9 +87,14 @@ function TileLayoutComponent({ tabAtom, contents, getCursorPoint }: TileLayoutPr
     }));
 
     useEffect(() => {
-        const activeTileDrag = activeDrag && dragItemType == tileItemType;
-        setActiveDrag(activeTileDrag);
-    }, [activeDrag, dragItemType]);
+        const activeLayoutDrag =
+            activeDrag && (dragItemType === TileDragItemType || dragItemType === ExternalTileDragItemType);
+        if (wasActiveLayoutDragRef.current && !activeLayoutDrag) {
+            layoutModel.treeReducer({ type: LayoutTreeActionType.ClearPendingAction });
+        }
+        wasActiveLayoutDragRef.current = activeLayoutDrag;
+        setActiveDrag(activeLayoutDrag);
+    }, [activeDrag, dragItemType, layoutModel, setActiveDrag]);
 
     const checkForCursorBounds = useCallback(
         debounce(100, (dragClientOffset: XYCoord) => {
@@ -133,6 +148,7 @@ function TileLayoutComponent({ tabAtom, contents, getCursorPoint }: TileLayoutPr
                 style={tileStyle}
             >
                 <div key="display" ref={layoutModel.displayContainerRef} className="display-container">
+                    <EmptyLayoutDropTarget layoutModel={layoutModel} />
                     <ResizeHandleWrapper layoutModel={layoutModel} />
                     <DisplayNodesWrapper layoutModel={layoutModel} />
                     <NodeBackdrops layoutModel={layoutModel} />
@@ -144,6 +160,44 @@ function TileLayoutComponent({ tabAtom, contents, getCursorPoint }: TileLayoutPr
     );
 }
 export const TileLayout = memo(TileLayoutComponent) as typeof TileLayoutComponent;
+
+function EmptyLayoutDropTarget({ layoutModel }: { layoutModel: LayoutModel }) {
+    const leafs = useAtomValue(layoutModel.leafs);
+    const dropRef = useRef<HTMLDivElement>(null);
+    const [{ isOver, canDrop }, drop] = useDrop(
+        () => ({
+            accept: ExternalTileDragItemType,
+            canDrop: () => leafs.length === 0,
+            drop: (item: ExternalTileDragItem, monitor) => {
+                if (monitor.didDrop() || leafs.length !== 0) {
+                    return;
+                }
+                layoutModel.treeReducer({ type: LayoutTreeActionType.ClearPendingAction });
+                fireAndForget(() => dispatchExternalTileDrop(item, undefined, undefined, true));
+                return { handled: true };
+            },
+            collect: (monitor) => ({
+                isOver: monitor.isOver({ shallow: true }),
+                canDrop: monitor.canDrop(),
+            }),
+        }),
+        [leafs.length, layoutModel]
+    );
+
+    useEffect(() => {
+        drop(dropRef);
+    }, [drop]);
+
+    if (leafs.length !== 0) {
+        return null;
+    }
+    return (
+        <div
+            ref={dropRef}
+            className={clsx("absolute inset-0 transition-colors", isOver && canDrop && "bg-accent/10")}
+        />
+    );
+}
 
 function NodeBackdrops({ layoutModel }: { layoutModel: LayoutModel }) {
     const [blockBlurAtom] = useState(() => getSettingsKeyAtom("window:magnifiedblockblursecondarypx"));
@@ -259,7 +313,7 @@ const DisplayNode = ({ layoutModel, node }: DisplayNodeProps) => {
 
     const [{ isDragging }, drag, dragPreview] = useDrag(
         () => ({
-            type: tileItemType,
+            type: TileDragItemType,
             canDrag: () => !(isEphemeral || isMagnified) && dragStartAllowedRef.current,
             item: () => node,
             collect: (monitor) => ({
@@ -407,26 +461,71 @@ const OverlayNode = memo(({ node, layoutModel }: OverlayNodeProps) => {
     const additionalProps = useAtomValue(nodeModel.additionalProps);
     const overlayRef = useRef<HTMLDivElement>(null);
 
+    const getDropDirection = useCallback(
+        (monitor: DropTargetMonitor<unknown, unknown>) => {
+            const clientOffset = monitor.getClientOffset();
+            const container = layoutModel.displayContainerRef?.current;
+            if (clientOffset == null || container == null || additionalProps?.rect == null) {
+                return undefined;
+            }
+            const containerRect = container.getBoundingClientRect();
+            return determineDropDirection(additionalProps.rect, {
+                x: clientOffset.x - containerRect.x,
+                y: clientOffset.y - containerRect.y,
+            });
+        },
+        [additionalProps?.rect, layoutModel.displayContainerRef]
+    );
+
     const [, drop] = useDrop(
         () => ({
-            accept: tileItemType,
+            accept: [TileDragItemType, ExternalTileDragItemType],
             canDrop: (_, monitor) => {
+                if (!monitor.isOver({ shallow: true })) {
+                    return false;
+                }
+                if (monitor.getItemType() === ExternalTileDragItemType) {
+                    return isExternalTileDropDirection(getDropDirection(monitor));
+                }
                 const dragItem = monitor.getItem<LayoutNode>();
-                if (monitor.isOver({ shallow: true }) && dragItem.id !== node.id) {
-                    return true;
-                }
-                return false;
+                return dragItem.id !== node.id;
             },
-            drop: (_, monitor) => {
-                if (!monitor.didDrop()) {
-                    layoutModel.onDrop();
+            drop: (item, monitor) => {
+                if (monitor.didDrop()) {
+                    return;
                 }
+                if (monitor.getItemType() === ExternalTileDragItemType) {
+                    const direction = getDropDirection(monitor);
+                    layoutModel.treeReducer({ type: LayoutTreeActionType.ClearPendingAction });
+                    if (!isExternalTileDropDirection(direction)) {
+                        return;
+                    }
+                    fireAndForget(() =>
+                        dispatchExternalTileDrop(item as ExternalTileDragItem, node.id, direction)
+                    );
+                    return { handled: true };
+                }
+                layoutModel.onDrop();
             },
             hover: throttle(50, (_, monitor: DropTargetMonitor<unknown, unknown>) => {
-                if (monitor.isOver({ shallow: true })) {
-                    if (monitor.canDrop() && layoutModel.displayContainerRef?.current && additionalProps?.rect) {
+                if (!monitor.isOver({ shallow: true })) {
+                    return;
+                }
+                if (monitor.canDrop() && layoutModel.displayContainerRef?.current && additionalProps?.rect) {
+                    if (monitor.getItemType() === ExternalTileDragItemType) {
+                        const dragItem = monitor.getItem<ExternalTileDragItem>();
+                        const direction = getDropDirection(monitor);
+                        const action = computeInsertNode(layoutModel.treeState, node.id, dragItem.node, direction);
+                        if (action == null) {
+                            layoutModel.treeReducer({ type: LayoutTreeActionType.ClearPendingAction });
+                            return;
+                        }
+                        layoutModel.treeReducer({
+                            type: LayoutTreeActionType.SetPendingAction,
+                            action,
+                        } as LayoutTreeSetPendingAction);
+                    } else {
                         const dragItem = monitor.getItem<LayoutNode>();
-                        // console.log("computing operation", layoutNode, dragItem, additionalProps.rect);
                         const offset = monitor.getClientOffset();
                         const containerRect = layoutModel.displayContainerRef.current.getBoundingClientRect();
                         offset.x -= containerRect.x;
@@ -437,15 +536,23 @@ const OverlayNode = memo(({ node, layoutModel }: OverlayNodeProps) => {
                             nodeToMoveId: dragItem.id,
                             direction: determineDropDirection(additionalProps.rect, offset),
                         } as LayoutTreeComputeMoveNodeAction);
-                    } else {
-                        layoutModel.treeReducer({
-                            type: LayoutTreeActionType.ClearPendingAction,
-                        });
                     }
+                    return;
                 }
+                layoutModel.treeReducer({
+                    type: LayoutTreeActionType.ClearPendingAction,
+                });
             }),
         }),
-        [node.id, additionalProps?.rect, layoutModel.displayContainerRef, layoutModel.onDrop, layoutModel.treeReducer]
+        [
+            node.id,
+            additionalProps?.rect,
+            getDropDirection,
+            layoutModel,
+            layoutModel.displayContainerRef,
+            layoutModel.onDrop,
+            layoutModel.treeReducer,
+        ]
     );
 
     // Register the overlay node as a drop target

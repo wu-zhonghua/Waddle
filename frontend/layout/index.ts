@@ -1,6 +1,13 @@
 // Copyright 2025, Command Line Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    dispatchExternalTileDrop,
+    ExternalTileDragItemType,
+    isExternalTileDropDirection,
+    TileDragItemType,
+} from "./lib/drag";
+import type { ExternalTileDragItem } from "./lib/drag";
 import { TileLayout } from "./lib/TileLayout";
 import { LayoutModel } from "./lib/layoutModel";
 import { deleteLayoutModelForTab, getLayoutModelForStaticTab, useDebouncedNodeInnerRect } from "./lib/layoutModelHooks";
@@ -32,17 +39,22 @@ import { DropDirection, LayoutTreeActionType, NavigateDirection } from "./lib/ty
 export {
     computeInsertNode,
     deleteLayoutModelForTab,
+    dispatchExternalTileDrop,
     DropDirection,
+    ExternalTileDragItemType,
     getLayoutModelForStaticTab,
+    isExternalTileDropDirection,
     LayoutModel,
     LayoutTreeActionType,
     NavigateDirection,
     newLayoutNode,
+    TileDragItemType,
     TileLayout,
     useDebouncedNodeInnerRect,
 };
 export type {
     ContentRenderer,
+    ExternalTileDragItem,
     LayoutNode,
     LayoutTreeAction,
     LayoutTreeClearPendingAction,
