@@ -6,6 +6,7 @@ import { getPlacementForBlockDef } from "@/app/store/block-placement";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import { useWaddleEnv, WaddleEnv, WaddleEnvSubset } from "@/app/waveenv/waveenv";
 import { shouldIncludeWidgetForWorkspace } from "@/app/workspace/widgetfilter";
+import { ExternalTileDragItemType } from "@/layout/lib/drag";
 import { modalsModel } from "@/store/modalmodel";
 import { fireAndForget, isBlank, makeIconClass } from "@/util/util";
 import {
@@ -20,6 +21,8 @@ import {
 import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useDrag } from "react-dnd";
+import { makeWidgetDragItem } from "./widget-drag";
 
 export type WidgetsEnv = WaddleEnvSubset<{
     isDev: WaddleEnv["isDev"];
@@ -36,6 +39,7 @@ export type WidgetsEnv = WaddleEnvSubset<{
         hasCustomAIPresetsAtom: WaddleEnv["atoms"]["hasCustomAIPresetsAtom"];
     };
     createBlock: WaddleEnv["createBlock"];
+    createBlockAtLayoutPosition: WaddleEnv["createBlockAtLayoutPosition"];
     showContextMenu: WaddleEnv["showContextMenu"];
 }>;
 
@@ -64,6 +68,19 @@ async function handleWidgetSelect(widget: WidgetConfigType, env: WidgetsEnv) {
 const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
     const [isTruncated, setIsTruncated] = useState(false);
     const labelRef = useRef<HTMLDivElement>(null);
+    const dragRef = useRef<HTMLDivElement>(null);
+    const [{ isDragging }, drag] = useDrag(
+        () => ({
+            type: ExternalTileDragItemType,
+            item: () => makeWidgetDragItem(widget, env.createBlockAtLayoutPosition),
+            collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+        }),
+        [widget, env]
+    );
+
+    useEffect(() => {
+        drag(dragRef);
+    }, [drag]);
 
     useEffect(() => {
         if (mode === "normal" && labelRef.current) {
@@ -79,9 +96,11 @@ const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
             content={widget.description || widget.label}
             placement="left"
             disable={shouldDisableTooltip}
+            divRef={dragRef}
             divClassName={clsx(
                 "flex flex-col justify-center items-center w-full py-1.5 pr-0.5 text-secondary overflow-hidden rounded-sm hover:bg-hoverbg hover:text-white cursor-pointer",
                 mode === "supercompact" ? "text-sm" : "text-lg",
+                isDragging && "opacity-50",
                 widget["display:hidden"] && "hidden"
             )}
             divOnClick={() => handleWidgetSelect(widget, env)}
@@ -100,6 +119,7 @@ const Widget = memo(({ widget, mode, env }: WidgetPropsType) => {
         </Tooltip>
     );
 });
+Widget.displayName = "Widget";
 
 function calculateGridSize(appCount: number): number {
     if (appCount <= 4) return 2;

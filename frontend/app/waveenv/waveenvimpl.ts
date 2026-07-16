@@ -5,6 +5,7 @@ import { ContextMenuModel } from "@/app/store/contextmenu";
 import {
     atoms,
     createBlock,
+    createBlockAtLayoutPosition,
     getBlockMetaKeyAtom,
     getConfigBackgroundAtom,
     getConnConfigKeyAtom,
@@ -32,6 +33,7 @@ export function makeWaddleEnvImpl(): WaddleEnv {
         isMacOS,
         atoms,
         createBlock,
+        createBlockAtLayoutPosition,
         services: AllServiceImpls,
         callBackendService: WOS.callBackendService,
         showContextMenu: (menu: ContextMenuItem[], e: React.MouseEvent) => {

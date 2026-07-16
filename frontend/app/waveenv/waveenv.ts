@@ -4,6 +4,7 @@
 import type { AllServiceImpls } from "@/app/store/services";
 import type { CreateBlockPlacement } from "@/app/store/block-placement";
 import { RpcApiType } from "@/app/store/wshclientapi";
+import type { DropDirection } from "@/layout/lib/types";
 import { Atom, PrimitiveAtom } from "jotai";
 import React from "react";
 
@@ -63,6 +64,12 @@ export type WaddleEnv = {
     isMacOS: () => boolean;
     atoms: GlobalAtomsType;
     createBlock: (blockDef: BlockDef, magnified?: boolean, ephemeral?: boolean, placement?: CreateBlockPlacement) => Promise<string>;
+    createBlockAtLayoutPosition: (
+        blockDef: BlockDef,
+        targetNodeId?: string,
+        direction?: DropDirection,
+        placement?: CreateBlockPlacement
+    ) => Promise<string>;
     services: typeof AllServiceImpls;
     callBackendService: (service: string, method: string, args: any[], noUIContext?: boolean) => Promise<any>;
     showContextMenu: (menu: ContextMenuItem[], e: React.MouseEvent) => void;

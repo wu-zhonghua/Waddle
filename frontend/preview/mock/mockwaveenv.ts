@@ -8,6 +8,7 @@ import { AllServiceTypes } from "@/app/store/services";
 import { handleWaddleEvent } from "@/app/store/wps";
 import { RpcApiType } from "@/app/store/wshclientapi";
 import { WaddleEnv } from "@/app/waveenv/waveenv";
+import { DropDirection } from "@/layout/lib/types";
 import { PlatformLinux, PlatformMacOS, PlatformWindows } from "@/util/platformutil";
 import { NullAtom } from "@/util/util";
 import { Atom, atom, PrimitiveAtom, useAtomValue } from "jotai";
@@ -78,6 +79,7 @@ export type MockEnv = {
     atoms?: Partial<GlobalAtomsType>;
     electron?: Partial<ElectronApi>;
     createBlock?: WaddleEnv["createBlock"];
+    createBlockAtLayoutPosition?: WaddleEnv["createBlockAtLayoutPosition"];
     showContextMenu?: WaddleEnv["showContextMenu"];
     connStatus?: Record<string, ConnStatus>;
     mockWaddleObjs?: Record<string, WaddleObj>;
@@ -121,6 +123,7 @@ export function mergeMockEnv(base: MockEnv, overrides: MockEnv): MockEnv {
                 ? { ...(base.electron ?? {}), ...(overrides.electron ?? {}) }
                 : undefined,
         createBlock: overrides.createBlock ?? base.createBlock,
+        createBlockAtLayoutPosition: overrides.createBlockAtLayoutPosition ?? base.createBlockAtLayoutPosition,
         showContextMenu: overrides.showContextMenu ?? base.showContextMenu,
         connStatus: mergeRecords(base.connStatus, overrides.connStatus),
         mockWaddleObjs: mergeRecords(base.mockWaddleObjs, overrides.mockWaddleObjs),
@@ -516,6 +519,14 @@ export function makeMockWaddleEnv(mockEnv?: MockEnv): MockWaddleEnv {
                 }
                 return Promise.resolve(newBlockId);
             }),
+        createBlockAtLayoutPosition:
+            mergedOverrides.createBlockAtLayoutPosition ??
+            ((
+                blockDef: BlockDef,
+                _targetNodeId?: string,
+                _direction?: DropDirection,
+                placement?: CreateBlockPlacement
+            ) => env.createBlock(blockDef, false, false, placement)),
         showContextMenu: mergedOverrides.showContextMenu ?? showPreviewContextMenu,
         getLocalHostDisplayNameAtom: () => {
             return localHostDisplayNameAtom;

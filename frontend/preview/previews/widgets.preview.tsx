@@ -5,6 +5,8 @@ import { useWaddleEnv, WaddleEnv, WaddleEnvContext } from "@/app/waveenv/waveenv
 import { Widgets } from "@/app/workspace/widgets";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useRef } from "react";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import { applyMockEnvOverrides } from "../mock/mockwaveenv";
 
 const resizableHeightAtom = atom(250);
@@ -208,16 +210,23 @@ export function WidgetsPreview() {
     const mockVersion = useAtomValue(mockVersionAtom);
 
     return (
-        <div className="flex flex-col gap-8 p-6">
-            <PreviewControls />
-            <div key={mockVersion} className="flex flex-col gap-8">
-                <div className="flex flex-row gap-8 items-start flex-wrap">
-                    <WidgetsScenario label="normal" height={550} isDev={isDev} />
-                    <WidgetsScenario label="dev mode (apps button)" height={550} isDev={isDev} apps={mockApps} />
-                    <WidgetsScenario label="compact (200px)" height={200} isDev={isDev} apps={mockApps} />
+        <DndProvider backend={HTML5Backend}>
+            <div className="flex flex-col gap-8 p-6">
+                <PreviewControls />
+                <div key={mockVersion} className="flex flex-col gap-8">
+                    <div className="flex flex-row gap-8 items-start flex-wrap">
+                        <WidgetsScenario label="normal" height={550} isDev={isDev} />
+                        <WidgetsScenario
+                            label="dev mode (apps button)"
+                            height={550}
+                            isDev={isDev}
+                            apps={mockApps}
+                        />
+                        <WidgetsScenario label="compact (200px)" height={200} isDev={isDev} apps={mockApps} />
+                    </div>
+                    <WidgetsResizable isDev={isDev} />
                 </div>
-                <WidgetsResizable isDev={isDev} />
             </div>
-        </div>
+        </DndProvider>
     );
 }

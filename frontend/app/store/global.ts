@@ -4,6 +4,7 @@
 import { RpcApi } from "@/app/store/wshclientapi";
 import { TabRpcClient } from "@/app/store/wshrpcutil";
 import {
+    DropDirection,
     getLayoutModelForStaticTab,
     LayoutTreeActionType,
     LayoutTreeInsertNodeAction,
@@ -36,6 +37,7 @@ import {
     makeCreateBlockPlacementAction,
 } from "./block-placement";
 import { atoms, blockComponentModelMap, ConnStatusMapAtom, initGlobalAtoms, orefAtomCache } from "./global-atoms";
+import { createBlockAtLayoutPositionWithDeps } from "./block-drop";
 import { globalStore } from "./jotaiStore";
 import { modalsModel } from "./modalmodel";
 import { ClientService, ObjectService } from "./services";
@@ -451,6 +453,30 @@ async function createBlock(
     return blockId;
 }
 
+async function createBlockAtLayoutPosition(
+    blockDef: BlockDef,
+    targetNodeId?: string,
+    direction?: DropDirection,
+    placement: CreateBlockPlacement = "default"
+): Promise<string> {
+    const layoutModel = getLayoutModelForStaticTab();
+    const getBlockMeta = (existingBlockId: string) => {
+        const block = globalStore.get(WOS.getWaddleObjectAtom<Block>(WOS.makeORef("block", existingBlockId)));
+        return block?.meta;
+    };
+    return createBlockAtLayoutPositionWithDeps(
+        blockDef,
+        targetNodeId,
+        direction,
+        placement,
+        {
+            layoutModel,
+            createBlockObject: (resolvedBlockDef, rtOpts) => ObjectService.CreateBlock(resolvedBlockDef, rtOpts),
+            getBlockMeta,
+        }
+    );
+}
+
 async function replaceBlock(blockId: string, blockDef: BlockDef, focus: boolean): Promise<string> {
     const layoutModel = getLayoutModelForStaticTab();
     const rtOpts: RuntimeOpts = { termsize: { rows: 25, cols: 80 } };
@@ -704,6 +730,7 @@ function recordTEvent(event: string, props?: TEventProps) {
 export {
     atoms,
     createBlock,
+    createBlockAtLayoutPosition,
     createBlockSplitHorizontally,
     createBlockSplitVertically,
     createTab,
