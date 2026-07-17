@@ -164,18 +164,23 @@ test("computeInsertNode preserves a Files sidebar while splitting the main pane"
     expect(findNode(treeState.rootNode, newNode.id)?.size).toBe(40);
 });
 
-test("computeInsertNode splits the adjacent group for an outer edge", () => {
-    const filesNode = newLayoutNode(FlexDirection.Column, 20, undefined, { blockId: "files" });
-    const firstMainNode = newLayoutNode(FlexDirection.Row, 40, undefined, { blockId: "terminal" });
-    const secondMainNode = newLayoutNode(FlexDirection.Row, 40, undefined, { blockId: "preview" });
-    const mainGroup = newLayoutNode(FlexDirection.Column, 80, [firstMainNode, secondMainNode]);
+test.each([
+    [DropDirection.OuterTop, FlexDirection.Column, FlexDirection.Row],
+    [DropDirection.OuterRight, FlexDirection.Row, FlexDirection.Column],
+    [DropDirection.OuterBottom, FlexDirection.Column, FlexDirection.Row],
+    [DropDirection.OuterLeft, FlexDirection.Row, FlexDirection.Column],
+])("computeInsertNode splits the adjacent group for outer direction %s", (direction, rootDirection, groupDirection) => {
+    const fixedNode = newLayoutNode(groupDirection, 20, undefined, { blockId: "fixed" });
+    const firstMainNode = newLayoutNode(rootDirection, 40, undefined, { blockId: "terminal" });
+    const secondMainNode = newLayoutNode(rootDirection, 40, undefined, { blockId: "preview" });
+    const mainGroup = newLayoutNode(groupDirection, 80, [firstMainNode, secondMainNode]);
     const newNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-widget" });
-    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, [filesNode, mainGroup]));
+    const treeState = newLayoutTreeState(newLayoutNode(rootDirection, undefined, [fixedNode, mainGroup]));
 
-    const action = computeInsertNode(treeState, secondMainNode.id, newNode, DropDirection.OuterRight);
+    const action = computeInsertNode(treeState, secondMainNode.id, newNode, direction);
     moveNode(treeState, action);
 
-    expect(filesNode.size).toBe(20);
+    expect(fixedNode.size).toBe(20);
     expect(mainGroup.size).toBe(40);
     expect(findNode(treeState.rootNode, newNode.id)?.size).toBe(40);
 });
