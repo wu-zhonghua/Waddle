@@ -251,7 +251,7 @@ export function computeInsertNode(
     ) {
         return undefined;
     }
-    return computeMoveNode(
+    const moveAction = computeMoveNode(
         layoutState,
         {
             type: LayoutTreeActionType.ComputeMove,
@@ -261,6 +261,36 @@ export function computeInsertNode(
         },
         nodeToInsert
     ) as LayoutTreeMoveNodeAction | undefined;
+    if (moveAction == null) {
+        return undefined;
+    }
+
+    const parent = moveAction.insertAtRoot
+        ? layoutState.rootNode
+        : findNode(layoutState.rootNode, moveAction.parentId);
+    if (parent == null) {
+        return moveAction;
+    }
+
+    let anchorNode = parent;
+    if (parent.children?.length) {
+        const insertsBefore =
+            direction === DropDirection.Top ||
+            direction === DropDirection.Left ||
+            direction === DropDirection.OuterTop ||
+            direction === DropDirection.OuterLeft;
+        const anchorIndex = insertsBefore ? moveAction.index : moveAction.index - 1;
+        anchorNode = parent.children[Math.max(0, Math.min(anchorIndex, parent.children.length - 1))];
+    }
+
+    const splitSize = anchorNode.size / 2;
+    return {
+        ...moveAction,
+        resizeOperations: [
+            { nodeId: anchorNode.id, size: splitSize },
+            { nodeId: nodeToInsert.id, size: splitSize },
+        ],
+    };
 }
 
 export function moveNode(layoutState: LayoutTreeState, action: LayoutTreeMoveNodeAction) {
@@ -309,6 +339,13 @@ export function moveNode(layoutState: LayoutTreeState, action: LayoutTreeMoveNod
     // Remove nodeToInsert from its old parent
     if (oldParent) {
         removeChild(oldParent, node, startingIndex);
+    }
+
+    if (action.resizeOperations?.length) {
+        resizeNode(layoutState, {
+            type: LayoutTreeActionType.ResizeNode,
+            resizeOperations: action.resizeOperations,
+        });
     }
 }
 

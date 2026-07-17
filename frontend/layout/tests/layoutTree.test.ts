@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { assert, expect, test } from "vitest";
-import { newLayoutNode } from "../lib/layoutNode";
+import { findNode, newLayoutNode } from "../lib/layoutNode";
 import {
     computeInsertNode,
     computeMoveNode,
@@ -13,6 +13,7 @@ import {
 } from "../lib/layoutTree";
 import {
     DropDirection,
+    FlexDirection,
     LayoutTreeActionType,
     LayoutTreeComputeMoveNodeAction,
     LayoutTreeMoveNodeAction,
@@ -89,6 +90,14 @@ test("computeMove - noop action", () => {
 
     pendingAction = computeMoveNode(treeState, moveAction);
     assert(pendingAction === undefined, "inserting a node to the right of itself should not produce a pendingAction");
+
+    const ordinaryMoveAction = computeMoveNode(treeState, {
+        type: LayoutTreeActionType.ComputeMove,
+        nodeId: treeState.rootNode.id,
+        nodeToMoveId: nodeToMove.id,
+        direction: DropDirection.Bottom,
+    }) as LayoutTreeMoveNodeAction;
+    expect(ordinaryMoveAction.resizeOperations).toBeUndefined();
 });
 
 test.each([
@@ -121,6 +130,54 @@ test("computeInsertNode rejects center and missing targets", () => {
 
     expect(computeInsertNode(treeState, terminalNode.id, newNode, DropDirection.Center)).toBeUndefined();
     expect(computeInsertNode(treeState, "missing", newNode, DropDirection.Left)).toBeUndefined();
+});
+
+test.each([
+    DropDirection.Top,
+    DropDirection.Right,
+    DropDirection.Bottom,
+    DropDirection.Left,
+])("computeInsertNode splits a target evenly for direction %s", (direction) => {
+    const targetNode = newLayoutNode(undefined, 80, undefined, { blockId: "terminal" });
+    const newNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-widget" });
+    const treeState = newLayoutTreeState(targetNode);
+    const targetNodeId = targetNode.id;
+
+    const action = computeInsertNode(treeState, targetNodeId, newNode, direction);
+    moveNode(treeState, action);
+
+    expect(findNode(treeState.rootNode, targetNodeId)?.size).toBe(40);
+    expect(findNode(treeState.rootNode, newNode.id)?.size).toBe(40);
+});
+
+test("computeInsertNode preserves a Files sidebar while splitting the main pane", () => {
+    const filesNode = newLayoutNode(FlexDirection.Column, 20, undefined, { blockId: "files" });
+    const terminalNode = newLayoutNode(FlexDirection.Column, 80, undefined, { blockId: "terminal" });
+    const newNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-widget" });
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, [filesNode, terminalNode]));
+
+    const action = computeInsertNode(treeState, terminalNode.id, newNode, DropDirection.Right);
+    moveNode(treeState, action);
+
+    expect(filesNode.size).toBe(20);
+    expect(terminalNode.size).toBe(40);
+    expect(findNode(treeState.rootNode, newNode.id)?.size).toBe(40);
+});
+
+test("computeInsertNode splits the adjacent group for an outer edge", () => {
+    const filesNode = newLayoutNode(FlexDirection.Column, 20, undefined, { blockId: "files" });
+    const firstMainNode = newLayoutNode(FlexDirection.Row, 40, undefined, { blockId: "terminal" });
+    const secondMainNode = newLayoutNode(FlexDirection.Row, 40, undefined, { blockId: "preview" });
+    const mainGroup = newLayoutNode(FlexDirection.Column, 80, [firstMainNode, secondMainNode]);
+    const newNode = newLayoutNode(undefined, undefined, undefined, { blockId: "new-widget" });
+    const treeState = newLayoutTreeState(newLayoutNode(FlexDirection.Row, undefined, [filesNode, mainGroup]));
+
+    const action = computeInsertNode(treeState, secondMainNode.id, newNode, DropDirection.OuterRight);
+    moveNode(treeState, action);
+
+    expect(filesNode.size).toBe(20);
+    expect(mainGroup.size).toBe(40);
+    expect(findNode(treeState.rootNode, newNode.id)?.size).toBe(40);
 });
 
 test("insertLeftSidebar wraps existing layout on the right", () => {

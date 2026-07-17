@@ -66,6 +66,11 @@ export type MoveOperation = {
      * The node to insert.
      */
     node: LayoutNode;
+
+    /**
+     * Optional size updates to apply after the node is inserted.
+     */
+    resizeOperations?: ResizeNodeOperation[];
 };
 
 /**
