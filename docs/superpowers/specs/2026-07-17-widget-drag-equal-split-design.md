@@ -24,7 +24,7 @@ Extend the computed external `Move` action with optional resize operations. `com
 - For an inner edge, the anchor is the target tile.
 - For an outer edge, the anchor is the adjacent parent group being split at the surrounding level.
 
-The action carries a copy of the external node sized to half of the anchor and a resize operation that reduces the anchor to the same size. `moveNode` applies those resize operations after inserting the node, making insertion and sizing one layout transaction.
+The action carries resize operations for both the external node and the anchor, each set to half of the anchor's current size. `computeInsertNode` does not mutate the drag item; `moveNode` applies both resize operations after inserting the node, making insertion and sizing one layout transaction.
 
 Only `computeInsertNode` adds these operations. Existing `computeMoveNode` calls for tile-to-tile dragging remain unchanged.
 
