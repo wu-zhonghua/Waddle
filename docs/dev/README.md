@@ -40,8 +40,9 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
+| [2026-11-19-01-codex-in-waddle](2026-11-19-01-codex-in-waddle.md) | 在 Waddle 里用 Codex：读写文件、跑命令、读和改系统设置（2 个阶段） | 待实现（阶段 1） | 无 |
 
 当前进度（2026-11-19）：这套流程今天建立，之前的工作没有需求文档。
 
 - 仓库整理和安卓终端第一版已提交并推到 `feat/android-terminal-mvp`（提交 `d3746418` 及之后两个 CI 修正），GitHub 上 Android 和 Desktop checks 通过；macOS、Windows、Linux 安装包还没在这个分支上打过，尚未合并到 `main`。计划和验收条件见 [mvp-plan.md](../mvp-plan.md)，迁移记录见 [workspace-migration.md](../workspace-migration.md)。
-- 在手机上用 Codex（`docs/mvp-plan.md` 第二阶段）已由 Codex 开始实现，改动还没提交，也还没有对应的需求文档。
+- 在 Waddle 里用 Codex 已由 Codex 先行实现（0.4.0，模拟器上自测通过，改动未提交），补写了需求 2026-11-19-01 用来验收；真机三星 Fold7 已装上，等用户登录 Codex 后做阶段 2。
