@@ -58,6 +58,17 @@ jobs:
           arch: x86_64
           working-directory: apps/android
           script: ./gradlew connectedDebugAndroidTest --console=plain
+      - name: Annotate device test failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          for path in glob.glob("app/build/outputs/androidTest-results/connected/**/*.xml", recursive=True):
+              for case in ET.parse(path).getroot().iter("testcase"):
+                  for bad in list(case.iter("failure")) + list(case.iter("error")):
+                      detail = (bad.get("message") or bad.text or "").strip().splitlines()[:6]
+                      print(f"::error title={case.get('name')}::" + " | ".join(detail)[:900])
+          PY
       - uses: actions/upload-artifact@v5
         if: always()
         with:

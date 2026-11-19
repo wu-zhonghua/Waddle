@@ -37,7 +37,8 @@ class TerminalIntegrationTest {
     }
 
     private fun await(message: String, predicate: () -> Boolean) {
-        val deadline = SystemClock.uptimeMillis() + 10_000
+        // CI runs on a software-accelerated emulator where shell startup can take several seconds.
+        val deadline = SystemClock.uptimeMillis() + 30_000
         while (SystemClock.uptimeMillis() < deadline) {
             if (main(predicate)) return
             SystemClock.sleep(40)
