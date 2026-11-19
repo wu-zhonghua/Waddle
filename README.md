@@ -1,117 +1,59 @@
-<p align="center">
-  <a href="https://www.waddle.dev">
-	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="./assets/waddle-dark.png">
-		<source media="(prefers-color-scheme: light)" srcset="./assets/waddle-light.png">
-		<img alt="Waddle Logo" src="./assets/waddle-light.png" width="240">
-	</picture>
-  </a>
-  <br/>
-</p>
-
 # Waddle
 
-<div align="center">
+手机与电脑上的终端工作区。桌面端保留现有 Electron、React、Go 实现；安卓端使用 Kotlin、Compose 和原生 PTY，分别构建和发布。
 
-[English](README.md) | [한국어](README.ko.md) | [繁體中文](README.zh-TW.md)
+## 仓库结构
 
-</div>
+```text
+apps/android/   安卓客户端、终端组件源码、Gradle 工程与设备测试
+apps/desktop/   现有桌面应用、Go 后端与桌面文档站
+protocols/      未来跨端协议；首版尚未引入共享协议
+.github/        两端 CI 与原有桌面发布流程
+docs/           产品调研、MVP 计划与验证记录
+```
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwaddledev%2Fwaddle.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwaddledev%2Fwaddle?ref=badge_shield)
+此仓库沿用 `wu-zhonghua/Waddle` 的完整 Git 历史。目录整理基于提交 `643229a7b40739de17970593e916aaee18a857ba`，没有重新初始化或重写历史。
 
-Waddle is an open-source, AI-integrated terminal for macOS, Linux, and Windows. It works with any AI model. Bring your own API keys for OpenAI, Claude, or Gemini, or run local models via Ollama and LM Studio. No accounts required.
+## 安卓第一版
 
-Waddle also supports durable SSH sessions that survive network interruptions and restarts, with automatic reconnection. Edit remote files with a built-in graphical editor and preview files inline without leaving the terminal.
+- 真正的本地 PTY 和 Android 系统 Shell，支持交互程序、ANSI 颜色与屏幕 resize。
+- 多终端会话（界面最多 8 个）、切换、关闭、退出码与滚动历史。
+- 软键盘、中文组合输入、Ctrl / Esc / Tab / 方向键、Ctrl-C。
+- 长按选择复制、带预览的粘贴、双指调整字号。
+- 会话由前台服务持有，Activity 重建和短暂后台切换不会主动重建 Shell；通知可关闭全部会话。
 
-![Waddle Screenshot](./assets/waddle-screenshot.webp)
+要求 Android 8+，当前打包 ARM64 与 x86_64。首版使用 App 私有目录和系统命令，没有集成 Termux App、包管理器、SSH 或 Codex。系统终止进程或重启设备后，Shell 不会恢复；保留在私有 home 中的文件仍然存在。
 
-## Key Features
+```sh
+cd apps/android
+./gradlew assembleDebug
+./gradlew testDebugUnitTest lintDebug
+./gradlew :app:connectedDebugAndroidTest
+```
 
-- Waddle AI - Context-aware terminal assistant that reads your terminal output, analyzes widgets, and performs file operations
-- Durable SSH Sessions - Remote terminal sessions survive connection interruptions, network changes, and Waddle restarts with automatic reconnection
-- Flexible drag & drop interface to organize terminal blocks, editors, web browsers, and AI assistants
-- Built-in editor for editing remote files with syntax highlighting and modern editor features
-- Rich file preview system for remote files (markdown, images, video, PDFs, CSVs, directories)
-- Quick full-screen toggle for any block - expand terminals, editors, and previews for better visibility, then instantly return to multi-block view
-- AI chat widget with support for multiple models (OpenAI, Claude, Azure, Perplexity, Ollama)
-- Command Blocks for isolating and monitoring individual commands
-- One-click remote connections with full terminal and file system access
-- Secure secret storage using native system backends - store API keys and credentials locally, access them across SSH sessions
-- Rich customization including tab themes, terminal styles, and background images
-- Powerful `wsh` command system for managing your workspace from the CLI and sharing data between terminal sessions
-- Connected file management with `wsh file` - seamlessly copy and sync files between local and remote SSH hosts
+环境要求和安装方式见 [安卓开发说明](apps/android/README.md)。
 
-## Waddle AI
+## 桌面端
 
-Waddle AI is your context-aware terminal assistant with access to your workspace:
+```sh
+cd apps/desktop
+npm ci
+npm test -- --run
+npx tsc --noEmit
+# 安装 Go、Task 等依赖后启动完整桌面应用
+task dev
+```
 
-- **Terminal Context**: Reads terminal output and scrollback for debugging and analysis
-- **File Operations**: Read, write, and edit files with automatic backups and user approval
-- **CLI Integration**: Use `wsh ai` to pipe output or attach files directly from the command line
-- **BYOK Support**: Bring your own API keys for OpenAI, Claude, Gemini, Azure, and other providers
-- **Local Models**: Run local models with Ollama, LM Studio, and other OpenAI-compatible providers
-- **Free Beta**: Included AI credits while we refine the experience
-- **Coming Soon**: Command execution (with approval)
+也可在仓库根目录运行 `task desktop -- dev`。完整说明见 [桌面构建文档](apps/desktop/BUILD.md)。桌面 npm 和 Go 的依赖及相对路径仍由 `apps/desktop` 管理。
 
-Learn more in our [Waddle AI documentation](https://docs.waddle.dev/waveai) and [Waddle AI Modes documentation](https://docs.waddle.dev/waveai-modes).
+## 后续方向
 
-## Installation
+先验证手机本地 Codex，再实现 AI 面板和 SSH。手机与电脑的会话互联需要单独的服务与认证协议。
 
-Waddle works on macOS, Linux, and Windows.
+- [技术调研](docs/research.md)
+- [安卓 MVP 计划](docs/mvp-plan.md)
+- [仓库迁移说明](docs/workspace-migration.md)
 
-Platform-specific installation instructions can be found [here](https://docs.waddle.dev/gettingstarted).
+## 许可
 
-You can also install Waddle directly from: [www.waddle.dev/download](https://www.waddle.dev/download).
-
-### Minimum requirements
-
-Waddle runs on the following platforms:
-
-- macOS 11 or later (arm64, x64)
-- Windows 10 1809 or later (x64)
-- Linux based on glibc-2.28 or later (Debian 10, RHEL 8, Ubuntu 20.04, etc.) (arm64, x64)
-
-The WSH helper runs on the following platforms:
-
-- macOS 11 or later (arm64, x64)
-- Windows 10 or later (x64)
-- Linux Kernel 2.6.32 or later (x64), Linux Kernel 3.1 or later (arm64)
-
-## Roadmap
-
-Waddle is constantly improving! Our roadmap will be continuously updated with our goals for each release. You can find it [here](./ROADMAP.md).
-
-Want to provide input to our future releases? Connect with us on [Discord](https://discord.gg/XfvZ334gwU) or open a [Feature Request](https://github.com/waddledev/waddle/issues/new/choose)!
-
-## Links
-
-- Homepage &mdash; https://www.waddle.dev
-- Download Page &mdash; https://www.waddle.dev/download
-- Documentation &mdash; https://docs.waddle.dev
-- X &mdash; https://x.com/waddledev
-- Discord Community &mdash; https://discord.gg/XfvZ334gwU
-
-## Building from Source
-
-See [Building Waddle](BUILD.md).
-
-## Contributing
-
-Waddle uses GitHub Issues for issue tracking.
-
-Find more information in our [Contributions Guide](CONTRIBUTING.md), which includes:
-
-- [Ways to contribute](CONTRIBUTING.md#contributing-to-wave-terminal)
-- [Contribution guidelines](CONTRIBUTING.md#before-you-start)
-
-### Sponsoring Waddle ❤️
-
-If Waddle is useful to you or your company, consider sponsoring development.
-
-Sponsorship helps support the time spent building and maintaining the project.
-
-- https://github.com/sponsors/waddledev
-
-## License
-
-Waddle is licensed under the Apache-2.0 License. For more information on our dependencies, see [here](./ACKNOWLEDGEMENTS.md).
+桌面端继续使用根目录的 [Apache-2.0 许可](LICENSE)。安卓端使用 [GPL-3.0-only](apps/android/LICENSE)，包含 Termux 终端组件及其上游 Apache-2.0 部分，来源和本地调整见 [组件记录](apps/android/third-party/termux/PROVENANCE.md)。安卓侧的许可不替换桌面项目原有许可。

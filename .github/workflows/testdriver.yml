@@ -138,4 +138,4 @@ jobs:
                       Write-Host "Application launched."
 
                   prompt: |
-                      1. /run testdriver/onboarding.yml
+                      1. /run apps/desktop/testdriver/onboarding.yml

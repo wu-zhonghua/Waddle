@@ -16,6 +16,10 @@ env:
     MAC_SIGNING_ENABLED: ${{ secrets.PROD_MACOS_CERTIFICATE_2 != '' && secrets.PROD_MACOS_CERTIFICATE_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_APPLE_ID_2 != '' && secrets.PROD_MACOS_NOTARIZATION_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_TEAM_ID_2 != '' }}
     WINDOWS_SIGNING_ENABLED: ${{ secrets.SM_HOST != '' && secrets.SM_API_KEY != '' && secrets.SM_CLIENT_CERT_FILE_B64 != '' && secrets.SM_CLIENT_CERT_PASSWORD != '' && secrets.SM_CODE_SIGNING_CERT_SHA1_HASH != '' }}
     S3_UPLOAD_ENABLED: ${{ secrets.ARTIFACTS_KEY_ID != '' && secrets.ARTIFACTS_KEY_SECRET != '' }}
+defaults:
+    run:
+        working-directory: apps/desktop
+
 jobs:
     build-app:
         outputs:
@@ -68,12 +72,12 @@ jobs:
               with:
                   go-version: ${{env.GO_VERSION}}
                   cache-dependency-path: |
-                      go.sum
+                      apps/desktop/go.sum
             - uses: actions/setup-node@v6
               with:
                   node-version: ${{env.NODE_VERSION}}
                   cache: npm
-                  cache-dependency-path: package-lock.json
+                  cache-dependency-path: apps/desktop/package-lock.json
             - name: Force git deps to HTTPS
               run: |
                   git config --global url.https://github.com/.insteadof ssh://git@github.com/
@@ -81,7 +85,7 @@ jobs:
             - uses: nick-fields/retry@v4
               name: npm ci
               with:
-                  command: npm ci --no-audit --no-fund
+                  command: cd apps/desktop && npm ci --no-audit --no-fund
                   retry_on: error
                   max_attempts: 3
                   timeout_minutes: 5
@@ -140,7 +144,7 @@ jobs:
               name: Build (Darwin signed)
               if: matrix.platform == 'darwin' && env.MAC_SIGNING_ENABLED == 'true'
               with:
-                  command: task package
+                  command: cd apps/desktop && task package
                   timeout_minutes: 120
                   retry_on: error
                   max_attempts: 3
@@ -156,7 +160,7 @@ jobs:
               name: Build (Darwin fallback)
               if: matrix.platform == 'darwin' && env.MAC_SIGNING_ENABLED != 'true'
               with:
-                  command: task package
+                  command: cd apps/desktop && task package
                   timeout_minutes: 120
                   retry_on: error
                   max_attempts: 3
@@ -185,7 +189,7 @@ jobs:
               uses: actions/upload-artifact@v5
               with:
                   name: ${{ matrix.runner }}
-                  path: make
+                  path: apps/desktop/make
             - name: Upload Snapcraft logs on failure
               if: failure()
               uses: actions/upload-artifact@v5

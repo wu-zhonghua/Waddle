@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 
 describe("GitHub release workflow", () => {
     it("publishes releases with updater assets", () => {
-        const workflow = readFileSync(".github/workflows/build-helper.yml", "utf8");
+        const workflow = readFileSync(new URL("../../.github/workflows/build-helper.yml", import.meta.url), "utf8");
 
         expect(workflow).toContain("name: Waddle ${{ github.ref_name }} Release");
         expect(workflow).toContain("draft: false");
@@ -15,7 +15,7 @@ describe("GitHub release workflow", () => {
     });
 
     it("skips optional release integrations when their secrets are unavailable", () => {
-        const workflow = readFileSync(".github/workflows/build-helper.yml", "utf8");
+        const workflow = readFileSync(new URL("../../.github/workflows/build-helper.yml", import.meta.url), "utf8");
 
         expect(workflow).toContain(
             "MAC_SIGNING_ENABLED: ${{ secrets.PROD_MACOS_CERTIFICATE_2 != '' && secrets.PROD_MACOS_CERTIFICATE_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_APPLE_ID_2 != '' && secrets.PROD_MACOS_NOTARIZATION_PWD_2 != '' && secrets.PROD_MACOS_NOTARIZATION_TEAM_ID_2 != '' }}"
@@ -39,7 +39,7 @@ describe("GitHub release workflow", () => {
     });
 
     it("pins snapcraft to a version compatible with electron-builder", () => {
-        const workflow = readFileSync(".github/workflows/build-helper.yml", "utf8");
+        const workflow = readFileSync(new URL("../../.github/workflows/build-helper.yml", import.meta.url), "utf8");
 
         expect(workflow).toContain("sudo snap install snapcraft --classic --channel=8.x/stable");
     });

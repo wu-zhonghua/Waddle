@@ -85,6 +85,16 @@ or
 git clone https://github.com/waddledev/waddle.git
 ```
 
+## Enter the desktop application
+
+The repository also contains the Android client. Run desktop commands from this directory:
+
+```sh
+cd Waddle/apps/desktop
+```
+
+From the repository root, `task desktop -- <task-name>` forwards to this directory.
+
 ## Install code dependencies
 
 The first time you clone the repo, you'll need to run the following to load the dependencies. If you ever have issues building the app, try running this again:
@@ -95,7 +105,7 @@ task init
 
 ## Build and Run
 
-All the methods below will install Node and Go dependencies when they run the first time. All these should be run from within the Git repository.
+All the methods below will install Node and Go dependencies when they run the first time. Run them from `apps/desktop`.
 
 ### Development server
 

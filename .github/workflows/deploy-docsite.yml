@@ -9,6 +9,11 @@ on:
     push:
         branches:
             - main
+        paths:
+            - "apps/desktop/docs/**"
+            - "apps/desktop/package*.json"
+            - "apps/desktop/Taskfile.yml"
+            - ".github/workflows/deploy-docsite.yml"
     workflow_dispatch:
     # Also run any time a PR is opened targeting the docs
     pull_request:
@@ -20,9 +25,13 @@ on:
             - reopened
             - ready_for_review
         paths:
-            - "docs/**"
+            - "apps/desktop/docs/**"
             - ".github/workflows/deploy-docsite.yml"
-            - "Taskfile.yml"
+            - "apps/desktop/Taskfile.yml"
+
+defaults:
+    run:
+        working-directory: apps/desktop
 
 jobs:
     build:
@@ -37,7 +46,7 @@ jobs:
               with:
                   node-version: ${{env.NODE_VERSION}}
                   cache: npm
-                  cache-dependency-path: package-lock.json
+                  cache-dependency-path: apps/desktop/package-lock.json
             - name: Install Task
               uses: arduino/setup-task@v2
               with:
@@ -46,7 +55,7 @@ jobs:
             - uses: nick-fields/retry@v4
               name: npm ci
               with:
-                  command: npm ci --no-audit --no-fund
+                  command: cd apps/desktop && npm ci --no-audit --no-fund
                   retry_on: error
                   max_attempts: 3
                   timeout_minutes: 5
@@ -57,7 +66,7 @@ jobs:
               if: github.event_name == 'push' && github.ref == 'refs/heads/main'
               uses: actions/upload-pages-artifact@v4
               with:
-                  path: docs/build
+                  path: apps/desktop/docs/build
     deploy:
         name: Deploy to GitHub Pages
         # Only deploy when pushed to the main branch

@@ -1,0 +1,5 @@
+Waddle Android 0.1.0
+Terminal components: Termux, https://github.com/termux/termux-app
+Source revision: 8629e632fcb95da272221be327db653fb24befe9
+GPL-3.0-only, with upstream Apache-2.0 portions; see accompanying license files.
+Waddle integration changes are documented in third-party/termux/PROVENANCE.md.

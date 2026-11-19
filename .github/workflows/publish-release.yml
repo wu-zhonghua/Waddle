@@ -5,6 +5,10 @@ run-name: Publish ${{ github.ref_name }}
 on:
     release:
         types: [published]
+defaults:
+    run:
+        working-directory: apps/desktop
+
 jobs:
     publish-s3:
         name: Publish to Releases
@@ -44,6 +48,7 @@ jobs:
               with:
                   tag: ${{github.ref_name}}
                   fileName: "*amd64.snap"
+                  out-file-path: apps/desktop
             - name: Publish to Snapcraft
               run: "task artifacts:snap:publish:${{ github.ref_name }}"
               env:
@@ -69,6 +74,7 @@ jobs:
               with:
                   tag: ${{github.ref_name}}
                   fileName: "*arm64.snap"
+                  out-file-path: apps/desktop
             - name: Publish to Snapcraft
               run: "task artifacts:snap:publish:${{ github.ref_name }}"
               env:

@@ -24,6 +24,10 @@ on:
                 default: true
 env:
     NODE_VERSION: 22
+defaults:
+    run:
+        working-directory: apps/desktop
+
 jobs:
     bump-version:
         runs-on: ubuntu-latest
@@ -43,11 +47,11 @@ jobs:
               with:
                   node-version: ${{env.NODE_VERSION}}
                   cache: npm
-                  cache-dependency-path: package-lock.json
+                  cache-dependency-path: apps/desktop/package-lock.json
             - uses: nick-fields/retry@v4
               name: npm ci
               with:
-                  command: npm ci --no-audit --no-fund
+                  command: cd apps/desktop && npm ci --no-audit --no-fund
                   retry_on: error
                   max_attempts: 3
                   timeout_minutes: 5
@@ -64,11 +68,12 @@ jobs:
 
             - name: "Push version bump: ${{ steps.bump-version.outputs.PENGU_VERSION }}"
               if: github.ref_protected
+              working-directory: .
               run: |
                   # Create a new commit for the package version bump in package.json
                   export VERSION=${{ steps.bump-version.outputs.PENGU_VERSION }}
                   export MESSAGE="chore: bump package version to $VERSION"
-                  export FILE=package.json
+                  export FILE=apps/desktop/package.json
                   export BRANCH=${{github.ref_name}}
                   export SHA=$( git rev-parse $BRANCH:$FILE )
                   export CONTENT=$( base64 -i $FILE )

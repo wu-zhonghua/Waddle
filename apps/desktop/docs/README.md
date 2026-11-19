@@ -24,4 +24,4 @@ This command generates static content into the `build` directory and can be serv
 
 ### Deployment
 
-Deployments are handled automatically by the [Docsite CI/CD workflow](../.github/workflows/deploy-docsite.yml)
+Deployments are handled automatically by the [Docsite CI/CD workflow](../../../.github/workflows/deploy-docsite.yml)

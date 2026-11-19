@@ -6,7 +6,13 @@ on:
             - main
         tags:
             - "v[0-9]+.[0-9]+.[0-9]+*"
+        paths:
+            - "apps/desktop/**"
+            - ".github/workflows/testdriver*.yml"
     pull_request:
+        paths:
+            - "apps/desktop/**"
+            - ".github/workflows/testdriver*.yml"
         # branches:
         #     - main
         # paths-ignore:
@@ -35,6 +41,10 @@ permissions:
     contents: read # To allow the action to read repository contents
     pull-requests: write # To allow the action to create/update pull request comments
 
+defaults:
+    run:
+        working-directory: apps/desktop
+
 jobs:
     build_and_upload:
         name: Build for TestDriver.ai
@@ -51,11 +61,11 @@ jobs:
               with:
                   node-version: ${{env.NODE_VERSION}}
                   cache: npm
-                  cache-dependency-path: package-lock.json
+                  cache-dependency-path: apps/desktop/package-lock.json
             - uses: nick-fields/retry@v4
               name: npm ci
               with:
-                  command: npm ci --no-audit --no-fund
+                  command: cd apps/desktop && npm ci --no-audit --no-fund
                   retry_on: error
                   max_attempts: 3
                   timeout_minutes: 5
@@ -80,4 +90,4 @@ jobs:
               uses: actions/upload-artifact@v5
               with:
                   name: windows-exe
-                  path: make/*.exe
+                  path: apps/desktop/make/*.exe
