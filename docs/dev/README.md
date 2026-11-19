@@ -44,5 +44,5 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 当前进度（2026-11-19）：这套流程今天建立，之前的工作没有需求文档。
 
-- 仓库整理和安卓终端第一版已提交并推到 `feat/android-terminal-mvp`（提交 `d3746418` 及之后两个 CI 修正），GitHub 上 Android 和 Desktop checks 通过；macOS、Windows、Linux 安装包还没在这个分支上打过，尚未合并到 `main`。计划和验收条件见 [mvp-plan.md](../mvp-plan.md)，迁移记录见 [workspace-migration.md](../workspace-migration.md)。
+- 仓库整理和安卓终端第一版已提交（`d3746418` 及之后两个 CI 修正），GitHub 上 Android 和 Desktop checks 通过，已合入 `main`；之后都直接在 `main` 上开发。macOS、Windows、Linux 安装包还没在新目录结构下打过。计划和验收条件见 [mvp-plan.md](../mvp-plan.md)，迁移记录见 [workspace-migration.md](../workspace-migration.md)。
 - 在 Waddle 里用 Codex 已由 Codex 先行实现（0.4.0，模拟器上自测通过，改动未提交），补写了需求 2026-11-19-01 用来验收；真机三星 Fold7 已装上，等用户登录 Codex 后做阶段 2。

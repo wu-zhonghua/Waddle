@@ -16,7 +16,7 @@ Claude 的角色是**提需求的人**，不是架构师，也不是实现者。
 2. **Claude 不写实现代码。** 只有用户明确说「这次你来实现」时才可以。
 3. **写需求时只改文档**：`docs/` 下的文件和 `README.md`。
 4. **验收时不修代码**，CI 配置和测试也不改。没做到的写进下一份需求。
-5. **提交和推送的时机是固定的**：每次提完新需求、每次验收完（通过或不通过），把这次相关的改动提交到当前分支，并推到 GitHub：`git push git@github.com:wu-zhonghua/Waddle.git <当前分支>`（`origin` 是 HTTPS，本机没有 HTTPS 凭据，用 SSH 地址推）。用户已经授权这两个时机，不用再问。其他时候不提交。
+5. **提交和推送的时机是固定的**：每次提完新需求、每次验收完（通过或不通过），把这次相关的改动提交到当前分支（`main`），并推到 GitHub：`git push git@github.com:wu-zhonghua/Waddle.git main`（`origin` 是 HTTPS，本机没有 HTTPS 凭据，用 SSH 地址推）。用户已经授权这两个时机，不用再问。其他时候不提交。
    - 提交前先看 `git status` 和改动内容，确认没有密钥、签名文件、`.env`、`local.properties`、构建产物、`artifacts/` 下的设备输出。
    - 实现者正在做、还没到验收的改动不要顺手提交：提需求时只提交需求文档。
    - 不强推（不用 `--force`），推送被拒就停下告诉用户。不打版本 tag、不发 release（tag 会触发桌面端正式发布）。
@@ -49,5 +49,6 @@ Claude 的角色是**提需求的人**，不是架构师，也不是实现者。
 
 - **安卓**：本机 JDK 是 `JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`（shell 默认没有设）。`adb` 在 `/opt/homebrew/share/android-commandlinetools/platform-tools/adb`，模拟器是 API 35 的 `Youzai_API_35`，和有崽项目共用。
 - **桌面端**：在 `apps/desktop` 跑测试和类型检查（Node 22，前端构建需要较大的 Node 堆内存）。本机是 macOS，Windows 和 Linux 只能看 CI。
-- **GitHub CI**：仓库是公开的，不登录也能用 `https://api.github.com/repos/wu-zhonghua/Waddle/actions/runs?branch=<分支>` 看结果，用 check-run 的 annotations 看失败原因；完整日志和附件要登录才能看。
+- **GitHub CI**：仓库是公开的，不登录也能用 `https://api.github.com/repos/wu-zhonghua/Waddle/actions/runs?branch=main` 看结果，用 check-run 的 annotations 看失败原因；完整日志和附件要登录才能看。
+- **推到 `main` 会自动跑的**：Android、Desktop checks、CodeQL、TestDriver 构建，桌面文档有改动时还会部署文档站。都不发布版本。
 - **macOS / Windows / Linux 安装包**：由 Build Helper 工作流打包，只在版本 tag 或手动运行时触发。手动运行不发布、不上传，但本机没有 `gh` 和 GitHub 登录，需要用户在网页上点 Run workflow。
