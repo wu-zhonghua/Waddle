@@ -40,6 +40,7 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
+| [2026-11-20-02-phone-abilities](2026-11-20-02-phone-abilities.md) | 让 Waddle 里的 Codex 用上手机能力：短信、通讯录、日历、文件等（3 个阶段） | 待实现（阶段 1） | 无 |
 | [2026-11-20-01-drawer-and-theme](2026-11-20-01-drawer-and-theme.md) | 安卓端改用左侧抽屉切换终端和 Codex（可选工作目录），并能选浅色/深色主题（2 个阶段） | 待实现（阶段 1） | 无 |
 | [2026-11-19-01-codex-in-waddle](2026-11-19-01-codex-in-waddle.md) | 在 Waddle 里用 Codex：读写文件、跑命令、读和改系统设置（2 个阶段） | 待实现（阶段 1） | 无 |
 
