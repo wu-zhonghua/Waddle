@@ -32,10 +32,14 @@ class CodexRpc(
                         for (i in 0 until count) {
                             if (buffer[i] == '\n') {
                                 val text = line.toString(); line.setLength(0)
-                                if (text.isNotBlank()) handler.post { if (!stopped) receive(text) }
+                                if (text.isNotBlank()) {
+                                    // Image tool results can be large; parse off the UI thread as well as reading off-thread.
+                                    val message = JSONObject(text)
+                                    handler.post { if (!stopped) receive(message) }
+                                }
                             } else {
                                 line.append(buffer[i])
-                                check(line.length <= 4 * 1024 * 1024) { "Runtime response too large" }
+                                check(line.length <= 40 * 1024 * 1024) { "Runtime response too large" }
                             }
                         }
                     }
@@ -48,8 +52,7 @@ class CodexRpc(
         onReady()
     }
 
-    private fun receive(text: String) {
-        val message = runCatching { JSONObject(text) }.getOrElse { fail("Codex 返回了无效数据。"); return }
+    private fun receive(message: JSONObject) {
         if (message.has("id") && !message.has("method")) {
             val callback = pending.remove(message.optInt("id", -1)) ?: return
             val error = message.optJSONObject("error")

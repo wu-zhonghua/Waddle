@@ -232,24 +232,7 @@ fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, onCo
                 pathInput = null
             }) { Text("打开") } }, dismissButton = { TextButton(onClick = { pathInput = null }) { Text("取消") } })
     }
-    browser.selected?.let { entry ->
-        AlertDialog(onDismissRequest = { browser.dismissSelection() }, title = { Text(entry.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-            text = {
-                Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("${formatSize(entry.size)} · ${entry.mime}", fontSize = 12.sp)
-                    Text(if (entry.local) entry.file.path else "手机原文件 · 导入后可交给终端或 Codex", fontSize = 12.sp)
-                    if (browser.previewLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
-                    browser.previewError?.let { Text(it, fontSize = 13.sp) }
-                    browser.preview?.let { preview ->
-                        if (preview.truncated) Text("仅预览前 64 KiB；导入会保留完整文件。", fontSize = 12.sp)
-                        SelectionContainer { Text(preview.text.ifEmpty { "（空文件）" }, fontFamily = FontFamily.Monospace, fontSize = 12.sp) }
-                    }
-                }
-            }, confirmButton = {
-                if (entry.local) TextButton(onClick = { browser.dismissSelection(); onCodex(entry.file) }) { Text("交给 Codex") }
-                else TextButton(onClick = { browser.dismissSelection(); browser.import(entry) }, enabled = !browser.importBusy) { Text("导入副本") }
-            }, dismissButton = { TextButton(onClick = { browser.dismissSelection() }) { Text("关闭") } })
-    }
+
 }
 
 

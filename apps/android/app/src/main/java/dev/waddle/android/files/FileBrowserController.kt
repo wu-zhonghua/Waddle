@@ -180,7 +180,7 @@ class FileBrowserController(private val context: Context, val home: File) {
     fun select(entry: FileEntry) {
         dismissSelection()
         selected = entry
-        if (entry.directory) return
+        if (entry.directory || entry.viewKind() !in setOf(ViewKind.TEXT, ViewKind.MARKDOWN, ViewKind.HTML)) return
         previewLoading = true
         val version = previewVersion
         previewJob = scope.launch {
@@ -192,6 +192,20 @@ class FileBrowserController(private val context: Context, val home: File) {
             finally { if (version == previewVersion) previewLoading = false }
         }
     }
+    fun openPath(file: File, onDirectory: () -> Unit = {}) {
+        scope.launch {
+            try {
+                val entry = withContext(Dispatchers.IO) { access.local(file) }
+                if (entry.directory) { openLocal(file); onDirectory() } else select(entry)
+            } catch (e: Exception) {
+                // Keep the failed file visible, so retry and external-open remain available.
+                select(FileEntry(Uri.fromFile(file.absoluteFile), file.name, false, null,
+                    android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension.lowercase()) ?: "application/octet-stream"))
+                previewError = fileError(e)
+            }
+        }
+    }
+
     fun dismissSelection() {
         previewVersion++; previewJob?.cancel()
         selected = null; preview = null; previewError = null; previewLoading = false

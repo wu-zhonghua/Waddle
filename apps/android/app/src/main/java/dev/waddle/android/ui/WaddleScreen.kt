@@ -164,7 +164,9 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
                                         else Text("正在连接工作区…", Modifier.padding(24.dp))
                                     "codex" -> if (codex != null) CodexScreen(codex, onConnectCodex, codexSession.pendingFile,
                                         clearSelectedFile = { codexSession.pendingFile = null },
-                                        onNewConversation = { newCodexDirectory = codex.workingDirectory.path; newCodexError = null })
+                                        onNewConversation = { newCodexDirectory = codex.workingDirectory.path; newCodexError = null },
+                                        onOpenFile = { file -> workspace?.files?.openPath(file) { navigate("files") } },
+                                        viewerOpen = workspace?.files?.selected != null)
                                         else Text("从文件夹或左侧抽屉新建 Codex 对话。", Modifier.padding(24.dp))
                                     else -> TerminalScreen(workspace, onNewSession)
                                 }
@@ -194,6 +196,15 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
             }
             BackHandler(enabled = drawerVisible) { scope.launch { drawer.close() } }
         }
+        workspace?.files?.selected?.let { entry ->
+            key(entry.uri) {
+                FileViewer(entry, onClose = { workspace.files.dismissSelection() }, onCodex = {
+                    workspace.files.dismissSelection()
+                    val target = codexWorkspace?.selected ?: codexWorkspace?.create()
+                    target?.pendingFile = entry.file.path; navigate("codex")
+                }, onImport = if (entry.local) null else ({ workspace.files.dismissSelection(); workspace.files.import(entry); navigate("files") }))
+            }
+        }
         closeTarget?.let { target ->
             AlertDialog(onDismissRequest = { closeTarget = null }, title = { Text("关闭 ${target.label}？") },
                 text = { Text(if (target.running) "该终端仍在运行。关闭会停止其中的命令并移除输出。" else "移除这个已退出的终端及输出。") },
@@ -220,7 +231,7 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
         }
         if (settings && codex != null) CodexSettingsDialog(codex) { settings = false }
         if (help) AlertDialog(onDismissRequest = { help = false }, title = { Text("使用 Waddle") }, text = {
-            Text("左侧文件夹按钮打开文件；菜单切换终端和 Codex。浏览文件不会改变终端路径，进入文件夹后点底部“打开终端”，或用卡片“在此打开…”菜单，新终端会从该目录开始，原会话保留。“在此打开 Codex”同样新建独立对话，从所选目录读写文件和执行命令。Codex 最多同时打开 4 个对话，可在抽屉切换或关闭。\n\n终端可运行 pwd、ls、codex。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n底部“问 Codex，写命令”使用当前终端上下文，确认命令后回车执行。\n\n会话在后台服务存活期间保留；系统结束应用或手机重启后 Shell 不会恢复。文件和 Codex 登录保存在本机。\n\n版本 0.4.0 · 终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
+            Text("左侧文件夹按钮打开文件；菜单切换终端和 Codex。浏览文件不会改变终端路径，进入文件夹后点底部“打开终端”，或用卡片“在此打开…”菜单，新终端会从该目录开始，原会话保留。“在此打开 Codex”同样新建独立对话，从所选目录读写文件和执行命令。Codex 最多同时打开 4 个对话，可在抽屉切换或关闭。\n\n终端可运行 pwd、ls、codex。用 waddle-open \"文件路径\" 打开图片或文件（Codex CLI 也可执行此命令），返回保留原终端。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n底部“问 Codex，写命令”使用当前终端上下文，确认命令后回车执行。\n\n会话在后台服务存活期间保留；系统结束应用或手机重启后 Shell 不会恢复。文件和 Codex 登录保存在本机。\n\n版本 0.4.0 · 终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
         }, confirmButton = { TextButton(onClick = { help = false }) { Text("知道了") } })
     }
 }

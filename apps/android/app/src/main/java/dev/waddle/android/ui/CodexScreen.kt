@@ -28,7 +28,7 @@ import org.json.JSONObject
 import java.io.File
 
 @Composable
-fun CodexScreen(client: CodexController, onConnect: () -> Unit, selectedFile: String? = null, clearSelectedFile: () -> Unit = {}, onNewConversation: () -> Unit) {
+fun CodexScreen(client: CodexController, onConnect: () -> Unit, selectedFile: String? = null, clearSelectedFile: () -> Unit = {}, onNewConversation: () -> Unit, onOpenFile: (File) -> Unit = {}, viewerOpen: Boolean = false) {
     val context = LocalContext.current
     var input by rememberSaveable { mutableStateOf("") }
     var fileError by remember { mutableStateOf<String?>(null) }
@@ -37,7 +37,7 @@ fun CodexScreen(client: CodexController, onConnect: () -> Unit, selectedFile: St
     val listState = rememberLazyListState()
     val lastText = client.messages.lastOrNull()?.text
     LaunchedEffect(client.messages.size, lastText) {
-        if (client.messages.isNotEmpty()) listState.scrollToItem(client.messages.lastIndex)
+        if (!viewerOpen && client.messages.isNotEmpty() && (!listState.canScrollForward || listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index == client.messages.lastIndex - 1)) listState.scrollToItem(client.messages.lastIndex)
     }
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
         selectedFile?.let { path ->
@@ -92,8 +92,7 @@ fun CodexScreen(client: CodexController, onConnect: () -> Unit, selectedFile: St
                             Spacer(Modifier.height(6.dp))
                             if (message.role == "Waddle 原生工具") SettingsResult(message.text)
                             else if (message.role == "Waddle 亮度工具") DisplayWriteResult(message.text)
-                            else SelectionContainer { Text(message.text, color = Color(0xFFE4ECE6), fontSize = 14.sp,
-                                fontFamily = if (message.role == "命令") FontFamily.Monospace else FontFamily.Default) }
+                            else MessageFiles(message, client.workingDirectory, client.runtime.home, onOpenFile)
                         }
                     }
                 }

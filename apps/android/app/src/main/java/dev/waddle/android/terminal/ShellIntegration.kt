@@ -17,6 +17,13 @@ internal object ShellIntegration {
 
     fun rc(config: File, directory: File, nonce: String): String = """
         builtin source ${quote(config.path)}
+        waddle-open() {
+            if [[ §# != 1 ]]; then builtin printf '用法: waddle-open "文件路径"\n' >&2; return 2; fi
+            local target=§1
+            [[ §target == /* ]] || target="§PWD/§target"
+            builtin printf '%s' "§target" > ${quote(directory.path)}/open-§BASHPID-§RANDOM
+        }
+        export -f waddle-open
         __waddle_epoch=0
         __waddle_prompt() {
             local previous=§?

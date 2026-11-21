@@ -17,6 +17,7 @@ import dev.waddle.android.files.FileBrowserController
 import dev.waddle.android.codex.WaddleRuntime
 
 class ShellSession(val number: Int, val terminal: TerminalSession, internal val directory: File, internal val nonce: String) {
+    internal var fileObserver: android.os.FileObserver? = null
     var promptReady by mutableStateOf(false); internal set
     var promptEpoch by mutableStateOf(0L); internal set
     var cwd by mutableStateOf<String?>(null); internal set
@@ -74,6 +75,19 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
             arrayOf("bash", "--noprofile", "--rcfile", rc.absolutePath, "-i"), env, 4000, this)
         val session = ShellSession(number, terminal, directory, nonce)
         sessions += session
+        // A private request file also works when Codex captures stdout or creates a new process session.
+        session.fileObserver = object : android.os.FileObserver(directory.path, android.os.FileObserver.CLOSE_WRITE) {
+            override fun onEvent(event: Int, path: String?) {
+                if (path == null || !path.matches(Regex("open-[0-9]+-[0-9]+"))) return
+                val request = File(directory, path)
+                val target = runCatching { if (request.length() <= 16_384) request.readText() else "" }.getOrDefault("")
+                request.delete()
+                if (!target.startsWith('/') || target.any { it < ' ' }) return
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    if (session in sessions) files.openPath(File(target))
+                }
+            }
+        }.also { it.startWatching() }
         suggestions.cancel()
         selectedId = terminal.mHandle
         terminal.updateSize(80, 24, 8, 16)
@@ -102,6 +116,7 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
         val index = sessions.indexOf(session)
         if (index < 0) return
         if (selected === session) suggestions.cancel()
+        session.fileObserver?.stopWatching()
         session.terminal.finishIfRunning()
         session.directory.deleteRecursively()
         sessions.removeAt(index)
@@ -113,7 +128,7 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
 
     fun closeAll() {
         suggestions.cancel()
-        sessions.toList().forEach { it.terminal.finishIfRunning(); it.directory.deleteRecursively() }
+        sessions.toList().forEach { it.fileObserver?.stopWatching(); it.terminal.finishIfRunning(); it.directory.deleteRecursively() }
         sessions.clear()
         selectedId = null
         onStateChanged()

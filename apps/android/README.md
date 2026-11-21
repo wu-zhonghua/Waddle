@@ -54,6 +54,16 @@ When a document-only folder needs a copy, **复制到 Waddle…** explains that 
 
 All-files access is declared for the terminal/file-workspace use case; any future Google Play publication requires the applicable permission review. This task does not publish a release or expand access to other apps' private directories.
 
+### Viewing and taking files out
+
+Images and local file links in Codex messages open the same full-screen viewer as Files. Image tool events (`imageView`, `imageGeneration`, MCP/dynamic/function outputs) attach thumbnails to their original messages. Quoted paths and Markdown links support Chinese/spaces; relative paths use the conversation/command cwd. Returning preserves the conversation position and service-owned tasks.
+
+The viewer supports pinch/pan images (including camera orientation), PDF page navigation and zoom, video/audio play/pause/seeking, and source/formatted Markdown or HTML. **文件操作** provides **用其他应用打开**, **分享**, and **保存到手机**. Exported content URIs grant read access only to a snapshot of the selected file. Android 10+ saves images in `Pictures/Waddle` and other files in `Download/Waddle`; duplicate names receive a new name. Android 8–9 uses the system save picker. Nothing is automatically exported to public storage.
+
+In a new terminal, run `waddle-open 'path/to/file.png'`, or ask terminal Codex to execute that command. The exported Bash function writes to that shell's private request directory, so captured stdout and detached child process groups do not hide the request. Closing the viewer leaves the shell running. These per-session functions disappear when their terminal closes.
+
+Image previews are decoded off the UI thread (480 px thumbnails / 2560 px full views); PDF pages are rendered individually up to 2400 px. Text/source previews are limited to 64 KiB. Markdown supports common headings, emphasis, code, lists, quotes and tables; HTML/Markdown viewing is offline, disables JavaScript and blocks external/local resource loads. This is a document reader, not a browser for running sites. Media codec support follows the device. Android 8.x GIF preview is a still frame. Inline tool image data is bounded to 32 MiB encoded; local files use the regular decoder. Remote-only or attachment-ID-only image results without local bytes/path show a useful message instead of an empty image. Temporary share snapshots older than 24 hours are cleaned up on later exports.
+
 ### AI commands in the terminal
 
 The default prompt is now `\w \$ ` (for example `~/my-project $`), with the full current path above the terminal. Only the exact old generated `.waddlerc` is migrated; custom shell configuration is preserved.

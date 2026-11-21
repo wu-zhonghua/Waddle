@@ -1,6 +1,6 @@
 # 在 Waddle 里看图片和文件：Codex 给的图直接显示，文件能预览、能用别的应用打开（2 个阶段）
 
-- 状态：待实现（两个阶段一起做，中间不停下等验收）
+- 状态：已实现
 - 日期：2026-11-21
 - 上一份：无（基于 2026-11-20-03、2026-11-21-03、2026-11-21-04 已实现能力）
 - 涉及：安卓
@@ -62,10 +62,182 @@
 
 ## 实现说明（实现者填写）
 
-<做了什么、怎么跑起来试用、有什么没做完或需要知道的。>
+### 本次交付范围
+
+两个阶段连续实现，未在中间停下等待验收。仅修改安卓及相关文档；未改桌面代码、未创建/切换分支、未 commit/push。Fold7 本轮没有安装 APK、没有运行 instrumentation、没有操作用户文件或登录。
+
+### 阶段 1：做了什么
+
+- 新增统一全屏文件查看器，文件页、Codex 路径/缩略图、终端共用。查看器覆盖当前页面，返回保留原会话和对话滚动位置；终端与 Codex 仍由原服务持有。
+- Codex 消息保留原文字并增加可点的本机路径、文件附件和图片缩略图。支持 Markdown 链接、反引号/引号路径、绝对/相对路径、`~/`、`file://`、`sandbox:`、中文、空格、URL 编码以及常见行号后缀。相对路径以对话或命令工作目录解释；文件夹进入文件页。
+- 按 APK 内 Codex 0.170.0 实际导出的协议接入 `imageView`、`imageGeneration`、文件修改、命令输出，以及 MCP/dynamic/function 工具的图片/路径输出。工具内联图片在后台落到 Waddle 私有目录，显示在原消息中，不自动保存进手机相册。JSON 解析移到读取线程，消息上限由 4 MiB 调整到 40 MiB，内联图片另限制为 32 MiB 编码数据。
+- PNG/JPEG/WebP/GIF 等使用后台限尺寸解码：缩略图最长边 480 px、全屏 2560 px，支持相机 EXIF 方向、双指缩放和拖动。Android 9+ 使用系统 ImageDecoder（含系统支持的 HEIF/HEIC 和动画图片）；Android 8–8.1 使用采样位图及 EXIF 方向处理，GIF 显示静态帧。限尺寸解码依据 [Android ImageDecoder 文档](https://developer.android.com/reference/android/graphics/ImageDecoder)。
+- 所有查看页面的「文件操作」提供「用其他应用打开」「分享」「保存到手机」。外部打开/分享只创建所选文件的缓存副本，通过非导出的 FileProvider 临时授予读取权限；没有暴露整个 home 或授予写权限。无接收应用、文件消失、权限失效、损坏/不支持的格式均有中文提示。
+- Android 10+ 一键保存图片到 `Pictures/Waddle`，其他文件到 `Download/Waddle`；MediaStore 先写入 pending 项，完成后发布，失败删除半成品。重复名称自动分配新名字，成功提示实际目录与名字。Android 8–9 使用系统另存为选择器，不额外申请旧式全盘写权限。保存/分享始终由用户点击触发。
+
+### 阶段 1：怎么试用
+
+1. 构建并覆盖安装（保留数据，**不要卸载/清数据**）：按 `apps/android/README.md` 准备 SDK/运行时，运行 `./gradlew assembleDebug`；手动安装时用 `adb -s <指定设备> install --user 0 -r app/build/outputs/apk/debug/app-debug.apk`，避免三星分身空间被同时安装。
+2. 文件 → Waddle 文件，点已有 PNG/JPG/WebP/GIF；或文件 → 手机存储，用户授权后从相册目录选照片。双指放大后拖动，用顶部「返回」或系统返回退出。
+3. 在 Codex 中让模型把图片存为本机文件，回复完整路径/Markdown 链接；运行中的图片工具输出和回复中的图片都可形成缩略图。点图片、文本、目录、其他格式的链接分别查看。含空格的路径推荐用反引号或 Markdown 链接明确包住。
+4. 查看器 → 文件操作 → 用其他应用打开/分享/保存到手机。保存两次同名图片后，在相册/文件应用的上述目录找两个文件。删除原文件后再点消息中的缩略图，确认显示错误而不闪退。
+
+### 阶段 2：做了什么与怎么试用
+
+- PDF 使用系统 PdfRenderer 按页在后台渲染，上一页/下一页和页码指示；每页最长边不超过 2400 px，双指缩放、拖动。SAF PDF 暂存为可 seek 文件，单次限制 512 MiB，结束清理临时文件。文件页或 Codex 中点一个多页 PDF，即可翻页试用。
+- 音视频使用系统播放器，提供播放/暂停、秒数和可拖动进度条，使用精确 seek 模式。关闭或切到后台暂停/释放播放器，不关闭终端/Codex。支持格式/编码以设备系统解码器为准，不支持时提示外部打开。点 MP4 和 WAV/MP3 等可分别试用。
+- Markdown/HTML 可切换「排版 / 原文」。Markdown 支持常见标题、强调、代码块、列表、引用、表格；HTML 使用禁用 JavaScript、禁止网络和本机资源加载的 WebView，避免打开文件就执行脚本或读取其他文件。它是离线文档阅读器，不执行网页应用；外链/相对图片、样式资源不会加载。文本两种视图都保留原有前 64 KiB 预览限制，导出仍是完整文件。
+- 新终端里可运行 `waddle-open "$HOME/查看示例.png"`（也可传相对路径/中文空格路径）；终端里的 Codex 可执行同一个 Bash 命令。函数通过每个终端自己的私有请求文件与 FileObserver 通知查看器，因而不会依赖标准输出或控制 TTY；Codex 捕获输出、子进程 `setsid` 时仍能打开。返回后原 Bash/程序继续，关闭终端才停止其监听。
+- 阶段 1 的打开/分享/保存菜单同样适用于 PDF、音视频、Markdown/HTML 和其他文件。
+
+### 验证平台与结果
+
+本机平台为 macOS ARM64；设备验证仅使用 **Waddle_API_35 / Android 15 API 35 ARM64 模拟器（emulator-5554）**。没有把其他工程模拟器或 Fold7 当成测试设备。
+
+- **阶段 1 模拟器**：验证 PNG/JPEG/WebP/GIF、6000×4000 大图限尺寸、带 EXIF 旋转的合成 JPEG；中文/空格/引号/相对路径及拒绝远程 URL；图片工具事件和内联图片落盘；Codex 消息缩略图打开、返回、删后错误；FileProvider 内容与只读 Intent；相册重复保存不覆盖和下载目录保存。两指缩放/拖动通过真实 MotionEvent 驱动查看器并比较渲染像素。相机照片用合成 EXIF 文件测试，**不是 Fold7 实拍照片**；消息使用离线协议/界面夹具，**不是本轮真实模型生成图**。
+- **阶段 2 模拟器**：三页 PDF 的不同页内容和翻页界面、损坏 PDF；视频/音频播放、暂停、进度跳转；Markdown/HTML 原文/排版切换、脚本不执行；普通 Bash、脱离控制 TTY 的子 Bash，以及真实内嵌 Codex `app-server command/exec` 都能打开图片并保留原 Shell。还验证查看器打开时 Activity 重建、返回后同一个 PTY 实例仍存活。没有把离线 `command/exec` 测试写成交互式 Codex TUI 的真实模型验收。
+- **两阶段共同检查**：`assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug` 通过；145 项 JVM 单元测试 0 失败，lint 0 errors（存在依赖更新、旧平台兼容等 warnings）。新增 `FileViewingIntegrationTest` 的 11 个不同用例覆盖通过（最后功能批次 10 项通过，手势阈值适配后定向重跑 1 项通过）。原有 46 项设备回归中，36 项实际执行通过、10 项按原有真实模型/授权开关跳过，见下方收尾记录；合计本轮覆盖 47 项不同的实际设备测试。
+- **更新保留**：模拟器覆盖安装前后，home 内 2,512 个文件的 SHA-256 清单完全一致。没有使用/迁移真实账号凭据；本轮没有真实模型登录/任务验证，不能据此宣称 Fold7 登录更新验收完成。
+- **桌面共同回归（仅本机 macOS）**：200 项测试、`tsc --noEmit --pretty false`、`npm run build:dev` 全部通过。第一次使用默认 Node 堆构建因内存不足退出，改用项目 CI 同款 `NODE_OPTIONS=--max-old-space-size=8192` 和 Node 22 后通过。未修改桌面代码；未测试桌面安装包、Windows/Linux 或远端 GitHub CI。
+
+设备测试命令（只针对可中断的测试模拟器；instrumentation 会启停目标进程，不要拿用户正在工作的真机执行）：
+
+```sh
+./gradlew assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug
+adb -s emulator-5554 install --user 0 -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5554 install --user 0 -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb -s emulator-5554 shell am instrument --user 0 -w \
+  -e class dev.waddle.android.FileViewingIntegrationTest \
+  dev.waddle.android.test/androidx.test.runner.AndroidJUnitRunner
+# 全部原有设备回归（真实模型/授权写入用例默认按原有开关跳过）
+adb -s emulator-5554 shell am instrument --user 0 -w \
+  -e notClass dev.waddle.android.FileViewingIntegrationTest \
+  dev.waddle.android.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+本轮本机临时日志位于 `/tmp/waddle-view-build.log`、`/tmp/waddle-view-focused.log`、`/tmp/waddle-view-gesture.log`、`/tmp/waddle-view-regression.log`、`/tmp/waddle-view-regression-isolated.log` 和 `/tmp/waddle-view-desktop-{test,tsc,build}.log`，不提交原始设备输出。音视频测试素材为 FFmpeg 自生成测试图案/正弦波，来源和重建命令在测试 assets 的 README 中；没有收录用户文件。
+
+### 尚未在 Fold7 真机验证的「怎样算做好」
+
+**阶段 1：六条均需 Fold7 实测补齐。**
+
+| 原条目 | Fold7 尚未验证的部分 |
+|---|---|
+| 1 | 真实模型生成图片后缩略图直接出现、点开双指缩放、返回原对话位置。模拟器仅离线输出/界面夹具已测。 |
+| 2 | 图片/文本/目录/其他格式路径的真机点击体验，含中文和空格。 |
+| 3 | 真机 PNG/JPG/WebP/GIF、Fold7 相册目录中的实拍照片，以及大图的实际流畅度/内存表现。 |
+| 4 | 真机相册外部打开、向实际聊天应用分享、PDF 阅读器接收、保存后相册可见、重复保存不覆盖。模拟器只验证了 URI/数据及 MediaStore，不等同于这些第三方应用实际接收。 |
+| 5 | 真机删文件/坏文件/撤销权限提示；真实运行中的终端命令和 Codex 模型任务跨查看器保持。 |
+| 6 | 本次新版覆盖安装到 Fold7 后的用户文件与真实 Codex 登录保留；真机现有设备测试。本地构建/模拟器和桌面检查已完成，但未运行远端 CI。 |
+
+**阶段 2：五条均需 Fold7 实测补齐。**
+
+| 原条目 | Fold7 尚未验证的部分 |
+|---|---|
+| 1 | 多页 PDF 的真机翻页、缩放和性能。 |
+| 2 | 真机视频/音频的播放、暂停、拖动进度、实际声音与设备特有编码。 |
+| 3 | Markdown/HTML 在真机原文与排版视图间切换。 |
+| 4 | Fold7 普通 Bash 和直接运行交互式 `codex` 各打开一次图片，返回后终端内容及真实程序保留；交互式 Codex TUI/真实模型这一组合在模拟器也未验。离线内嵌 Codex 命令执行链路已测。 |
+| 5 | 新版覆盖安装后的 Fold7 文件/登录保留及真机回归；本地 Android/桌面检查已完成，未跑远端 CI。 |
+
+其他边界：Android 8–10、x86_64、其他品牌设备未实测；加密 PDF、设备不支持的媒体编码交给其他应用。纯远程图片 URL、只有附件 ID 而没有本机路径/内联字节的生成结果会提示保存为本机文件，不会暗中下载。超出预览限制可用外部打开、分享或保存完整文件。
+
+### 收尾记录
+
+- 原有设备回归首轮：1 项导航用例失败，单独重跑仍失败。定位为模拟器已有 3 个保存的 Codex 面板，而该旧测试需要再创建 2 个，碰到原有 4 面板上限；不是查看器回归。没有改业务上限，也没有删除保存的面板来掩盖结果。
+- 备份导航配置后，临时只保留一个面板作测试起点，完整重跑原有 46 项：36 项实际执行通过、10 项按原有开关跳过，运行器报告 `OK (46 tests)`。结束后在 `finally` 中原样恢复导航配置，并逐字节核对一致；没有清空 home/登录。
+- 新增测试的开发过程捕获并修复了 PDF 翻页时的原生视图空值竞争、播放器生命周期清理竞争。实时可访问性缓存和高密度屏幕手势阈值也已纳入测试适配；最终 11 个不同新增用例都覆盖通过。
+- 本轮未操作 Fold7，未运行真实模型用例或远端 CI；全部真机待验项列在上方，不等于「验收通过」。
+
+### Fold7 真机补测（2026-11-21）
+
+本节补充上方历史记录；上方「尚未在 Fold7 真机验证」表是补测前的缺口清单，以本节结果为准。状态仍为「已实现」，不代表验收者已经验收通过。
+
+#### 范围、数据保留与恢复
+
+- 设备：Samsung Fold7 / SM-F966B，Android 17；真机命令始终指定 `-s RFCY71BWLPD`，所有安装均为 `install --user 0 -r`。没有卸载、清数据、安装到分身空间、修改系统权限、发出聊天消息。锁屏时停止可视操作，由用户两次手动解锁并确认可继续；instrumentation 前用户明确确认 Waddle 没有运行中的任务。
+- 首次覆盖安装前后 home 都是 **2,951** 个文件，没有缺失；登录文件 `.codex/auth.json` 字节不变。仅 `.codex/logs_2.sqlite-wal`、`logs_2.sqlite-shm`、`models_cache.json` 更新，属于仍存活的 Codex 日志/模型缓存。后续三次修复覆盖安装分别比对 **2,984 / 2,991 / 2,993** 个文件，全部哈希不变、无缺失、登录不变。真实 `account/read` 和模型任务确认原登录实际可用。
+- 整轮测试结束的对比要与「安装前后」区分：原文件中 2 个 Codex 进程锁文件随进程结束消失；日志 SQLite 主库/WAL/SHM、模型缓存、Codex history/session_index、Bash history 共 7 个运行记录文件更新。其余原有文件保持不变，登录哈希保持不变；没有删除或改写原有项目文件。新增的是自建素材、测试结果和测试会话记录。
+- 原有 6 份 Codex 面板/线程引用/文件浏览配置已从备份原样恢复，并逐字节核对一致。最后正常打开主应用，确认前台为 Waddle；主用户已安装、分身用户 95 未安装。原有所有文件访问权限仍保留，未更改音量、亮度、自动旋转、锁屏超时等系统设置。测试窗口的临时保持亮屏随 Activity 结束释放。
+- 自建素材保留在 Waddle home 的 `fold7-05-20261121-1900/`，包括图片、多页 PDF、合成音视频、文本及模型/终端完成标记，可供用户听声音和复核。临时测试 Codex 面板不替换用户原面板，测试对话 rollout 与 TUI history 保留；instrumentation 中的测试终端已结束，最后正常启动生成的空闲终端可继续使用。按「不卸载」约束保留仅主用户安装的无启动图标测试包 `dev.waddle.android.test`；收尾已用不含本轮临时真实模型脚本的正式测试包覆盖，避免默认回归误触发专用测试。
+- 外部应用补测的图片保存两轮共创建并删除 4 个公开图片项，其他格式创建并删除 5 个 Download 项；每次只删除本轮新增 MediaStore ID，并核对数量恢复。最终 `Pictures/Waddle`、`Download/Waddle` 中本轮专用前缀 `fold7-05-20261121-` 无残留。查看器常规缓存与私有测试证据保留在 Waddle 自己目录。
+- 实拍照片只在设备上选取 `DCIM/Camera` 内一个已有照片、只读打开，设备本地计算前后哈希一致；没有拍摄新照片，没有导出照片/路径/截图给模型。所有真实模型任务只涉及自建测试目录。聊天接收页不截图、不导出联系人内容、不选择联系人、不发送。
+
+#### 阶段 1：按原「怎样算做好」逐条结果
+
+| 原条目 | 真机结果与证据 |
+|---|---|
+| 1．Codex 生成图片、缩略图、全屏缩放、返回位置 | **真机通过。** 复用原登录，真实 Codex 用 Android Shell 实际生成 PNG，最终生成了彩色图形；消息中出现缩略图，点击进入全屏，返回保留原消息位置。最后重新恢复真实测试对话再打开结果、双指放大、返回。路径误识别和缩放遮挡按钮两处问题已修复并双端复测，见下节。不是只用离线消息夹具代替模型测试。 |
+| 2．图片/文本/目录/其他格式路径，中文与空格 | **真机通过。** 真机点击消息中的 Markdown 路径：`测试 image.png` 显示图片、`说明 text.txt` 显示原文、`folder 中文 space` 进入文件页指定目录、未知格式显示说明和「用其他应用打开」入口。路径点击使用受控消息夹具；图片生成另有第 1 条真实模型证据。 |
+| 3．PNG/JPG/WebP/GIF、Fold7 实拍照片和大图 | **真机通过。** 从文件网格实际点击四种格式和 6000×4000 PNG，正常显示、返回可响应，无崩溃；大图后台限尺寸解码。已有实拍照片只读显示并核对哈希，未导出个人照片。没有以合成 EXIF 文件替代此次实拍照片验证；没有做持续帧率/极限内存压测。 |
+| 4．外部相册、聊天分享、相册保存、PDF、重复保存 | **真机通过。** 私有模型图片通过生产 FileViewing 的只读 FileProvider URI 被三星相册实际接收；保存后的 MediaStore 图片也由相册显示。WhatsApp 实际进入联系人/聊天选择页后直接返回，未选人、未发送。Google PDF Viewer 显示三页测试 PDF。查看器菜单实际保存同名图片两次，生成不同 ID，逐字节确认两份内容相同且旧项未覆盖；提示包含 `Pictures/Waddle`。外部接收由测试指定目标组件启动同一生产 Intent，未把“系统候选列表里有应用”当成接收成功。早先微信尝试未确认接收页，随后用 WhatsApp 完成原条目要求，不宣称微信通过。 |
+| 5．删除/损坏/无权读取提示与任务保持 | **真机通过**（原条目）：删除测试图片后再点缩略图出现不存在提示；改坏自建图片、撤去自建文本文件读取位后显示可读错误，后者恢复读取位；没有闪退。实际终端 `sleep` 命令和真实模型命令在查看器打开时均完成标记写入，原 PTY 存活。**需要用户在 Fold7 上看**（补测前缺口表额外列出的系统撤权场景）：撤销/重新授予“所有文件访问权限”只能由用户手动操作，本轮没有代办，文件级不可读测试不等同于系统撤权。 |
+| 6．更新保留、Android/设备/桌面回归 | **真机通过（本地可执行范围）。** 文件与登录保留见上；新增查看器 11 项和原有 35 项不同实际设备测试通过，另 7 项按原有前提跳过、4 项涉及其他 live/设置变更的测试未调用。Android 构建、145 项 JVM 测试、lint 通过。桌面代码未变，沿用本次两阶段实现时已通过的 macOS 200 项测试、类型检查和开发构建，日志复制入本轮 artifacts。不是全套授权/亮度测试重跑，也没有运行远端 GitHub CI。 |
+
+#### 阶段 2：按原「怎样算做好」逐条结果
+
+| 原条目 | 真机结果与证据 |
+|---|---|
+| 1．多页 PDF 翻页、缩放 | **真机通过。** 三页 PDF 前进到第 2、3 页再返回，页面内容不同；真实双指事件放大，截图确认内容变化，最终裁剪修复保证返回/文件操作/页码和翻页控件不被覆盖。 |
+| 2．视频/音频播放、暂停、拖进度 | **需要用户在 Fold7 上看（实际声音）。** 自生成 MP4 和 WAV 在真机播放计时从 0 前进，暂停后显示播放按钮，拖动至 2/8 秒通过；没有把这些自动断言当作已经听到声音。未修改手机音量/静音设置。请在保留的 `sample.mp4`、`sample.wav` 上亲自听一次；其他设备特有编码未作穷尽验证。 |
+| 3．Markdown/HTML 原文和排版切换 | **真机通过。** 两类文件均切换到原文并核对内容，再切回 WebView 排版；原设备用例同时确认 HTML 脚本不执行。 |
+| 4．普通 Bash 与直接运行交互式 codex 打开图片并返回 | **真机通过。** 普通 Bash 调用 `waddle-open` 后回到同一个 PTY，完成后续输出；直接运行 `codex --no-alt-screen` 的交互式 TUI，通过真实模型执行 `waddle-open './测试 image.png'`，打开图片，返回时原终端仍存活、仍在 Codex 程序中。不是以 `app-server command/exec` 替代本条。测试用 TUI 输出仅包含自建任务。 |
+| 5．更新保留、Android/设备/桌面回归 | **真机通过（本地可执行范围）。** 与阶段 1 第 6 条共用安装哈希、真实登录和构建/回归证据；没有另行卸载、清数据或使用分身。 |
+
+阶段 2 的共同导出能力也补测：PDF/MP4/WAV/Markdown/HTML 使用相同生产方法创建导出快照，核对内容字节及只读分享 Intent，并保存到 `Download/Waddle` 后清理；PDF 有实际外部阅读器接收证据。未宣称每一种格式都在所有第三方接收应用中逐一试过。
+
+#### 真机发现的问题与修复
+
+1. **完整 Shell 脚本误识别为图片路径**：真实模型命令 `bash -lc 'printf … > generated.png && test -s generated.png'` 被当作图片文件名，命令卡片出现额外的无法读取提示。`FileReferences.resolve` 现在拒绝含 Shell 操作符的隐式路径候选；明确 Markdown 链接仍能表达包含这些符号的真实文件名。增加路径/工具附件回归断言；模拟器与 Fold7 均通过。
+2. **放大图片/PDF 绘制遮住顶部控件**：原生 ZoomImageView 在 Compose AndroidView 宿主内放大后可能绘出预览区域。增加 Canvas 范围裁剪和 Compose `clipToBounds`。第一次只补 Canvas 后，一种屏幕尺寸的最终截图仍出现遮挡，因此没有据此收工；继续补容器裁剪，并用实际窗口截图比较缩放前后“返回”按钮像素完全不变，图片和 PDF 各覆盖一次，双端验证。原有手势测试另增加绘制区域外透明像素断言。
+
+临时验收脚本曾因文件网格选错滚动容器、菜单动画未等待、前一测试残留查看器以及再次锁屏而失败，分别隔离/修正脚本并重跑。原始失败日志保留，不把这些失败计作最终产品失败，也不将运行器 `OK` 中跳过的用例计作通过。
+
+#### 测试与证据位置
+
+- `artifacts/fold7-05/` 已被仓库的 `artifacts/` 规则忽略。包括每次安装日志、前后 SHA-256 清单、配置恢复核对、设备测试日志、原图截图、自建测试脚本和桌面既有日志。含设备内部路径/配置的原始资料不加入提交。
+- 最终完整查看器回归：`viewing-final.log`、`emulator-viewing-final.log`，各 `OK (11 tests)`；最终 Compose 裁剪的真实窗口专项见 `hardware-clip-tests.log`、`emulator-hardware-clip-tests.log`。构建/145 项 JVM/lint 见 `clip-final-build.log`。
+- 原有测试：六个安全类报告 30 项，其中 24 实际通过、6 opt-in 跳过；另五个只读/本地方法实际通过；终端六项实际通过，缺系统权限用例因已有权限跳过。合计 35 项不同原有测试实际通过、7 跳过、4 未调用。整套回归最初被自动审批拒绝（可能自动授权/改设置），改为逐类/方法明确范围；终端类先核查 AndroidX 字节码和当前主用户已有通知授权，确认已授权分支不调用授权 API，运行日志六次记录“already granted”，没有替用户授权。
+- 一次补充截图安装被自动审批以额度耗尽拒绝，用户要求继续后恢复执行；最后截图和状态恢复已完成，没有因此遗留未恢复的用户配置。
+- 供验收者查看的截图：[模型生成图片](screenshots/fold7-05-model-image.png)、[最终图片缩放](screenshots/fold7-05-image-zoom.png)、[最终 PDF 缩放](screenshots/fold7-05-pdf-zoom.png)、[外部 PDF 阅读器](screenshots/fold7-05-external-pdf.png)、[Markdown 排版](screenshots/fold7-05-markdown.png)。仅含自建测试内容，没有真实照片、联系人或聊天记录。
+
+**需要用户亲自确认的项目**：阶段 2 第 2 条实际声音；阶段 1 第 5 条附加系统撤权/再授权体验。其余上述条目已完成本轮可执行真机补测；Android 8–10、其他机型、远端 CI 等历史边界保持不变。
 
 ## 验收记录（验收者填写）
 
-- <逐条写：做到 / 没做到 / 需要用户在手机或某台电脑上看，附看到的情况>
-- CI：<Android、Desktop checks 的结果>
-- 结论：
+验收者：Claude，2026-11-21。在 Mac mini 上用当前工作区构建；设备是 Waddle_API_35（API 35 ARM64 模拟器，emulator-5554）。Fold7（RFCY71BWLPD）是用户自己在用的手机，验收时只做了只读查看，没有安装、卸载、清数据、跑测试、发消息，也没有改文件和设置；真机结果来自实现者的「Fold7 真机补测」一节和截图，我逐条核对了它是否覆盖每一条。
+
+**本轮在 Mac mini 上跑的检查**
+
+- Android：`assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug` 成功；145 项单元测试 0 失败；lint 0 个 error。
+- 模拟器覆盖安装新版（`install --user 0 -r`）后，`FileViewingIntegrationTest` 11 项全部通过（`OK (11 tests)`）。
+- 原有设备回归 46 项中，45 项通过，失败 1 项：`NavigationIntegrationTest.folderCodexPanelsKeepDirectoryDraftAndMessagesAcrossSwitchAndRecreation`。原因是模拟器上已存了 3 个 Codex 对话，这个测试还要再开 2 个，超过了应用「最多 4 个」的上限（第 147 行没有新开对话）。这跟 05 无关，实现者也记录过同样的情况。我先备份对话配置，临时只留 1 个对话，单独重跑这项，通过（`OK (1 test)`）；跑完把配置原样恢复，逐字节比对一致。这个测试依赖设备上已存了几个对话，以前就有这个问题，05 没有改到它。
+- 桌面端（只在 macOS）：vitest 37 个文件、200 项测试全部通过，`tsc --noEmit` 通过。05 没有改桌面端代码。
+- Fold7 只读核对：Waddle 只装在主用户 0，分身用户 95 没有装；版本 0.4.0，最后一次更新是 19:20:17，之后源码没有再改，所以真机上就是最终版本。`Pictures/Waddle`、`Download/Waddle` 里没有测试留下的文件。另外，实现者补测时装的测试包 `dev.waddle.android.test`（没有桌面图标）还在主用户里，要不要卸载由用户决定。
+
+**模拟器上手动走查**（截图见下文各条）
+
+- 在 Bash 里运行 `waddle-open large.png; for i in 1..15; do echo tick-$i; sleep 1; done`：查看页立刻打开这张大图，点「返回」回到同一个终端，循环一直输出到 tick-15，提示符还在（[截图](screenshots/acceptance-05-bash-open-return.png)）。
+- 文件页 → Waddle 文件 → 测试目录：三页 PDF 能翻到第 3 页，页码和「上一页」「下一页」的可用状态都对（[截图](screenshots/acceptance-05-pdf-page3.png)）；Markdown 和 HTML 都能在「排版」和「原文」之间切换，原文和文件内容一致；MP4 能播放，计时从 0 往上走，暂停后停住，点进度条能跳到 6 秒（[截图](screenshots/acceptance-05-video.png)）。
+- 「文件操作」菜单里有：用其他应用打开、分享、保存到手机。「用其他应用打开」会交给模拟器的 Gallery，按返回回到查看页。同一张 jpg 保存两次，提示分别是 `Pictures/Waddle/sample.jpg` 和 `Pictures/Waddle/sample (1).jpg`，两个文件都在（[截图](screenshots/acceptance-05-save-twice.png)）。之后我通过 MediaStore 删掉了这两份测试副本。
+- 打开一个坏掉的 `.png`，显示「无法读取此文件，可能格式损坏、不受支持或没有权限。可尝试用其他应用打开。」（[截图](screenshots/acceptance-05-broken-image.png)）。打开没有对应格式的文件，提示用「文件操作」交给其他应用打开。都没有闪退，也没有空白页。我临时建的坏文件已经删掉。
+
+**阶段 1**
+
+1. Codex 生成图片显示缩略图，能全屏缩放，返回回到原来的位置：**做到。** 模拟器上的用例 `toolImagesAndGeneratedImagesAreAttached…` 和 `codexThumbnailOpens…` 通过。Fold7 上真实模型生成了 PNG，缩略图显示、全屏、双指放大、返回原位置都有记录（[截图](screenshots/fold7-05-model-image.png)、[缩放](screenshots/fold7-05-image-zoom.png)）。模拟器上没有登录，没有跑真实模型。
+2. 回复里的路径能点，包括中文和空格：**做到。** 模拟器上 `referencesResolveChineseSpacesQuotesRelativePathsAndRejectRemoteUrls` 通过。Fold7 上点了 `测试 image.png`、`说明 text.txt`、`folder 中文 space`，以及一个没有对应格式的文件，图片、文本、文件夹、「用其他应用打开」都正常。
+3. png、jpg、webp、gif、实拍照片、大图：**做到。** 模拟器上的解码用例通过，我也手动打开了 6000×4000 的 `large.png`。Fold7 上打开了四种格式、6000×4000 的大图，以及相册里一张已有照片（只读打开，前后哈希一致）。
+4. 用其他应用打开、分享、保存、PDF、同名不覆盖：**做到。** 模拟器上的用例和我手动保存两次的结果都对。Fold7 上三星相册收到了图片，WhatsApp 打开到选择联系人那一页（没有发送），Google PDF Viewer 打开了三页 PDF，同名图片保存两次得到两份、旧的没有被覆盖。
+5. 文件被删、坏掉或没权限时有提示，查看时终端和 Codex 任务不中断：**做到。** 模拟器上删除后的提示、坏文件提示，以及 Bash 程序不中断，我都亲眼看到了。Fold7 上删除、改坏、去掉读权限都有提示；查看时 `sleep` 和真实模型命令都跑完了。**需要用户在 Fold7 上看**：在系统设置里关掉再打开「所有文件访问权限」时的提示和恢复（实现者没有替用户操作系统设置）。
+6. 更新后文件和登录还在，构建和测试通过，桌面端照常：**本地做到。** 模拟器上的构建、单元测试、lint、新增测试都通过，原有回归除了上面那项设备环境问题也都通过；Fold7 上四次覆盖安装前后，文件哈希没变，登录文件没变，真实模型能用；桌面端通过。GitHub CI 的结果见下面。
+
+**阶段 2**
+
+1. 多页 PDF 能翻页、能缩放：**做到。** 模拟器上的用例通过，我手动翻到了第 3 页。Fold7 上翻页、双指放大都有记录，控件没有被挡住（[截图](screenshots/fold7-05-pdf-zoom.png)）。
+2. 视频和音频能播放、暂停、拖进度：**做到（画面和操作）。** 模拟器上的用例和我手动操作视频都正常，Fold7 上的计时、暂停、拖进度都有记录。**需要用户在 Fold7 上看**：实际有没有声音。请在 Waddle 文件 → `fold7-05-20261121-1900/` 里播放 `sample.mp4` 和 `sample.wav` 听一下。
+3. Markdown 和 HTML 能在原文和排版之间切换：**做到。** 模拟器上我手动切换过，用例也通过（HTML 里的脚本不会执行）。Fold7 上也有记录（[截图](screenshots/fold7-05-markdown.png)）。
+4. 普通 Bash 和直接运行 `codex` 时，各打开一次图片，返回后终端还在：**做到。** 普通 Bash 我在模拟器上亲自试过，用例也通过。直接运行 `codex` 这一条是 Fold7 上实现者用真实模型做的：交互式 `codex --no-alt-screen` 里运行 `waddle-open`，返回后终端仍然在 Codex 里。模拟器上只跑过不经过模型的内置 Codex 命令执行。
+5. 更新后文件和登录还在，构建和测试通过，桌面端照常：同阶段 1 第 6 条。
+
+- CI：推送后补充。
+- 结论：两个阶段的「怎样算做好」在模拟器和 Fold7 上都做到了。另有两项要用户在 Fold7 上亲自看：阶段 2 第 2 条的实际声音，阶段 1 第 5 条在系统设置里撤销、再授予权限。最终状态等推送后看了 CI 再定。

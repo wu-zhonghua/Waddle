@@ -10,9 +10,13 @@ import androidx.compose.runtime.setValue
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlinx.coroutines.*
 
 class CodexMessage(val id: String, val role: String, text: String) {
     var text by mutableStateOf(text)
+    var files by mutableStateOf<List<String>>(emptyList())
+    var fileError by mutableStateOf<String?>(null)
+    var revision by mutableStateOf(0)
 }
 data class PendingDisplayWrite(val change: DisplayChange, val thread: String, val turn: String, val callId: String)
 data class CodexApproval(val id: Any, val title: String, val detail: String, val displayWrite: PendingDisplayWrite? = null)
@@ -25,6 +29,8 @@ class CodexController(
     private val startProcess: (() -> Process)? = null,
 ) {
     val runtime = WaddleRuntime(context)
+    private val fileScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val imageStorage = File(context.filesDir, "codex-images")
     private val tool = NativeSettingsTool(context)
     private val displayTool = NativeDisplaySettingsTool(context)
     private val prefs = context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE)
@@ -300,6 +306,10 @@ class CodexController(
             "userMessage" -> { role = "你"; val content = item.optJSONArray("content") ?: JSONArray()
                 text = (0 until content.length()).joinToString("\n") { content.optJSONObject(it)?.optString("text", "") ?: "" } }
             "commandExecution" -> { role = "命令"; text = item.optString("command") + "\n" + item.optString("status") + "\n" + item.optString("aggregatedOutput", "") }
+            "imageView" -> { role = "图片"; text = item.optString("path") }
+            "imageGeneration" -> { role = "生成图片"; text = "图片生成 · " + item.optString("status") }
+            "functionCallOutput" -> { role = "工具输出"; text = item.optString("name", "工具") + "\n" + outputText(item.opt("output")) }
+            "mcpToolCall" -> { role = "工具输出"; text = item.optString("tool") + " · " + item.optString("status") + "\n" + outputText(item.optJSONObject("result")?.opt("content")) }
             "fileChange" -> { role = "文件修改"; text = item.optString("status") + "\n" + (item.optJSONArray("changes")?.toString() ?: "") }
             "dynamicToolCall" -> { role = "工具调用"; text = when (item.optString("tool")) {
                 NativeSettingsTool.NAME -> "读取系统设置"; NativeDisplaySettingsTool.NAME -> "修改亮度设置"; else -> item.optString("tool") } + " · " +
@@ -310,7 +320,24 @@ class CodexController(
         if (type == "userMessage") messages.removeAll { it.id.startsWith("user-") && it.text == text }
         val existing = messages.firstOrNull { it.id == id }
         if (existing != null) existing.text = text.take(100_000) else messages += CodexMessage(id, role, text.take(100_000))
+        val message = messages.first { it.id == id }
+        message.revision++
+        val revision = message.revision
+        val cwd = item.optString("cwd").takeIf { it.startsWith('/') }?.let(::File) ?: workingDirectory
+        fileScope.launch {
+            val result = withContext(Dispatchers.IO) { CodexFiles.read(item, cwd, runtime.home, imageStorage) }
+            if (message in messages && message.revision == revision) { message.files = result.paths; message.fileError = result.error }
+        }
         if (messages.size > 300) messages.removeAt(0)
+    }
+
+    private fun outputText(value: Any?): String = when (value) {
+        is String -> value.take(100_000)
+        is JSONArray -> (0 until minOf(value.length(), 100)).mapNotNull { index ->
+            val item = value.optJSONObject(index)
+            item?.optString("text")?.takeIf { it.isNotBlank() }
+        }.joinToString("\n").take(100_000)
+        else -> ""
     }
 
     private fun handleRequest(id: Any, method: String, params: JSONObject) {
@@ -397,7 +424,7 @@ class CodexController(
         generation++; rpc?.close(); rpc = null; runtime.stop()
         connected = false; connecting = false; signedIn = false; busy = false; startingThread = false
         turnId = null; threadId = null; stopRequested = false; interruptedTurn = null
-        resumeAfterStop = false; handler.removeCallbacksAndMessages(null)
+        resumeAfterStop = false; handler.removeCallbacksAndMessages(null); fileScope.coroutineContext.cancelChildren()
         approvals.clear(); loginId = null; loginCode = null; loginUrl = null
         status = "已断开，可重新连接后恢复会话"
     }

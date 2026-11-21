@@ -90,7 +90,10 @@ class FileAccess(private val context: Context) {
         return runCatching { PhoneStorage(context).resolveDocument(DocumentsContract.getDocumentId(entry.uri)) }.getOrNull()
     }
 
-    private fun open(entry: FileEntry): InputStream = if (entry.local) entry.file.inputStream()
+    fun open(entry: FileEntry): InputStream = if (entry.local) {
+        PhoneStorage(context).requireAccess(entry.file)
+        entry.file.inputStream()
+    }
         else resolver.openInputStream(entry.uri) ?: error("无法打开这个文件。")
 
     fun preview(entry: FileEntry): FilePreview {
@@ -99,7 +102,7 @@ class FileAccess(private val context: Context) {
         val text = bytes.take(PREVIEW_BYTES).toByteArray().toString(Charsets.UTF_8)
         check(!text.contains('\u0000') && text.count { it == '\ufffd' } <= 1 &&
             text.count { it < ' ' && it !in "\n\r\t" } <= text.length / 50) {
-            "此文件不适合文本预览。可以导入后交给支持此格式的工具处理。"
+            "此文件不适合文本预览。可选择“用其他应用打开”。"
         }
         return FilePreview(text, bytes.size > PREVIEW_BYTES)
     }
