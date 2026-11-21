@@ -13,4 +13,6 @@ local.properties
 *.jks
 *.keystore
 artifacts/
+apps/android/runtime/cache/
+apps/android/runtime/generated/
 .claude/

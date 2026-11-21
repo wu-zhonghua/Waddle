@@ -5,6 +5,9 @@ import java.nio.charset.StandardCharsets;
 /** A client which receives callbacks from events triggered by feeding input to a {@link TerminalEmulator}. */
 public abstract class TerminalOutput {
 
+    /** Waddle's private shell prompt notifications; ignored by other clients. */
+    public void onShellIntegration(String value) {}
+
     /** Write a string using the UTF-8 encoding to the terminal client. */
     public final void write(String data) {
         if (data == null) return;

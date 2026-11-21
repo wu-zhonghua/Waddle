@@ -1,0 +1,127 @@
+{
+  "architecture": "x86_64",
+  "abi": "x86_64",
+  "repository": "https://packages-cf.termux.dev/apt/termux-main/",
+  "packages": [
+    {
+      "Package": "codex",
+      "Version": "0.170.0",
+      "Filename": "pool/main/c/codex/codex_0.170.0_x86_64.deb",
+      "SHA256": "958d53e6d1faf8d1b055b74e065216615b263b098c8511aad20adf0bf59ce1b5"
+    },
+    {
+      "Package": "libc++",
+      "Version": "30",
+      "Filename": "pool/main/libc/libc++/libc++_30_x86_64.deb",
+      "SHA256": "c9bcd9a8067a19c9c0e4893a72d314a2e37d6b67ce8dd05c67b9bbacad044b4f"
+    },
+    {
+      "Package": "openssl",
+      "Version": "1:3.6.5",
+      "Filename": "pool/main/o/openssl/openssl_1:3.6.5_x86_64.deb",
+      "SHA256": "540f144592d23d35672976e175ede1b5d8cf464f153f646df5d4e6dcd8491a15"
+    },
+    {
+      "Package": "ca-certificates",
+      "Version": "1:2026.11.05-1",
+      "Filename": "pool/main/c/ca-certificates/ca-certificates_1:2026.11.05-1_all.deb",
+      "SHA256": "12fc350fc5ad638338b06b04835bce897615f8c93f96d30ac396cdb39b850c6b"
+    },
+    {
+      "Package": "zlib",
+      "Version": "1.4",
+      "Filename": "pool/main/z/zlib/zlib_1.4_x86_64.deb",
+      "SHA256": "55ab8f16e492d6ed03c2e2bf701af52cf54a313442dd7adedd3d6f3e3eba2e4f"
+    },
+    {
+      "Package": "git",
+      "Version": "2.56.1",
+      "Filename": "pool/main/g/git/git_2.56.1_x86_64.deb",
+      "SHA256": "c2b2e63b090c979ebedfb8610a06b87f052a9ce0477dd0a3a9d5bb9171c4550b"
+    },
+    {
+      "Package": "ripgrep",
+      "Version": "15.2.0",
+      "Filename": "pool/main/r/ripgrep/ripgrep_15.2.0_x86_64.deb",
+      "SHA256": "2eb50ab2e378436767975b072ce7118decf6444d6d6ed178bc89979b5f150f2a"
+    },
+    {
+      "Package": "libcurl",
+      "Version": "8.23.0",
+      "Filename": "pool/main/libc/libcurl/libcurl_8.23.0_x86_64.deb",
+      "SHA256": "fa71ce8eca3d0aa48a748fc60e4519351fc9c4d51b20cac5722190cb002cfd1c"
+    },
+    {
+      "Package": "libexpat",
+      "Version": "2.10.0",
+      "Filename": "pool/main/libe/libexpat/libexpat_2.10.0_x86_64.deb",
+      "SHA256": "2e0f6f7d54ef7d8a732148f0a2ff53594b1a8d410a707f480f143861313a0ecd"
+    },
+    {
+      "Package": "libiconv",
+      "Version": "1.19.1",
+      "Filename": "pool/main/libi/libiconv/libiconv_1.19.1_x86_64.deb",
+      "SHA256": "3eb0c454676ad24d26c79601721b2eb3f9485c611ad0179fb86b17229344f46d"
+    },
+    {
+      "Package": "pcre2",
+      "Version": "10.49",
+      "Filename": "pool/main/p/pcre2/pcre2_10.49_x86_64.deb",
+      "SHA256": "4a6f66ac12565342897ce9b5cd11ba8ce6fce1fd1a91ae679c3468d7fc2ee541"
+    },
+    {
+      "Package": "libnghttp2",
+      "Version": "1.71.0",
+      "Filename": "pool/main/libn/libnghttp2/libnghttp2_1.71.0_x86_64.deb",
+      "SHA256": "9bc1791438de6380038835cbd10c9cede716212cc32e37eb54407cd24f6605d6"
+    },
+    {
+      "Package": "libnghttp3",
+      "Version": "1.19.0",
+      "Filename": "pool/main/libn/libnghttp3/libnghttp3_1.19.0_x86_64.deb",
+      "SHA256": "b3fa3f6117a8d2c1e5c6535f733282c077d39760b79bd08eac4ffba8da7bc0e6"
+    },
+    {
+      "Package": "libngtcp2",
+      "Version": "1.26.0",
+      "Filename": "pool/main/libn/libngtcp2/libngtcp2_1.26.0_x86_64.deb",
+      "SHA256": "9a4ba347834cf4593cd80df9c9ad4caaf0486946ac0e1a812d10f0d712b5eae2"
+    },
+    {
+      "Package": "libssh2",
+      "Version": "1.11.1-2",
+      "Filename": "pool/main/libs/libssh2/libssh2_1.11.1-2_x86_64.deb",
+      "SHA256": "00db1c1497e8703281efded7f1f2a63824b145c980d9ec309ae0ab7ccb9ce1c5"
+    },
+    {
+      "Package": "bash",
+      "Version": "5.3.20",
+      "Filename": "pool/main/b/bash/bash_5.3.20_x86_64.deb",
+      "SHA256": "f8c984e68269df3df2efae9f2835a9d9af381a8f80d08b34160772bc16cd0910"
+    },
+    {
+      "Package": "readline",
+      "Version": "8.3.6",
+      "Filename": "pool/main/r/readline/readline_8.3.6_x86_64.deb",
+      "SHA256": "e9684798d13ede05f785315f68d3ff739563db2abef0e73db4dc9b8e17ded368"
+    },
+    {
+      "Package": "ncurses",
+      "Version": "6.6.20260307+really6.5.20250830",
+      "Filename": "pool/main/n/ncurses/ncurses_6.6.20260307+really6.5.20250830_x86_64.deb",
+      "SHA256": "3f30f53c6a41c8450d146d4d42611a44be6ba0a8de1e8bb4dc903109a5fc3ff1"
+    },
+    {
+      "Package": "libandroid-support",
+      "Version": "29-1",
+      "Filename": "pool/main/liba/libandroid-support/libandroid-support_29-1_x86_64.deb",
+      "SHA256": "665900760c05959ec076082a0941f05bd452f301e5a70bdfa7383fd3404d44d5"
+    },
+    {
+      "Package": "curl",
+      "Version": "8.23.0",
+      "Filename": "pool/main/c/curl/curl_8.23.0_x86_64.deb",
+      "SHA256": "03a68c5393759f6802a2b256891c2bca93d633d4915cdcb50e6d643c12f84fff"
+    }
+  ]
+}

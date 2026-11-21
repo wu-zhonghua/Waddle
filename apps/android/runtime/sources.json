@@ -1,0 +1,56 @@
+{
+  "recipes_commit": "15e04b447d07a1f82bd824797490cebc88837850",
+  "codex_source": {
+    "url": "https://github.com/openai/codex/archive/refs/tags/rust-v0.170.0.tar.gz",
+    "sha256": "1e8317c4c63554650c74043e1e1dd088f3aba36241d5726e29df83ee5e8e0f92"
+  },
+  "licenses": [
+    {
+      "name": "Git-COPYING.txt",
+      "url": "https://raw.githubusercontent.com/git/git/v2.56.1/COPYING",
+      "sha256": "5b2198d1645f767585e8a88ac0499b04472164c0d2da22e75ecf97ef443ab32e"
+    },
+    {
+      "name": "OpenSSL-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/openssl/openssl/openssl-3.6.5/LICENSE.txt",
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a"
+    },
+    {
+      "name": "LLVM-LICENSE.txt",
+      "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-21.1.8/libcxx/LICENSE.TXT",
+      "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b"
+    },
+    {
+      "name": "GNU-LGPL-2.1.txt",
+      "url": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt",
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95"
+    },
+    {
+      "name": "Mozilla-MPL-2.0.txt",
+      "url": "https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt",
+      "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+    }
+  ],
+  "recipes": {
+    "bash": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/bash",
+    "ca-certificates": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/ca-certificates",
+    "codex": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/codex",
+    "git": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/git",
+    "libandroid-support": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libandroid-support",
+    "libc++": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libc++",
+    "libcurl": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libcurl",
+    "libexpat": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libexpat",
+    "libiconv": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libiconv",
+    "libnghttp2": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libnghttp2",
+    "libnghttp3": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libnghttp3",
+    "libngtcp2": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libngtcp2",
+    "libssh2": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libssh2",
+    "ncurses": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/ncurses",
+    "openssl": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/openssl",
+    "pcre2": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/pcre2",
+    "readline": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/readline",
+    "ripgrep": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/ripgrep",
+    "zlib": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/zlib",
+    "curl": "https://github.com/termux/termux-packages/tree/15e04b447d07a1f82bd824797490cebc88837850/packages/libcurl"
+  }
+}

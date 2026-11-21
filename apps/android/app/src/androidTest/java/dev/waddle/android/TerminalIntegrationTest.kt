@@ -53,7 +53,7 @@ class TerminalIntegrationTest {
         val workspace = main { TerminalWorkspace(context) }
         val session = main { workspace.create() }
         try {
-            await("Shell did not display its prompt") { output(session).contains("waddle") }
+            await("Shell did not display its prompt") { session.promptReady }
             main { session.terminal.write("stty -echo\r") }
             block(workspace, session)
         } finally {
@@ -83,6 +83,9 @@ class TerminalIntegrationTest {
         main { session.terminal.write("printf '__JOB_%s__\\n' started; sleep 30; printf '__JOB_%s__\\n' completed\r") }
         await("Job did not start") { output(session).contains("__JOB_started__") }
         main { session.terminal.write("\u0003") }
+        // The terminal driver may flush queued input while delivering SIGINT.
+        // Wait for the interactive shell to regain control before typing again.
+        await("Shell did not show a prompt after Ctrl-C") { session.promptReady }
         main { session.terminal.write("printf '__AFTER_%s__\\n' interrupt\r") }
         await("Shell did not recover after Ctrl-C") { output(session).contains("__AFTER_interrupt__") }
         assertTrue(main { session.terminal.isRunning })
@@ -91,18 +94,31 @@ class TerminalIntegrationTest {
     @Test fun sessionsHaveIndependentStateAndExitCodes() = withWorkspace { workspace, first ->
         val second = main { workspace.create() }
         try {
+            await("Second shell did not become ready") { second.promptReady }
             main {
                 first.terminal.write("WADDLE_TEST=first; printf '__FIRST_%s__\\n' \"\$WADDLE_TEST\"\r")
                 second.terminal.write("printf '__SECOND_%s__\\n' \"\${WADDLE_TEST:-empty}\"; exit 7\r")
             }
             await("First session lost state") { output(first).contains("__FIRST_first__") }
             await("Second session did not exit") { !second.terminal.isRunning }
-            assertTrue(main { output(second).contains("__SECOND_empty__") })
+            assertTrue(main { output(second) }, main { output(second).contains("__SECOND_empty__") })
             assertEquals(7, main { second.terminal.exitStatus })
             assertTrue(main { first.terminal.isRunning })
             main { workspace.select(first); workspace.close(second) }
             assertSame(first, main { workspace.selected })
         } finally { main { workspace.close(second) } }
+    }
+
+    @Test fun fastExitPreservesFinalPtyOutput() = withWorkspace { workspace, _ ->
+        repeat(12) { index ->
+            val session = main { workspace.create() }
+            await("Shell did not start") { session.promptReady }
+            main { session.terminal.write("printf '__FINAL_%s__\\n' $index; exit 7\r") }
+            await("Shell did not exit") { !session.terminal.isRunning }
+            assertTrue(main { output(session) }, main { output(session).contains("__FINAL_${index}__") })
+            assertEquals(7, main { session.terminal.exitStatus })
+            main { workspace.close(session) }
+        }
     }
 
     @Test fun imeCompositionAndActivityRecreationPreserveTheSession() {

@@ -10,6 +10,11 @@
 #include <termios.h>
 #include <unistd.h>
 
+JNIEXPORT jint JNICALL Java_com_termux_terminal_JNI_getForegroundProcessGroup(
+        JNIEnv* env __attribute__((__unused__)), jclass clazz __attribute__((__unused__)), jint fd) {
+    return tcgetpgrp(fd);
+}
+
 #define TERMUX_UNUSED(x) x __attribute__((__unused__))
 #ifdef __APPLE__
 # define LACKS_PTSNAME_R

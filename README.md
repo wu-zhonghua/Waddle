@@ -16,16 +16,27 @@ docs/           产品调研、MVP 计划与验证记录
 
 ## 安卓第一版
 
-- 真正的本地 PTY 和 Android 系统 Shell，支持交互程序、ANSI 颜色与屏幕 resize。
-- 多终端会话（界面最多 8 个）、切换、关闭、退出码与滚动历史。
+- 真正的本地 PTY 和内置 Bash，支持交互程序、ANSI 颜色与屏幕 resize。
+- 多终端会话（界面最多 8 个）、切换、关闭、退出码与滚动历史；左侧抽屉统一访问文件、终端和多个独立 Codex 对话。
+- 提示符显示当前路径；终端底部可向 Codex 描述任务，结合当前会话生成可编辑的 Bash 命令，回车后在原会话运行。
+- 标题左侧文件入口：先选手机存储、Waddle 文件或其他来源，再浏览文件夹；底部打开终端/Codex，目录卡片菜单也可新建独立会话。Android 11+ 由用户开启所有文件访问权限后，普通手机目录直接操作原文件；云盘等文档来源可明确复制到 Waddle，完成后进入副本。
 - 软键盘、中文组合输入、Ctrl / Esc / Tab / 方向键、Ctrl-C。
 - 长按选择复制、带预览的粘贴、双指调整字号。
 - 会话由前台服务持有，Activity 重建和短暂后台切换不会主动重建 Shell；通知可关闭全部会话。
 
-要求 Android 8+，当前打包 ARM64 与 x86_64。首版使用 App 私有目录和系统命令，没有集成 Termux App、包管理器、SSH 或 Codex。系统终止进程或重启设备后，Shell 不会恢复；保留在私有 home 中的文件仍然存在。
+要求 Android 8+，默认打包 ARM64；x86_64 用于 CI 模拟器。本地终端使用 Waddle 私有目录、内置工具和 Android 系统命令，不依赖 Termux App；没有任意包管理器或 SSH。系统终止进程或重启设备后，Shell 不会恢复；保留在私有 home 中的文件仍然存在。
+
+## 安卓 Codex（0.4.0）
+
+Codex、执行 helper、Bash、Git、ripgrep、curl 和依赖库已打包到 Waddle。终端直接输入 `codex`，或打开 Codex 页面登录并发送任务；两个入口共用 Waddle 的 home、文件和登录。Codex 面板最多同时打开 4 个独立对话，每个有自己的工作目录、任务和审批；在抽屉新建时可用当前终端目录，也可输入其他本地目录。模型推理需要联网。
+
+已移除 Termux 伴随 App、RUN_COMMAND 权限和本机 WebSocket 桥接。Waddle 直接启动自己的 Codex 子进程，通过标准输入/输出通信。保留原生只读系统设置工具：亮度、亮度模式、屏幕超时、飞行模式和辅助功能状态。新增亮度/自动模式修改工具，需要 Android 系统授权、开启修改开关并逐次确认，写入后读回核对。
+
+当前运行时固定为 Codex 0.170.0，Android 的工作区隔离仍有限。内置命令和动态库的来源、许可证与重打包步骤见[运行时记录](apps/android/runtime/PROVENANCE.md)，使用方式见[安卓说明](apps/android/README.md)。
 
 ```sh
 cd apps/android
+python3 tools/prepare-runtime.py --ndk "$ANDROID_HOME/ndk/28.2.13676358"
 ./gradlew assembleDebug
 ./gradlew testDebugUnitTest lintDebug
 ./gradlew :app:connectedDebugAndroidTest
@@ -48,7 +59,7 @@ task dev
 
 ## 后续方向
 
-先验证手机本地 Codex，再实现 AI 面板和 SSH。手机与电脑的会话互联需要单独的服务与认证协议。
+Android 15 ARM64 模拟器上已跑通 Codex 本地执行路径，并实现 Waddle 客户端和原生设置工具。后续继续验证实体手机、审批与取消的边界、运行时隔离，再考虑 SSH。手机与电脑的会话互联需要单独的服务与认证协议。
 
 - [技术调研](docs/research.md)
 - [安卓 MVP 计划](docs/mvp-plan.md)

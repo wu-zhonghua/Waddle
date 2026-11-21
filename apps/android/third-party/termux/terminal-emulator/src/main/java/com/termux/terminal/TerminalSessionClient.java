@@ -10,6 +10,8 @@ import androidx.annotation.Nullable;
  */
 public interface TerminalSessionClient {
 
+    default void onShellIntegration(TerminalSession session, String value) {}
+
     void onTextChanged(@NonNull TerminalSession changedSession);
 
     void onTitleChanged(@NonNull TerminalSession changedSession);

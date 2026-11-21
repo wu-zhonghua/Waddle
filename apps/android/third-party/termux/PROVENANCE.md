@@ -14,5 +14,18 @@ Local integration changes:
 - Minimal library manifests without deprecated package attributes.
 - User-initiated selection copies directly to the clipboard, independently of the disabled OSC 52 callback; selection paste is routed through the host's preview dialog.
 - No Termux application, bootstrap, package manager or termux-shared code is included.
+- Before reporting a child exit, wait up to one second for the PTY reader to drain
+  final output. This fixes a waitpid/reader race that dropped fast-exit Bash output;
+  the bound prevents background descendants retaining the PTY from hanging cleanup.
+
+- Forward private OSC 777 shell notifications through optional callbacks. Waddle
+  validates each session nonce and uses prompt epochs to invalidate command drafts.
+- Expose `tcgetpgrp` through JNI so Waddle can reject AI command submission while a
+  foreground program, rather than the original interactive Bash, owns the PTY.
+
+Version 0.3.0 separately packages selected Android-native CLI programs built by
+the Termux package project. Their binary transformations, dependencies and licenses
+are recorded in [runtime provenance](../../runtime/PROVENANCE.md). This does not
+add a dependency on the Termux application or change the vendored terminal source.
 
 Keep this document updated when modifying upstream source.

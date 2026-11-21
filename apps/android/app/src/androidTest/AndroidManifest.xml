@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Test APK only: serves fixed synthetic documents, never real user files. -->
+        <provider android:name="dev.waddle.android.TestFilesProvider"
+            android:authorities="dev.waddle.android.test.files"
+            android:exported="true" android:grantUriPermissions="true" />
+    </application>
+</manifest>

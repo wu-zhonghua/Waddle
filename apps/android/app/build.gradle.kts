@@ -12,17 +12,23 @@ android {
         applicationId = "dev.waddle.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 4
+        versionName = "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
+        ndk { abiFilters += listOf(providers.gradleProperty("waddleAbi").getOrElse("arm64-v8a")) }
     }
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+    sourceSets["main"].jniLibs.srcDir("../runtime/generated/jniLibs")
+    sourceSets["main"].assets.srcDir("../runtime/generated/assets")
+    packaging {
+        resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        jniLibs.useLegacyPackaging = true
+        jniLibs.keepDebugSymbols += "**/*.so"
+    }
 }
 
 kotlin { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
@@ -39,4 +45,16 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:core-ktx:1.6.1")
+}
+
+tasks.named("preBuild") {
+    doFirst {
+        check(file("../runtime/generated/assets/runtime/manifest.json").isFile) {
+            "Prepare the embedded runtime first: python3 tools/prepare-runtime.py --ndk <Android NDK path>"
+        }
+        val abi = providers.gradleProperty("waddleAbi").getOrElse("arm64-v8a")
+        check(file("../runtime/generated/jniLibs/$abi/libwaddle_codex.so").isFile) {
+            "Embedded runtime ABI mismatch: prepare-runtime.py --abi $abi before building"
+        }
+    }
 }

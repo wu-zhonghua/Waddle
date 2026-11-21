@@ -1,5 +1,15 @@
-Waddle Android 0.1.0
+Waddle Android 0.4.0
 Terminal components: Termux, https://github.com/termux/termux-app
 Source revision: 8629e632fcb95da272221be327db653fb24befe9
 GPL-3.0-only, with upstream Apache-2.0 portions; see accompanying license files.
 Waddle integration changes are documented in third-party/termux/PROVENANCE.md.
+
+Bundled native toolchain: Codex, Bash, Git, ripgrep, curl and shared dependencies.
+Android binary builds originate from the Termux package project.
+No Termux companion application is required.
+See runtime/PROVENANCE.md, runtime/sources.json and the APK runtime/licenses assets
+for package attribution, complete license texts and the reproducible patch recipe.
+
+Navigation folder/menu icons: Google Material Design Icons (Apache-2.0).
+Source: https://github.com/google/material-design-icons
+See accompanying Apache-2.0.txt.

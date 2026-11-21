@@ -130,7 +130,7 @@ public final class TerminalSession extends TerminalOutput {
 
         final FileDescriptor terminalFileDescriptorWrapped = wrapFileDescriptor(mTerminalFileDescriptor, mClient);
 
-        new Thread("TermSessionInputReader[pid=" + mShellPid + "]") {
+        final Thread inputReader = new Thread("TermSessionInputReader[pid=" + mShellPid + "]") {
             @Override
             public void run() {
                 try (InputStream termIn = new FileInputStream(terminalFileDescriptorWrapped)) {
@@ -145,7 +145,8 @@ public final class TerminalSession extends TerminalOutput {
                     // Ignore, just shutting down.
                 }
             }
-        }.start();
+        };
+        inputReader.start();
 
         new Thread("TermSessionOutputWriter[pid=" + mShellPid + "]") {
             @Override
@@ -167,6 +168,14 @@ public final class TerminalSession extends TerminalOutput {
             @Override
             public void run() {
                 int processExitCode = JNI.waitFor(mShellPid);
+                // waitpid can win the race with the PTY reader. Let it drain the
+                // final output before cleanup closes the fd and byte queue.
+                // Bound the wait because background descendants may retain the PTY.
+                try {
+                    inputReader.join(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 mMainThreadHandler.sendMessage(mMainThreadHandler.obtainMessage(MSG_PROCESS_EXITED, processExitCode));
             }
         }.start();
@@ -291,6 +300,16 @@ public final class TerminalSession extends TerminalOutput {
 
     public int getPid() {
         return mShellPid;
+    }
+
+    @Override
+    public void onShellIntegration(String value) {
+        mClient.onShellIntegration(this, value);
+    }
+
+    /** False when a foreground program owns the PTY, or after the PTY is closed. */
+    public boolean isShellForeground() {
+        return isRunning() && JNI.getForegroundProcessGroup(mTerminalFileDescriptor) == mShellPid;
     }
 
     /** Returns the shell's working directory or null if it was unavailable. */
