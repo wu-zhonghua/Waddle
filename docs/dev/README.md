@@ -41,6 +41,7 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
 | [2026-11-21-06-terminal-startup](2026-11-21-06-terminal-startup.md) | 新开的终端不再打出 bind 报错 | 待实现 | 2026-11-19-02 |
+| [2026-11-21-05-view-images-and-files](2026-11-21-05-view-images-and-files.md) | 在 Waddle 里看图片和文件：Codex 给的图直接显示，文件能预览、能用别的应用打开（2 个阶段） | 待实现（两个阶段一起做） | 无 |
 | [2026-11-21-04-file-locations](2026-11-21-04-file-locations.md) | 文件按位置浏览，直接在手机原目录工作 | 验收通过 | 2026-11-21-03 等 |
 | [2026-11-21-03-open-codex-here](2026-11-21-03-open-codex-here.md) | 在文件夹打开独立的 Codex 对话 | 验收通过 | 2026-11-21-02；补充 2026-11-20-01 |
 | [2026-11-21-02-open-terminal-here](2026-11-21-02-open-terminal-here.md) | 找到文件夹，在这个文件夹直接打开终端 | 验收通过 | 2026-11-21-01、2026-11-20-03 |
