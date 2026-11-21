@@ -1,6 +1,6 @@
 # 找到文件夹，在这个文件夹直接打开终端
 
-- 状态：验收通过
+- 状态：验收不通过
 - 日期：2026-11-21
 - 上一份：[2026-11-21-01-files-drawer](2026-11-21-01-files-drawer.md)、[2026-11-20-03-file-browser](2026-11-20-03-file-browser.md)
 - 涉及：安卓
@@ -80,5 +80,5 @@
 - 浏览和打开菜单不执行命令；旧的切换当前终端还能在菜单里用，并且保护前台程序：**做到**，有测试覆盖。
 - 目录被删、8 个会话的上限都会提示，不多建会话；共享目录标明是副本，取消后什么都不变：**做到**，有测试覆盖。
 - 构建、lint、设备回归通过：**做到**（导航测试有 1 项不稳定，见上）。
-- CI：提交后补记。
-- 结论：**验收通过**。
+- CI：提交 `2a2aa8ba` 的 [Android 检查失败](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364506)。build 和 device-tests 两个 job 都停在「准备内置运行时」这一步：锁定的 Termux 软件包（比如 `codex_0.170.0_aarch64.deb`）在软件源上已经 404。我在 Mac mini 上用干净的仓库副本跑同一步，也是 404；本机能构建，只是因为本地缓存里还留着这些包。后面的构建、单元测试、lint 和设备测试在 GitHub 上都没有跑到。[Desktop checks 通过](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364520)。**CI 没过，按规则算没做到。**
+- 结论：**验收不通过**。功能上「怎样算做好」的各条都做到了，但 GitHub 上的 Android 检查没过（干净的仓库构建不出内置运行时），另提 [2026-11-21-07-android-build-from-clean-checkout](2026-11-21-07-android-build-from-clean-checkout.md)。

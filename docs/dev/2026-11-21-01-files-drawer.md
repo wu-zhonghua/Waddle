@@ -1,6 +1,6 @@
 # 文件作为左侧固定入口，接入统一导航抽屉
 
-- 状态：验收通过
+- 状态：验收不通过
 - 日期：2026-11-21
 - 上一份：[2026-11-20-03-file-browser](2026-11-20-03-file-browser.md)；补充 [2026-11-20-01-drawer-and-theme](2026-11-20-01-drawer-and-theme.md) 的导航基础，不替代其完整阶段验收
 - 涉及：安卓
@@ -91,5 +91,5 @@
 - Codex 草稿、浏览位置、当前页在切换和重建时保留；打开文件或抽屉不发请求、不动登录：**做到**。其中「两个目录各自的 Codex 草稿」那一项在整套测试里失败过 1 次，单独重跑 3 次都通过，看作测试不稳定，不算功能问题；如果 CI 因为它失败，就按没做到处理。
 - 构建、lint、导航设备测试、文件/终端回归通过：**做到**。
 - 需要用户在 Fold7 上看：用三星的全面屏返回手势从左边缘滑出抽屉，看会不会和系统返回手势冲突；折叠屏展开、合上后抽屉是否正常。
-- CI：提交后补记。
-- 结论：**验收通过**。
+- CI：提交 `2a2aa8ba` 的 [Android 检查失败](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364506)。build 和 device-tests 两个 job 都停在「准备内置运行时」这一步：锁定的 Termux 软件包（比如 `codex_0.170.0_aarch64.deb`）在软件源上已经 404。我在 Mac mini 上用干净的仓库副本跑同一步，也是 404；本机能构建，只是因为本地缓存里还留着这些包。后面的构建、单元测试、lint 和设备测试在 GitHub 上都没有跑到。[Desktop checks 通过](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364520)。**CI 没过，按规则算没做到。**
+- 结论：**验收不通过**。功能上「怎样算做好」的各条都做到了，但 GitHub 上的 Android 检查没过（干净的仓库构建不出内置运行时），另提 [2026-11-21-07-android-build-from-clean-checkout](2026-11-21-07-android-build-from-clean-checkout.md)。

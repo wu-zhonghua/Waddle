@@ -1,6 +1,6 @@
 # 文件夹浏览与共享文件导入
 
-- 状态：验收通过
+- 状态：验收不通过
 - 日期：2026-11-20
 - 上一份：无（补充 2026-11-20-02 的共享文件部分，不改变其阶段安排）
 - 涉及：安卓
@@ -81,5 +81,5 @@ Waddle 只能通过终端命令查看自己的文件。手机的共享存储、�
 - Codex 用导入后的本地路径，没登录或忙时选中的内容不丢，也不自动发送：**做到**，有测试覆盖（导航测试中，文件选择在切页和 Activity 重建后都保留）。
 - Android 构建、设备测试、终端回归通过：**做到**。导航测试里有 1 项不稳定，见上。
 - 需要用户在 Fold7 上看：从「其他来源」选一个云盘或 SD 卡上的文件夹复制进来（实体 SD 卡、U 盘这次都没测过）。
-- CI：提交后补记。
-- 结论：**验收通过**。
+- CI：提交 `2a2aa8ba` 的 [Android 检查失败](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364506)。build 和 device-tests 两个 job 都停在「准备内置运行时」这一步：锁定的 Termux 软件包（比如 `codex_0.170.0_aarch64.deb`）在软件源上已经 404。我在 Mac mini 上用干净的仓库副本跑同一步，也是 404；本机能构建，只是因为本地缓存里还留着这些包。后面的构建、单元测试、lint 和设备测试在 GitHub 上都没有跑到。[Desktop checks 通过](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364520)。**CI 没过，按规则算没做到。**
+- 结论：**验收不通过**。功能上「怎样算做好」的各条都做到了，但 GitHub 上的 Android 检查没过（干净的仓库构建不出内置运行时），另提 [2026-11-21-07-android-build-from-clean-checkout](2026-11-21-07-android-build-from-clean-checkout.md)。

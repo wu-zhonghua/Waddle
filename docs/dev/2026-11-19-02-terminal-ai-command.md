@@ -90,5 +90,5 @@ Waddle 已有本地 Bash 终端和独立 Codex 面板，两处共用登录。终
 - 切换/关闭会话、目录变了、前台有程序在跑时，不会把过期建议送错地方；取消不影响别的会话：**做到**，相关测试全部通过。
 - 保留文件和登录；Android 构建和终端回归通过：**没做到**。构建和回归测试是通过的，但**每个新终端一启动都会先打出两行 `bash: bind: 'vi-insertion': invalid keymap name`**（[截图](screenshots/2026-11-21-acceptance-01-terminal-start.png)、[截图](screenshots/2026-11-21-acceptance-06-terminal-in-phone-folder.png)），来自这份需求加的终端集成。第一版终端没有这个问题，用户每开一个终端都会看到报错。实现说明也提到了，但没有处理。
 - 需要用户在 Fold7 上看：用最终版本问一次 Codex 生成命令，编辑后回车执行，看结果是否出现在原会话；看看真机上新终端是否也有这两行报错。
-- CI：提交后补记。
-- 结论：**验收不通过**。没做到的部分另提 [2026-11-21-06-terminal-startup](2026-11-21-06-terminal-startup.md)。
+- CI：提交 `2a2aa8ba` 的 [Android 检查失败](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364506)。build 和 device-tests 两个 job 都停在「准备内置运行时」这一步：锁定的 Termux 软件包（比如 `codex_0.170.0_aarch64.deb`）在软件源上已经 404。我在 Mac mini 上用干净的仓库副本跑同一步，也是 404；本机能构建，只是因为本地缓存里还留着这些包。后面的构建、单元测试、lint 和设备测试在 GitHub 上都没有跑到。[Desktop checks 通过](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364520)。**CI 没过，按规则算没做到。**
+- 结论：**验收不通过**。新终端的 bind 报错另提 [2026-11-21-06-terminal-startup](2026-11-21-06-terminal-startup.md)；Android 检查没过另提 [2026-11-21-07-android-build-from-clean-checkout](2026-11-21-07-android-build-from-clean-checkout.md)。

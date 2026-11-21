@@ -1,6 +1,6 @@
 # 在 Waddle 里用 Codex：读写文件、跑命令、读和改系统设置（2 个阶段）
 
-- 状态：验收通过
+- 状态：验收不通过
 - 日期：2026-11-19
 - 上一份：无
 - 涉及：安卓
@@ -155,5 +155,5 @@ adb -s emulator-5556 shell am instrument --user 0 -w \
 - 阶段 2 · 测试后恢复亮度和模式：**做到**。已写回原来的 103，并恢复为自动模式（之后的亮度由自动调节决定）。
 - 阶段 2 · 真机和模拟器的差异写进实现说明：**做到**（自动模式下亮度会自己变、三星分身用户 95 的安装问题）。
 - 需要用户在 Fold7 上看：在最终版本里打开「设置与运行环境」，确认亮度修改开关和「系统授权」都还在、能用。
-- CI：提交后补记。
-- 结论：**验收通过**。
+- CI：提交 `2a2aa8ba` 的 [Android 检查失败](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364506)。build 和 device-tests 两个 job 都停在「准备内置运行时」这一步：锁定的 Termux 软件包（比如 `codex_0.170.0_aarch64.deb`）在软件源上已经 404。我在 Mac mini 上用干净的仓库副本跑同一步，也是 404；本机能构建，只是因为本地缓存里还留着这些包。后面的构建、单元测试、lint 和设备测试在 GitHub 上都没有跑到。[Desktop checks 通过](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364520)。**CI 没过，按规则算没做到。**
+- 结论：**验收不通过**。功能上「怎样算做好」的各条都做到了，但 GitHub 上的 Android 检查没过（干净的仓库构建不出内置运行时），另提 [2026-11-21-07-android-build-from-clean-checkout](2026-11-21-07-android-build-from-clean-checkout.md)。

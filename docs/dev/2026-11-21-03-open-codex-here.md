@@ -1,6 +1,6 @@
 # 找到文件夹，在这个文件夹打开独立的 Codex 对话
 
-- 状态：验收通过
+- 状态：验收不通过
 - 日期：2026-11-21
 - 上一份：2026-11-21-02；补充 2026-11-20-01 阶段 1
 - 涉及：安卓
@@ -88,5 +88,5 @@
 - 共享目录只有确认导入副本后才有 Codex 入口；旧的终端、文件浏览、Codex 功能回归通过：**做到**。
 - 构建、lint、设备测试通过；写清楚是否测过真实模型、是否更新过真机：**做到**。实现说明区分了协议验证和真实模型验证。
 - 小问题（不影响结论）：Codex 对话的编号会一直往上加，模拟器上已经到了「Codex 40」，测试建过的对话也算在里面。
-- CI：提交后补记。
-- 结论：**验收通过**。
+- CI：提交 `2a2aa8ba` 的 [Android 检查失败](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364506)。build 和 device-tests 两个 job 都停在「准备内置运行时」这一步：锁定的 Termux 软件包（比如 `codex_0.170.0_aarch64.deb`）在软件源上已经 404。我在 Mac mini 上用干净的仓库副本跑同一步，也是 404；本机能构建，只是因为本地缓存里还留着这些包。后面的构建、单元测试、lint 和设备测试在 GitHub 上都没有跑到。[Desktop checks 通过](https://github.com/wu-zhonghua/Waddle/actions/runs/44891364520)。**CI 没过，按规则算没做到。**
+- 结论：**验收不通过**。功能上「怎样算做好」的各条都做到了，但 GitHub 上的 Android 检查没过（干净的仓库构建不出内置运行时），另提 [2026-11-21-07-android-build-from-clean-checkout](2026-11-21-07-android-build-from-clean-checkout.md)。
