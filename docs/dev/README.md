@@ -41,7 +41,7 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
-| [2026-11-22-04-bundled-agents-and-accounts](2026-11-22-04-bundled-agents-and-accounts.md) | 安装包里带上 Codex、Claude Code、Antigravity，设置里统一登录账号；国内版能一键去掉（3 个阶段） | 待实现（阶段 1） | 2026-11-22-01；取代 02、03 |
+| [2026-11-22-04-bundled-agents-and-accounts](2026-11-22-04-bundled-agents-and-accounts.md) | 安装包里带上 Codex、Claude Code、Antigravity，在终端里敲命令打开，设置里统一登录账号；国内版能一键去掉（3 个阶段） | 待实现（阶段 1） | 2026-11-22-01；取代 02、03 |
 | [2026-11-22-03-repo-without-codex-packages](2026-11-22-03-repo-without-codex-packages.md) | 仓库里不放 Codex 安装包，GitHub 上的安卓检查全部通过 | 已取消（被 04 取代） | [2026-11-22-01](2026-11-22-01-ai-terminal.md) |
 | [2026-11-22-02-extensions](2026-11-22-02-extensions.md) | 扩展：Codex、Claude Code 等工具按需下载安装（2 个阶段） | 已取消（被 04 取代） | 无（在 2026-11-22-01 阶段 1 之后做） |
 | [2026-11-22-01-ai-terminal](2026-11-22-01-ai-terminal.md) | Waddle 改成 AI 终端：安装包不带 Codex，内置 AI 可选 DeepSeek 等国内模型（2 个阶段） | 验收不通过（阶段 1） | 无 |
