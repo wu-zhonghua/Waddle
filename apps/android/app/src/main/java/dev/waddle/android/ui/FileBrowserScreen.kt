@@ -41,7 +41,7 @@ import dev.waddle.android.terminal.TerminalWorkspace
 import java.io.File
 
 @Composable
-fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, onCodex: (File) -> Unit, onOpenCodex: (File) -> Unit, navigationEnabled: Boolean = true) {
+fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, navigationEnabled: Boolean = true) {
     val browser = workspace.files
     val context = LocalContext.current
     var pathInput by remember { mutableStateOf<String?>(null) }
@@ -99,7 +99,6 @@ fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, onCo
                             if (current?.local == true) {
                                 DropdownMenuItem(text = { Text("查看完整路径") }, onClick = { menu = false; browser.report(current.file.path) })
                                 DropdownMenuItem(text = { Text("切换当前终端到此目录") }, onClick = { menu = false; terminal(current.file, false) })
-                                DropdownMenuItem(text = { Text("交给 Codex") }, onClick = { menu = false; onCodex(current.file) })
                             }
                         }
                         DropdownMenuItem(text = { Text("手机存储授权") }, onClick = { menu = false; storageHelp = true })
@@ -189,7 +188,6 @@ fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, onCo
                     HorizontalDivider()
                     if (current.local) Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { terminal(current.file, true) }, modifier = Modifier.weight(1f).semantics { contentDescription = "在当前文件夹打开终端" }) { Text("打开终端") }
-                        OutlinedButton(onClick = { onOpenCodex(current.file) }, modifier = Modifier.weight(1f).semantics { contentDescription = "在当前文件夹打开 Codex" }) { Text("打开 Codex") }
                     } else Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("此来源需先复制到 Waddle 才能运行命令", Modifier.weight(1f), fontSize = 12.sp)
                         TextButton(onClick = { importFolder = current }, enabled = !browser.importBusy) { Text("复制到 Waddle…") }
@@ -201,7 +199,7 @@ fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, onCo
     if (storageHelp) AlertDialog(onDismissRequest = { storageHelp = false }, title = { Text("直接访问手机存储") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(if (browser.phoneStorage.supported) "在系统设置中为 Waddle 开启“所有文件访问权限”，即可直接使用下载、文档等手机原文件夹，无需复制。" else "直接访问手机存储需要 Android 11 或更新版本。当前可使用 Waddle 文件或系统选择器来源。")
-            Text("授权也适用于 Waddle 中运行的终端和 Codex。其他 App 的私有数据仍无法访问；可以随时在系统设置中关闭授权。", fontSize = 13.sp)
+            Text("授权也适用于 Waddle 中运行的终端。其他 App 的私有数据仍无法访问；可以随时在系统设置中关闭授权。", fontSize = 13.sp)
         }
     }, confirmButton = { if (browser.phoneStorage.supported) TextButton(onClick = {
         storageHelp = false
@@ -212,7 +210,6 @@ fun FileBrowserScreen(workspace: TerminalWorkspace, onTerminal: () -> Unit, onCo
         AlertDialog(onDismissRequest = { folderActions = null }, title = { Text(entry.name) }, text = { Text("在这个文件夹中工作") }, confirmButton = {
             if (entry.local) Row {
                 TextButton(onClick = { folderActions = null; terminal(entry.file, true) }, modifier = Modifier.semantics { contentDescription = "在所选文件夹打开终端" }) { Text("打开终端") }
-                TextButton(onClick = { folderActions = null; onOpenCodex(entry.file) }, modifier = Modifier.semantics { contentDescription = "在所选文件夹打开 Codex" }) { Text("打开 Codex") }
             } else TextButton(onClick = { folderActions = null; importFolder = entry }, modifier = Modifier.semantics { contentDescription = "复制所选文件夹" }) { Text("复制到 Waddle…") }
         }, dismissButton = { TextButton(onClick = { folderActions = null }) { Text("取消") } })
     }

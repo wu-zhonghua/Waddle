@@ -41,7 +41,7 @@ import kotlinx.coroutines.*
 import java.io.ByteArrayInputStream
 
 @Composable
-fun FileViewer(entry: FileEntry, onClose: () -> Unit, onCodex: () -> Unit, onImport: (() -> Unit)? = null) {
+fun FileViewer(entry: FileEntry, onClose: () -> Unit, onImport: (() -> Unit)? = null) {
     val context = LocalContext.current
     val service = remember(context) { FileViewing(context) }
     val scope = rememberCoroutineScope()
@@ -92,8 +92,7 @@ fun FileViewer(entry: FileEntry, onClose: () -> Unit, onCodex: () -> Unit, onImp
                                 if (Build.VERSION.SDK_INT >= 29) action { withContext(Dispatchers.IO) { service.save(entry) } }
                                 else saveAs.launch(entry.name)
                             })
-                            if (entry.local) DropdownMenuItem(text = { Text("交给 Codex") }, onClick = { menu = false; onCodex() })
-                            else if (onImport != null) DropdownMenuItem(text = { Text("导入副本") }, onClick = { menu = false; onImport() })
+                            if (onImport != null) DropdownMenuItem(text = { Text("导入副本") }, onClick = { menu = false; onImport() })
                             DropdownMenuItem(text = { Text("重新加载") }, onClick = { menu = false; retry++ })
                         }
                     }
@@ -276,7 +275,7 @@ private fun MediaFile(entry: FileEntry) {
         catch (e: Exception) { error = fileError(e) }
     }
     LaunchedEffect(video, ready) { while (ready) { run { position = video.currentPosition; playing = video.isPlaying }; delay(250) } }
-    // Playback belongs to this viewer only. Backgrounding/closing never affects terminal/Codex services.
+    // Playback belongs to this viewer only. Backgrounding/closing never affects terminal services.
     val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val playerView = video
     DisposableEffect(owner, playerView) {

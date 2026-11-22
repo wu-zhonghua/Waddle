@@ -31,11 +31,13 @@ private val Accent = Color(0xFFA7E8BD)
 private val Muted = Color(0xFF96A59B)
 
 @Composable
-fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
+fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAiSettings: () -> Unit) {
     val context = LocalContext.current
     val input = remember { InputState() }
     var terminalView by remember { mutableStateOf<TerminalView?>(null) }
     var aiContext by remember { mutableStateOf<TerminalContext?>(null) }
+    var diagnose by remember { mutableStateOf(false) }
+    var needsAi by remember { mutableStateOf(false) }
     var aiError by remember { mutableStateOf<String?>(null) }
     var pasteText by remember { mutableStateOf<String?>(null) }
     val selected = workspace?.selected
@@ -110,12 +112,18 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
                 (aiError ?: selected?.commandError)?.let { message ->
                     Text(message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp))
                 }
-                OutlinedButton(onClick = {
-                    runCatching { workspace!!.captureContext() }.fold(onSuccess = { aiContext = it; aiError = null },
+                fun openAi(explain: Boolean) {
+                    if (workspace?.suggestions?.settings?.configured() != true) { needsAi = true; return }
+                    runCatching { workspace.captureContext() }.fold(onSuccess = { aiContext = it; diagnose = explain; aiError = null },
                         onFailure = { aiError = it.message })
-                }, enabled = selected?.running == true, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
-                    Text("✦ 问 Codex，写命令…")
                 }
+                if (selected?.promptReady == true && selected.lastExitCode?.let { it != 0 } == true) {
+                    TextButton(onClick = { openAi(true) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("退出码 ${selected.lastExitCode} · 让 AI 看看")
+                    }
+                }
+                OutlinedButton(onClick = { openAi(false) }, enabled = selected?.running == true,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) { Text("✦ 问 AI，写命令…") }
                 HorizontalDivider(color = Color(0xFF2B352E))
                 Row(Modifier.fillMaxWidth().background(Panel).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
                     KeyButton("Ctrl", selected = input.control, enabled = selected?.running == true) { input.control = !input.control }
@@ -142,11 +150,15 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
             }
         }
         aiContext?.let { snapshot ->
-            if (workspace != null) CommandSheet(workspace, snapshot, onDismiss = { aiContext = null }, onRun = {
+            if (workspace != null) CommandSheet(workspace, snapshot, diagnose = diagnose, onDismiss = { aiContext = null }, onRun = {
                 aiContext = null
                 terminalView?.requestFocus()
             })
         }
+        if (needsAi) AlertDialog(onDismissRequest = { needsAi = false }, title = { Text("先配置 AI 模型") },
+            text = { Text("终端可继续使用。要生成命令或解释报错，请先在设置里选择模型并填写 API Key。") },
+            confirmButton = { TextButton(onClick = { needsAi = false; onAiSettings() }) { Text("去设置") } },
+            dismissButton = { TextButton(onClick = { needsAi = false }) { Text("取消") } })
         pasteText?.let { text ->
             AlertDialog(onDismissRequest = { pasteText = null }, title = { Text("Paste into ${selected?.label ?: "terminal"}?") },
                 text = { Column {

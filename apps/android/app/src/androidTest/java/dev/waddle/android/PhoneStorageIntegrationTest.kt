@@ -8,7 +8,7 @@ import android.provider.DocumentsContract
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.waddle.android.codex.WaddleRuntime
+import dev.waddle.android.terminal.WaddleRuntime
 import dev.waddle.android.files.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -64,7 +64,7 @@ class PhoneStorageIntegrationTest {
         } finally { main { browser.close() } }
     }
 
-    @Test fun sharedOriginalSupportsBrowsingShellAndBundledCodexWithoutCopy() {
+    @Test fun sharedOriginalSupportsBrowsingShellWithoutCopy() {
         assumeTrue(InstrumentationRegistry.getArguments().getString("waddleStorage") == "granted")
         assertTrue("Grant all-files access on the isolated test device first", PhoneStorage(context).allowed())
         val storage = PhoneStorage(context).locations().first { it.volumeId == "primary" }
@@ -73,8 +73,6 @@ class PhoneStorageIntegrationTest {
         val runtime = WaddleRuntime(context)
         val imports = File(runtime.home, "Imports").list().orEmpty().toSet()
         val browser = main { FileBrowserController(context, runtime.home) }
-        var process: Process? = null
-        val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
         try {
             main { browser.openLocal(folder) }
             await { !browser.loading && browser.current?.file == folder.canonicalFile }
@@ -85,33 +83,9 @@ class PhoneStorageIntegrationTest {
             val bash = runtime.command(runtime.executable("bash"), "-c", "cat input.txt > shell.txt; pwd").directory(folder).start()
             assertTrue(bash.waitFor(15, TimeUnit.SECONDS)); assertEquals(0, bash.exitValue())
             assertEquals("original input", File(folder, "shell.txt").readText())
-            process = runtime.start(workingDirectory = folder)
-            val active = process
-            Thread { runCatching { active.errorStream.copyTo(object : OutputStream() { override fun write(value: Int) {} }) } }.start()
-            val reader = active.inputStream.bufferedReader()
-            val writer = active.outputStream.bufferedWriter()
-            var id = 0
-            fun call(method: String, params: JSONObject): JSONObject {
-                val target = ++id
-                writer.write(JSONObject().put("id", target).put("method", method).put("params", params).toString() + "\n"); writer.flush()
-                return executor.submit<JSONObject> {
-                    var response: JSONObject
-                    do { response = JSONObject(reader.readLine()) } while (response.optInt("id") != target)
-                    check(!response.has("error")) { response.toString() }
-                    response.getJSONObject("result")
-                }.get(30, TimeUnit.SECONDS)
-            }
-            call("initialize", JSONObject().put("clientInfo", JSONObject().put("name", "waddle_storage_test").put("version", "0.4.0")))
-            writer.write("{\"method\":\"initialized\"}\n"); writer.flush()
-            val thread = call("thread/start", JSONObject().put("cwd", folder.canonicalPath).put("approvalPolicy", "on-request").put("sandbox", "workspace-write")).getJSONObject("thread")
-            assertEquals(folder.canonicalFile, File(thread.getString("cwd")).canonicalFile)
-            val result = call("command/exec", JSONObject().put("command", JSONArray().put(runtime.executable("bash")).put("-c").put("cat input.txt > codex.txt; pwd"))
-                .put("timeoutMs", 10000).put("sandboxPolicy", JSONObject().put("type", "workspaceWrite").put("writableRoots", JSONArray().put(folder.path))))
-            assertEquals(result.toString(), 0, result.getInt("exitCode"))
-            assertEquals("original input", File(folder, "codex.txt").readText())
             assertEquals("original input", File(folder, "input.txt").readText())
             assertEquals(imports, File(runtime.home, "Imports").list().orEmpty().toSet())
             assertNull(main { browser.imported })
-        } finally { runtime.stop(); executor.shutdownNow(); main { browser.close() }; folder.parentFile!!.deleteRecursively() }
+        } finally { main { browser.close() }; folder.parentFile!!.deleteRecursively() }
     }
 }

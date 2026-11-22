@@ -40,7 +40,8 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
+| [2026-11-22-03-repo-without-codex-packages](2026-11-22-03-repo-without-codex-packages.md) | 仓库里不放 Codex 安装包，干净代码照样能构建和通过 CI | 待实现 | [2026-11-22-01](2026-11-22-01-ai-terminal.md) |
 | [2026-11-22-02-extensions](2026-11-22-02-extensions.md) | 扩展：Codex、Claude Code 等工具按需下载安装（2 个阶段） | 待实现（阶段 1） | 无（在 2026-11-22-01 阶段 1 之后做） |
-| [2026-11-22-01-ai-terminal](2026-11-22-01-ai-terminal.md) | Waddle 改成 AI 终端：安装包不带 Codex，内置 AI 可选 DeepSeek 等国内模型（2 个阶段） | 待实现（阶段 1） | 无 |
+| [2026-11-22-01-ai-terminal](2026-11-22-01-ai-terminal.md) | Waddle 改成 AI 终端：安装包不带 Codex，内置 AI 可选 DeepSeek 等国内模型（2 个阶段） | 验收不通过（阶段 1） | 无 |
 
-当前进度（2026-11-22）：产品方向改为 **AI 终端**，要在国内上架。Waddle 本体不带 Codex 等海外 AI 工具，终端里的 AI 用用户自己配的模型（DeepSeek、通义千问、Kimi、智谱或 OpenAI 兼容接口）；Codex、Claude Code 做成可选扩展。之前的需求文档（2026-11-19-01 到 2026-11-21-07）和验收截图已全部删除，需要时可以在 git 历史里找到。先做 01，01 阶段 1 验收后再做 02。
+当前进度（2026-11-22）：产品方向改为 **AI 终端**，要在国内上架。Waddle 本体不带 Codex 等海外 AI 工具，终端里的 AI 用用户自己配的模型（DeepSeek、通义千问、Kimi、智谱或 OpenAI 兼容接口）；Codex、Claude Code 做成可选扩展。之前的需求文档（2026-11-19-01 到 2026-11-21-07）和验收截图已全部删除，需要时可以在 git 历史里找到。先做 01，01 阶段 1 验收后再做 02。01 阶段 1 功能已验收，但仓库里不放 Codex 包时 Android CI 过不了，先做 03，复验通过后再进入 01 阶段 2。

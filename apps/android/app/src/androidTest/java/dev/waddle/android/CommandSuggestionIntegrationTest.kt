@@ -5,6 +5,9 @@ import android.os.SystemClock
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.activity.compose.setContent
+import dev.waddle.android.ai.*
+import dev.waddle.android.ui.TerminalScreen
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -42,6 +45,7 @@ class CommandSuggestionIntegrationTest {
         val fixture = File(workspace.runtime.home, "AI 测试 space-${System.nanoTime()}").apply { mkdirs() }
         try {
             await("Bash prompt integration not ready") { session.promptReady && session.terminal.isShellForeground }
+            assertFalse("Readline keymap initialization failed", main { output(session).contains("invalid keymap name") })
             shell(session, "cd '${fixture.path}'")
             block(workspace, session, fixture)
         } finally {
@@ -124,8 +128,24 @@ class CommandSuggestionIntegrationTest {
         assertTrue(main { workspace.runSuggestion(snapshot, "touch forbidden").isFailure })
     }
 
-    @Test fun cancelDoesNotAffectOtherShellOrCodexLogin() = withShell { workspace, session, _ ->
-        val auth = File(workspace.runtime.config, "auth.json")
+    @Test fun failureExitCodeSurvivesCustomPromptHooksAndFixNeedsConfirmation() = withShell { workspace, session, directory ->
+        shell(session, "PROMPT_COMMAND=(__waddle_capture_status true __waddle_prompt)")
+        shell(session, "ls missing-waddle-file")
+        assertTrue(main { session.lastExitCode != 0 })
+        val snapshot = main { workspace.captureContext() }
+        assertTrue(snapshot.transcript.contains("missing-waddle-file"))
+        assertEquals(main { session.lastExitCode }, snapshot.exitCode)
+        assertFalse(File(directory, "fixed").exists())
+        assertTrue(main { workspace.runSuggestion(snapshot, "touch fixed").isSuccess })
+        assertTrue(main { workspace.runSuggestion(snapshot, "touch forbidden").isFailure })
+        await("Fix did not finish") { session.promptReady && session.promptEpoch > snapshot.epoch }
+        assertEquals(0, main { session.lastExitCode })
+        assertTrue(File(directory, "fixed").exists())
+        assertFalse(File(directory, "forbidden").exists())
+    }
+
+    @Test fun cancelDoesNotAffectOtherShellOrFiles() = withShell { workspace, session, _ ->
+        val auth = File(workspace.runtime.home, "WELCOME.txt")
         val existed = auth.exists()
         val other = main { workspace.create() }
         await("Other shell not ready") { other.promptReady }
@@ -144,33 +164,54 @@ class CommandSuggestionIntegrationTest {
         assertTrue(main { session.terminal.isRunning })
     }
 
-    @Test fun liveDrawerEditsMultilineDraftAndEnterExecutesExactlyOnce() = exerciseDrawer(useIme = false)
+    @Test fun drawerEditsMultilineDraftAndEnterExecutesExactlyOnce() = exerciseDrawer(useIme = false)
 
-    @Test fun liveDrawerSoftKeyboardGoExecutesExactlyOnce() = exerciseDrawer(useIme = true)
+    @Test fun drawerSoftKeyboardGoExecutesExactlyOnce() = exerciseDrawer(useIme = true)
 
-    private fun exerciseDrawer(useIme: Boolean) {
-        assumeTrue(InstrumentationRegistry.getArguments().getString("waddleLiveSuggestions") == "true")
+    @Test fun errorDiagnosisShowsFixButOnlyRunsAfterConfirmation() = exerciseDrawer(useIme = false, diagnose = true)
+
+    private fun exerciseDrawer(useIme: Boolean, diagnose: Boolean = false) {
+        val namespace = "ai_drawer_${System.nanoTime()}"
+        val store = AiSettings(context, namespace)
+        store.save(AiProvider.CUSTOM, "https://test.example/v1", "fixture-model", "not-a-real-key")
+        try {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            lateinit var workspace: TerminalWorkspace
+            val client = main { CommandSuggester(context, store) {
+                AiClient { url -> object : java.net.HttpURLConnection(url) {
+                    override fun connect() {}
+                    override fun disconnect() {}
+                    override fun usingProxy() = false
+                    override fun getOutputStream() = java.io.ByteArrayOutputStream()
+                    override fun getResponseCode() = 200
+                    override fun getInputStream(): java.io.InputStream {
+                        val content = org.json.JSONObject().put("command", "pwd").put("explanation", "先确认当前目录，再修改路径。")
+                        val body = org.json.JSONObject().put("choices", org.json.JSONArray().put(org.json.JSONObject()
+                            .put("finish_reason", "stop").put("message", AiClient.message("assistant", content.toString()))))
+                        return java.io.ByteArrayInputStream(body.toString().toByteArray())
+                    }
+                } }
+            } }
+            val workspace = main { TerminalWorkspace(context, client) }
             lateinit var session: ShellSession
-            await("Activity workspace not connected") {
-                var ready = false
-                scenario.onActivity { if (it.workspace != null) { workspace = it.workspace!!; ready = true } }
-                ready
-            }
+            scenario.onActivity { activity -> activity.setContent { TerminalScreen(workspace, { workspace.create() }, {}) } }
             val previous = main { workspace.selected }
             session = main { workspace.create() }
             val directory = File(workspace.runtime.home, "drawer-test-${System.nanoTime()}").apply { mkdirs() }
             try {
                 await("UI shell not ready") { session.promptReady }
                 shell(session, "cd '${directory.path}'")
-                tapText("✦ 问 Codex，写命令…")
+                if (diagnose) {
+                    shell(session, "ls missing-waddle-fixture")
+                    tapText("退出码 ${main { session.lastExitCode }} · 让 AI 看看")
+                } else tapText("✦ 问 AI，写命令…")
                 val question = awaitFields(1).single()
                 assertTrue(question.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, Bundle().apply {
                     putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "生成 pwd 命令，显示当前路径。")
                 }))
-                tapText("生成命令")
+                tapText(if (diagnose) "分析报错" else "生成命令")
                 await("UI generation did not finish", 130_000) { !workspace.suggestions.busy && workspace.suggestions.command.isNotBlank() }
+                assertFalse(File(directory, "child/count").exists())
+                assertEquals(directory.canonicalPath, main { session.cwd })
                 val field = awaitFields(2).last()
                 assertTrue(field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, Bundle().apply {
                     putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
@@ -190,6 +231,10 @@ class CommandSuggestionIntegrationTest {
                 main { workspace.close(session); previous?.let { workspace.select(it) } }
                 directory.deleteRecursively()
             }
+        }
+        } finally {
+            context.getSharedPreferences(namespace, 0).edit().clear().commit()
+            java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null); deleteEntry("waddle.$namespace") }
         }
     }
 
@@ -218,14 +263,22 @@ class CommandSuggestionIntegrationTest {
     private fun tapText(text: String) {
         val deadline = SystemClock.uptimeMillis() + 10_000
         while (SystemClock.uptimeMillis() < deadline) {
-            var node = nodes().firstOrNull { it.text?.toString() == text }
+            val currentNodes = nodes()
+            var node = currentNodes.firstOrNull { it.text?.toString() == text }
+            node?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
             while (node != null) {
                 if (node.isClickable && node.isEnabled && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
                 node = node.parent
             }
+            currentNodes.firstOrNull { it.isScrollable && it.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD } }
+                ?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
             SystemClock.sleep(100)
         }
-        fail("Cannot click $text")
+        instrumentation.uiAutomation.takeScreenshot()?.let { bitmap ->
+            File(context.cacheDir, "ai-drawer-test-failure.png").outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+            bitmap.recycle()
+        }
+        fail("Cannot click $text; visible=" + nodes().mapNotNull { it.text?.toString() }.take(20))
     }
 
     @Test fun liveSuggestionUsesCurrentContextWithoutExecutingUntilRun() = withShell { workspace, session, directory ->

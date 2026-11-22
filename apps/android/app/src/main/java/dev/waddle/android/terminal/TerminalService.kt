@@ -10,13 +10,10 @@ import android.os.Binder
 import android.os.IBinder
 import dev.waddle.android.MainActivity
 import dev.waddle.android.R
-import dev.waddle.android.codex.CodexWorkspace
 
 class TerminalService : Service() {
     inner class LocalBinder : Binder() { val service get() = this@TerminalService }
     lateinit var workspace: TerminalWorkspace
-        private set
-    lateinit var codexWorkspace: CodexWorkspace
         private set
     private var foreground = false
     private var initialized = false
@@ -33,13 +30,11 @@ class TerminalService : Service() {
             NotificationChannel(CHANNEL, "Terminal sessions", NotificationManager.IMPORTANCE_LOW)
         )
         workspace = TerminalWorkspace(this) { if (foreground) updateNotification() }
-        codexWorkspace = CodexWorkspace(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             workspace.closeAll()
-            codexWorkspace.disconnectAll()
             foreground = false
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -54,7 +49,6 @@ class TerminalService : Service() {
     override fun onDestroy() {
         foreground = false
         workspace.closeAll()
-        codexWorkspace.disconnectAll()
         workspace.files.close()
         super.onDestroy()
     }
@@ -70,11 +64,11 @@ class TerminalService : Service() {
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_terminal_notification)
             .setContentTitle("Waddle · $running running ${if (running == 1) "session" else "sessions"}")
-            .setContentText("Terminal and Codex workspace · tap to return")
+            .setContentText("Terminal workspace · tap to return")
             .setContentIntent(open)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .addAction(Notification.Action.Builder(null, "Close all sessions and Codex", stop).build())
+            .addAction(Notification.Action.Builder(null, "Close all sessions", stop).build())
             .build()
     }
 

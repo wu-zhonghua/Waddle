@@ -1,5 +1,6 @@
 .gradle/
 .kotlin/
+__pycache__/
 apps/android/**/build/
 apps/android/**/.cxx/
 apps/android/**/.externalNativeBuild/

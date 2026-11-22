@@ -1,5 +1,26 @@
 # Waddle embedded runtime
 
+## 2026-11-22: AI terminal stage 1 (0.5.0)
+
+The current APK selects Bash, Git, ripgrep, curl, HTTPS transport, certificates,
+terminfo and shared-library dependencies from the same pinned upstream inputs.
+`terminal_packages()` excludes the Codex package **before verification/extraction
+and license copying**. Codex, code-mode helper and Waddle's process supervisor
+are no longer packaged or invoked. The generated package lock lists only selected
+packages; the original locks, archives and source records stay unchanged as
+historical provenance. This preserves the previous offline-build work.
+
+ELF SONAME/NEEDED and RUNPATH adaptations below still apply to terminal binaries.
+The Codex helper-name rewrite and supervisor compilation have been removed from
+the preparation script. `CODEX_HOME` is no longer injected into terminal sessions.
+On upgrade only symlinks to Waddle's former Codex/helper libraries are removed;
+user home, custom `.waddlerc`, imported files and old `.codex` data are retained.
+The generated manifest version is `terminal-0.5.0`. Gradle rejects stale generated
+Codex/helper/supervisor binaries. No vendored terminal-component source was changed.
+
+The following record describes the original 0.3/0.4 runtime and its attribution;
+Codex-specific transformations/licensing are historical, not current APK contents.
+
 Waddle 0.3.0 embeds Android-native programs in its APK. It does not install, start,
 or communicate with the Termux application. The programs run as Waddle's own UID,
 with the same private home directory as the terminal.
@@ -19,9 +40,17 @@ runtime supplied by that package; our small supervisor is built with NDK 28.2.
 The recipes identify upstream source archives, checksums, configuration and patches.
 
 Run `python3 tools/prepare-runtime.py --ndk <NDK 28.2 directory>` from the Android
-root before Gradle. The script downloads hash-pinned packages into ignored cache,
-extracts regular files without executing package scripts, and generates ignored
-`runtime/generated/{jniLibs,assets}`. `--offline` requires populated cache.
+root before Gradle. Since 2026-11-21, the script reads original packages from
+`third-party/runtime-packages`, verifies all inputs against the unchanged locks,
+extracts regular files into ignored cache without executing package scripts, and
+generates ignored `runtime/generated/{jniLibs,assets}`. No network or prior cache
+is needed for this step. `--offline` is retained as a compatibility flag. The 39
+original upstream dependency archives (216,548,432 bytes, both ABIs) were recovered
+from the existing download cache, each matching its already-recorded SHA-256.
+They are now versioned build inputs, not generated Waddle outputs. No versions,
+original URLs, checksums, binary transformations or package bytes changed. This
+avoids relying on upstream retaining old packages in its rolling repository.
+See the [snapshot record](../third-party/runtime-packages/README.md).
 For the x86_64 CI emulator use `--abi x86_64`, then Gradle `-PwaddleAbi=x86_64`.
 Each preparation produces one ABI; ARM64 is the default distributed debug build.
 
@@ -54,7 +83,9 @@ The package preparation logic is the complete binary transformation recipe. Both
 ARM64 and x86_64 generated ELF dependency closures were checked locally; all
 non-system NEEDED entries resolve to packaged libraries. Only ARM64 was run on
 a device in this session.
-Generated binaries, downloads, credentials and device outputs are not committed.
+Generated Waddle binaries, extracted caches, credentials and device outputs are
+not committed. Only the original, hash-verified third-party dependency archives
+are vendored alongside their existing source and license records.
 Keep the source recipes and exact corresponding upstream sources available when
 distributing binaries under their respective copyleft licenses. A public release
 must also supply the corresponding-source distribution, not just this debug APK.

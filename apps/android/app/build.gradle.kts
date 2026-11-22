@@ -12,8 +12,8 @@ android {
         applicationId = "dev.waddle.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0"
+        versionCode = 5
+        versionName = "0.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk { abiFilters += listOf(providers.gradleProperty("waddleAbi").getOrElse("arm64-v8a")) }
     }
@@ -52,8 +52,11 @@ tasks.named("preBuild") {
         check(file("../runtime/generated/assets/runtime/manifest.json").isFile) {
             "Prepare the embedded runtime first: python3 tools/prepare-runtime.py --ndk <Android NDK path>"
         }
+        check(!file("../runtime/generated").walkTopDown().any {
+            it.name in setOf("libwaddle_codex.so", "libwaddle_helper_.so", "libwaddle_supervisor.so")
+        }) { "Stale Codex payload: rerun tools/prepare-runtime.py before building the AI terminal" }
         val abi = providers.gradleProperty("waddleAbi").getOrElse("arm64-v8a")
-        check(file("../runtime/generated/jniLibs/$abi/libwaddle_codex.so").isFile) {
+        check(file("../runtime/generated/jniLibs/$abi/libwaddle_bash.so").isFile) {
             "Embedded runtime ABI mismatch: prepare-runtime.py --abi $abi before building"
         }
     }

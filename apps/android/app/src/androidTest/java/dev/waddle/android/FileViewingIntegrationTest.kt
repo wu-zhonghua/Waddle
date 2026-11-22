@@ -14,7 +14,6 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import dev.waddle.android.codex.CodexFiles
 import dev.waddle.android.files.*
 import dev.waddle.android.terminal.TerminalWorkspace
 import org.json.JSONArray
@@ -150,23 +149,6 @@ class FileViewingIntegrationTest {
         }
     }
 
-    @Test fun toolImagesAndGeneratedImagesAreAttachedWithoutLeakingBase64IntoMessages() = fixture { root ->
-        val file = image(root)
-        val bytes = android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
-        val result = CodexFiles.read(JSONObject().put("type", "functionCallOutput").put("output", JSONArray().put(JSONObject().put("type", "image").put("data", bytes).put("mimeType", "image/png"))), root, root, File(root, "stored"))
-        assertNull(result.error); assertEquals(1, result.paths.size)
-        assertArrayEquals(file.readBytes(), File(result.paths.single()).readBytes())
-        val generated = CodexFiles.read(JSONObject().put("type", "imageGeneration").put("result", bytes).put("status", "completed"), root, root, File(root, "stored"))
-        assertEquals(result.paths, generated.paths)
-        val viewed = CodexFiles.read(JSONObject().put("type", "imageView").put("path", file.path), root, root, File(root, "stored"))
-        assertEquals(listOf(file.path), viewed.paths)
-        val changed = CodexFiles.read(JSONObject().put("type", "fileChange").put("changes", JSONArray().put(JSONObject().put("path", "中文/image.png"))), root, root, root)
-        assertEquals(File(root, "中文/image.png").path, changed.paths.single())
-        val command = CodexFiles.read(JSONObject().put("type", "commandExecution")
-            .put("command", "bash -lc 'printf image-bytes > generated.png && test -s generated.png'"), root, root, root)
-        assertTrue("A shell script must not become an image attachment", command.paths.isEmpty())
-    }
-
     @Test fun sharingGrantsOnlySelectedSnapshotAndSavingNeverOverwrites() = fixture { root ->
         val file = image(root, "save-${System.nanoTime()}.png"); val entry = access.local(file)
         val uri = viewing.shareUri(entry)
@@ -218,28 +200,6 @@ class FileViewingIntegrationTest {
     }
     private fun quote(text: String) = "'" + text.replace("'", "'\\''") + "'"
 
-    @Test fun bundledCodexCommandCanOpenImageWithoutModelOrControlTty() = fixture { root ->
-        val workspace = main { TerminalWorkspace(context) }
-        try {
-            val image = image(root)
-            val requests = File(root, "requests.jsonl")
-            val command = "waddle-open ${quote(image.path)}; printf CODEX_VIEW_OK"
-            requests.writeText(listOf(
-                JSONObject().put("id", 1).put("method", "initialize").put("params", JSONObject().put("clientInfo", JSONObject().put("name", "viewer_test").put("version", "1"))),
-                JSONObject().put("method", "initialized"),
-                JSONObject().put("id", 2).put("method", "command/exec").put("params", JSONObject().put("command", JSONArray().put(workspace.runtime.executable("bash")).put("-lc").put(command)).put("timeoutMs", 10000).put("sandboxPolicy", JSONObject().put("type", "dangerFullAccess")))
-            ).joinToString("\n", postfix = "\n"))
-            val output = File(root, "codex-output.jsonl")
-            val shell = main { workspace.create(root) }
-            await { main { shell.promptReady } }
-            main { shell.terminal.write("(cat ${quote(requests.path)}; sleep 10) | codex app-server --listen stdio:// > ${quote(output.path)}\r") }
-            await("Codex command opens image") { main { workspace.files.selected?.file?.canonicalFile == image.canonicalFile } }
-            assertTrue(main { shell.running }); main { workspace.files.dismissSelection() }
-            await("Codex command finishes") { output.exists() && output.readText().contains("CODEX_VIEW_OK") }
-            await("original shell returns") { main { shell.promptReady } }
-        } finally { main { workspace.closeAll(); workspace.files.close() } }
-    }
-
     @Test fun viewerBackRotationPdfAndTextModesPreserveShell() = fixture { root ->
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val workspace = workspace(scenario)
@@ -263,44 +223,6 @@ class FileViewingIntegrationTest {
                 assertFalse(visible("UNSAFE")); click("返回")
             }
             assertSame(original, main { workspace.selected!!.terminal })
-        }
-    }
-
-    @Test fun codexThumbnailOpensAndDeletedPathShowsErrorWithoutChangingConversation() = fixture { root ->
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            workspace(scenario)
-            lateinit var panel: dev.waddle.android.codex.CodexSession
-            scenario.onActivity { panel = it.codexWorkspace!!.selected!! }
-            val client = panel.client
-            val connected = main { client.connected }; val signedIn = main { client.signedIn }
-            val messages = main { client.messages.toList() }
-            fun state(name: String, value: Boolean) = main {
-                val field = client.javaClass.getDeclaredField(name + "$" + "delegate").apply { isAccessible = true }
-                @Suppress("UNCHECKED_CAST")
-                (field.get(client) as androidx.compose.runtime.MutableState<Boolean>).value = value
-            }
-            try {
-                state("connected", true); state("signedIn", true)
-                val image = image(root)
-                main {
-                    client.messages.clear()
-                    client.messages += dev.waddle.android.codex.CodexMessage("viewer-message", "Codex", "生成好了：[图片](<${image.path}>)")
-                }
-                click("打开导航抽屉"); click(panel.label)
-                await { visible("图片缩略图 ${image.name}") }
-                click("图片缩略图 ${image.name}")
-                await { visible("图片 ${image.name}，双指缩放、拖动") }
-                click("返回")
-                await { visible("图片缩略图 ${image.name}") }
-                image.delete()
-                click("图片缩略图 ${image.name}")
-                await { nodes().any { it.text?.toString()?.contains("不存在") == true } }
-                click("返回")
-                assertEquals("viewer-message", main { client.messages.single().id })
-            } finally {
-                main { client.messages.clear(); client.messages.addAll(messages) }
-                state("connected", connected); state("signedIn", signedIn)
-            }
         }
     }
 

@@ -21,18 +21,23 @@ import dev.waddle.android.terminal.TerminalWorkspace
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, onDismiss: () -> Unit, onRun: () -> Unit) {
+fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, diagnose: Boolean = false, onDismiss: () -> Unit, onRun: () -> Unit) {
     val client = workspace.suggestions
     var snapshot by remember { mutableStateOf(initialContext) }
-    var question by remember { mutableStateOf("") }
+    var question by remember { mutableStateOf(if (diagnose) "解释刚才命令失败的原因（退出码 ${initialContext.exitCode}），给出修法；如有必要给出待确认的修复命令。" else "") }
     var draft by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var showContext by remember { mutableStateOf(false) }
     var submitted by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val focus = remember { FocusRequester() }
     val draftFocus = remember { FocusRequester() }
     DisposableEffect(client) { onDispose { client.cancel() } }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    // Requesting IME focus during the opening animation can move the sheet's anchors
+    // while it is still hidden. Wait until the expanded sheet is actually on screen.
+    LaunchedEffect(sheetState.currentValue) {
+        if (sheetState.currentValue == SheetValue.Expanded) focus.requestFocus()
+    }
     LaunchedEffect(client.command) {
         draft = client.command
         if (draft.isNotBlank()) draftFocus.requestFocus()
@@ -42,21 +47,23 @@ fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, 
     val stale = workspace.contextError(snapshot)
     fun generate() {
         if (client.busy || question.isBlank()) return
+        if (diagnose && stale != null) { error = stale; return }
         runCatching { workspace.captureContext() }.fold(onSuccess = {
             snapshot = it; error = null; submitted = false; draft = ""
             client.generate(it, question)
         }, onFailure = { error = it.message })
     }
     fun run() {
-        if (submitted || draft.isBlank() || client.busy) return
-        workspace.runSuggestion(client.source ?: snapshot, draft).fold(onSuccess = {
+        if (submitted || draft.isBlank() || client.command.isBlank() || client.busy) return
+        val origin = client.source ?: return
+        workspace.runSuggestion(origin, draft).fold(onSuccess = {
             submitted = true; onRun()
         }, onFailure = { error = it.message })
     }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)
             .padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("问 Codex · 生成命令", style = MaterialTheme.typography.titleLarge)
+            Text(if (diagnose) "让 AI 看看 · 解释报错" else "问 AI · 生成命令", style = MaterialTheme.typography.titleLarge)
             Text("${snapshot.sessionLabel} · ${snapshot.cwd}", fontFamily = FontFamily.Monospace, fontSize = 12.sp)
             Text("发送当前路径和最近终端内容。生成后先预览，回车才运行。", fontSize = 12.sp)
             TextButton(onClick = { showContext = !showContext }) { Text(if (showContext) "收起本次上下文" else "查看本次上下文") }
@@ -70,7 +77,7 @@ fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, 
                 modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("ai-question"), minLines = 2, maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { generate() }))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { generate() }, enabled = question.isNotBlank() && !client.busy) { Text(if (client.busy) "正在生成…" else "生成命令") }
+                Button(onClick = { generate() }, enabled = question.isNotBlank() && !client.busy) { Text(if (client.busy) "正在生成…" else if (diagnose) "分析报错" else "生成命令") }
                 if (client.busy) TextButton(onClick = { client.cancel() }) { Text("停止生成") }
                 TextButton(onClick = onDismiss) { Text("取消") }
             }

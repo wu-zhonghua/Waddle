@@ -22,22 +22,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.waddle.android.R
-import dev.waddle.android.codex.CodexWorkspace
-import dev.waddle.android.codex.CodexSession
 import java.io.File
 import dev.waddle.android.terminal.ShellSession
 import dev.waddle.android.terminal.TerminalWorkspace
 import kotlinx.coroutines.launch
 
 @Composable
-fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?, onNewSession: () -> Unit, onConnectCodex: () -> Unit) {
+fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
     var page by rememberSaveable { mutableStateOf("terminal") }
     var lastWorkPage by rememberSaveable { mutableStateOf("terminal") }
-    val codexSession = codexWorkspace?.selected
-    val codex = codexSession?.client
-    var newCodexDirectory by rememberSaveable { mutableStateOf<String?>(null) }
-    var newCodexError by remember { mutableStateOf<String?>(null) }
-    var closeCodex by remember { mutableStateOf<CodexSession?>(null) }
     var settings by rememberSaveable { mutableStateOf(false) }
     var help by rememberSaveable { mutableStateOf(false) }
     var closeTarget by remember { mutableStateOf<ShellSession?>(null) }
@@ -58,10 +51,6 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
         if (destination != "files") lastWorkPage = destination
         scope.launch { drawer.close() }
     }
-    fun openCodex(directory: File): Boolean = runCatching {
-        checkNotNull(codexWorkspace) { "工作区尚未连接。" }.create(directory)
-    }.fold(onSuccess = { navigate("codex"); onConnectCodex(); true },
-        onFailure = { newCodexError = it.message; false })
     MaterialTheme(colorScheme = darkColorScheme(
         primary = Color(0xFFA7E8BD), onPrimary = Color(0xFF101512),
         background = Color(0xFF101512), surface = Color(0xFF19211C),
@@ -99,31 +88,12 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
                                         .semantics { contentDescription = "关闭 ${session.label}" }, contentPadding = PaddingValues(0.dp)) { Text("×", fontSize = 22.sp) }
                                 }
                             }
-                            codexWorkspace?.sessions?.forEach { session ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    NavigationDrawerItem(label = { Column {
-                                        Text(session.label)
-                                        Text(when {
-                                            session.client.approvals.isNotEmpty() -> "等待审批"
-                                            session.client.busy -> "正在处理"
-                                            else -> session.client.status
-                                        }, fontSize = 11.sp)
-                                        Text(session.client.displayDirectory, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 11.sp)
-                                    } }, selected = page == "codex" && codexSession === session,
-                                        onClick = { codexWorkspace.select(session); navigate("codex") }, modifier = Modifier.weight(1f).padding(start = 12.dp))
-                                    TextButton(onClick = { closeCodex = session }, modifier = Modifier.size(48.dp)
-                                        .semantics { contentDescription = "关闭 ${session.label}" }, contentPadding = PaddingValues(0.dp)) { Text("×", fontSize = 22.sp) }
-                                }
-                            }
                             TextButton(onClick = { onNewSession(); navigate("terminal") },
                                 enabled = workspace != null && workspace.sessions.size < 8, modifier = Modifier.padding(horizontal = 12.dp)) { Text("＋ 新建终端") }
-                            TextButton(onClick = {
-                                newCodexDirectory = workspace?.files?.home?.path.orEmpty(); newCodexError = null
-                                scope.launch { drawer.close() }
-                            }, enabled = codexWorkspace != null, modifier = Modifier.padding(horizontal = 12.dp)) { Text("＋ 新建 Codex") }
+
                         }
                         HorizontalDivider()
-                        TextButton(onClick = { scope.launch { drawer.close() }; settings = true }, enabled = codex != null,
+                        TextButton(onClick = { scope.launch { drawer.close() }; settings = true }, enabled = workspace != null,
                             modifier = Modifier.fillMaxWidth()) { Text("设置与运行环境") }
                         TextButton(onClick = { scope.launch { drawer.close() }; help = true }, modifier = Modifier.fillMaxWidth()) { Text("帮助") }
                     }
@@ -140,35 +110,23 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
                                 Icon(painterResource(R.drawable.ic_folder), "打开文件", tint = MaterialTheme.colorScheme.primary)
                             }
                             Column(Modifier.weight(1f)) {
-                                Text(when (page) { "files" -> "文件"; "codex" -> codexSession?.let { "${it.label} · ${it.client.workingDirectory.name.ifEmpty { "/" }}" } ?: "Codex"; else -> workspace?.selected?.let { session -> session.label + (session.cwd?.let { " · " + java.io.File(it).name.ifEmpty { "/" } } ?: "") } ?: "终端" },
+                                Text(when (page) { "files" -> "文件"; else -> workspace?.selected?.let { session -> session.label + (session.cwd?.let { " · " + java.io.File(it).name.ifEmpty { "/" } } ?: "") } ?: "终端" },
                                     style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(when (page) {
                                     "files" -> "选择位置，打开文件夹"
-                                    "codex" -> codex?.let { "${it.status} · ${it.displayDirectory}" } ?: "从文件夹或抽屉新建 Codex"
                                     else -> workspace?.selected?.cwd ?: "正在连接工作区…"
                                 }, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         HorizontalDivider()
                         Box(Modifier.weight(1f)) {
-                            // Save drafts/scroll state when a page leaves composition. Shells and Codex stay in the service.
-                            pages.SaveableStateProvider(if (page == "codex") "codex-${codexSession?.id}" else page) {
+                            // Preserve file navigation while shells stay in the service.
+                            pages.SaveableStateProvider(page) {
                                 when (page) {
                                     "files" -> if (workspace != null) FileBrowserScreen(workspace,
-                                        onTerminal = { navigate("terminal") }, onCodex = { file ->
-                                            val target = codexWorkspace?.selected ?: codexWorkspace?.create()
-                                            target?.pendingFile = file.path; navigate("codex")
-                                        }, onOpenCodex = { directory ->
-                                            if (!openCodex(directory)) workspace.files.report(newCodexError ?: "无法打开 Codex。")
-                                        }, navigationEnabled = !drawerVisible)
+                                        onTerminal = { navigate("terminal") }, navigationEnabled = !drawerVisible)
                                         else Text("正在连接工作区…", Modifier.padding(24.dp))
-                                    "codex" -> if (codex != null) CodexScreen(codex, onConnectCodex, codexSession.pendingFile,
-                                        clearSelectedFile = { codexSession.pendingFile = null },
-                                        onNewConversation = { newCodexDirectory = codex.workingDirectory.path; newCodexError = null },
-                                        onOpenFile = { file -> workspace?.files?.openPath(file) { navigate("files") } },
-                                        viewerOpen = workspace?.files?.selected != null)
-                                        else Text("从文件夹或左侧抽屉新建 Codex 对话。", Modifier.padding(24.dp))
-                                    else -> TerminalScreen(workspace, onNewSession)
+                                    else -> TerminalScreen(workspace, onNewSession, onAiSettings = { settings = true })
                                 }
                             }
                         }
@@ -198,11 +156,7 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
         }
         workspace?.files?.selected?.let { entry ->
             key(entry.uri) {
-                FileViewer(entry, onClose = { workspace.files.dismissSelection() }, onCodex = {
-                    workspace.files.dismissSelection()
-                    val target = codexWorkspace?.selected ?: codexWorkspace?.create()
-                    target?.pendingFile = entry.file.path; navigate("codex")
-                }, onImport = if (entry.local) null else ({ workspace.files.dismissSelection(); workspace.files.import(entry); navigate("files") }))
+                FileViewer(entry, onClose = { workspace.files.dismissSelection() }, onImport = if (entry.local) null else ({ workspace.files.dismissSelection(); workspace.files.import(entry); navigate("files") }))
             }
         }
         closeTarget?.let { target ->
@@ -211,27 +165,9 @@ fun WaddleScreen(workspace: TerminalWorkspace?, codexWorkspace: CodexWorkspace?,
                 confirmButton = { TextButton(onClick = { workspace?.close(target); closeTarget = null }) { Text("关闭终端") } },
                 dismissButton = { TextButton(onClick = { closeTarget = null }) { Text("保留") } })
         }
-        closeCodex?.let { target ->
-            AlertDialog(onDismissRequest = { closeCodex = null }, title = { Text("关闭 ${target.label}？") },
-                text = { Text("关闭会停止这个对话的任务及待审批请求。其他会话、文件和登录不受影响，已保存的对话记录仍留在本机。") },
-                confirmButton = { TextButton(onClick = { codexWorkspace?.close(target); closeCodex = null }) { Text("关闭对话") } },
-                dismissButton = { TextButton(onClick = { closeCodex = null }) { Text("保留") } })
-        }
-        newCodexDirectory?.let { directory ->
-            AlertDialog(onDismissRequest = { newCodexDirectory = null }, title = { Text("新建 Codex 对话") }, text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("从这个目录开始，原对话保留。")
-                    OutlinedTextField(directory, { newCodexDirectory = it; newCodexError = null }, label = { Text("工作目录完整路径") })
-                    TextButton(onClick = { newCodexDirectory = workspace?.files?.home?.path.orEmpty(); newCodexError = null }) { Text("默认工作区") }
-                    TextButton(onClick = { newCodexDirectory = workspace?.selected?.cwd; newCodexError = null }, enabled = workspace?.selected?.cwd != null) { Text("当前终端目录") }
-                    newCodexError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                }
-            }, confirmButton = { TextButton(onClick = { if (openCodex(File(directory))) newCodexDirectory = null }) { Text("打开 Codex") } },
-                dismissButton = { TextButton(onClick = { newCodexDirectory = null }) { Text("取消") } })
-        }
-        if (settings && codex != null) CodexSettingsDialog(codex) { settings = false }
+        if (settings && workspace != null) AiSettingsDialog(workspace.suggestions.settings) { settings = false }
         if (help) AlertDialog(onDismissRequest = { help = false }, title = { Text("使用 Waddle") }, text = {
-            Text("左侧文件夹按钮打开文件；菜单切换终端和 Codex。浏览文件不会改变终端路径，进入文件夹后点底部“打开终端”，或用卡片“在此打开…”菜单，新终端会从该目录开始，原会话保留。“在此打开 Codex”同样新建独立对话，从所选目录读写文件和执行命令。Codex 最多同时打开 4 个对话，可在抽屉切换或关闭。\n\n终端可运行 pwd、ls、codex。用 waddle-open \"文件路径\" 打开图片或文件（Codex CLI 也可执行此命令），返回保留原终端。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n底部“问 Codex，写命令”使用当前终端上下文，确认命令后回车执行。\n\n会话在后台服务存活期间保留；系统结束应用或手机重启后 Shell 不会恢复。文件和 Codex 登录保存在本机。\n\n版本 0.4.0 · 终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
+            Text("左侧文件夹按钮打开文件；菜单切换终端。在文件夹底部点“打开终端”，或用卡片“在此打开…”新建终端，原会话保留。\n\n可运行 pwd、ls、bash、git、rg、curl。用 waddle-open \"文件路径\" 打开图片或文件，返回保留原终端。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n在设置的“AI 模型”中配置服务商和 Key。底部“问 AI，写命令”使用当前路径和最近输入输出；命令可编辑，确认后只在原会话执行一次。命令出错后点“让 AI 看看”解释报错。\n\n不配置 AI 也能使用终端。系统结束应用或手机重启后 Shell 不会恢复，本机文件仍保留。\n\n终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
         }, confirmButton = { TextButton(onClick = { help = false }) { Text("知道了") } })
     }
 }

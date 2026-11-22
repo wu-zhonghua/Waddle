@@ -12,13 +12,13 @@ import com.termux.terminal.TerminalColors
 import java.io.File
 import java.util.Properties
 import java.util.UUID
-import dev.waddle.android.codex.CommandSuggester
+import dev.waddle.android.ai.CommandSuggester
 import dev.waddle.android.files.FileBrowserController
-import dev.waddle.android.codex.WaddleRuntime
 
 class ShellSession(val number: Int, val terminal: TerminalSession, internal val directory: File, internal val nonce: String) {
     internal var fileObserver: android.os.FileObserver? = null
     var promptReady by mutableStateOf(false); internal set
+    var lastExitCode by mutableStateOf<Int?>(null); internal set
     var promptEpoch by mutableStateOf(0L); internal set
     var cwd by mutableStateOf<String?>(null); internal set
     var commandError by mutableStateOf<String?>(null); internal set
@@ -28,7 +28,8 @@ class ShellSession(val number: Int, val terminal: TerminalSession, internal val 
     val status get(): String = if (running) "RUNNING" else "EXITED · ${terminal.exitStatus}"
 }
 
-class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit = {}) :
+class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = CommandSuggester(context),
+                        private val onStateChanged: () -> Unit = {}) :
     TerminalLog(), TerminalSessionClient {
     val sessions = mutableStateListOf<ShellSession>()
     var selectedId by mutableStateOf<String?>(null)
@@ -36,7 +37,6 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
     private var nextNumber = 1
     var requestPaste: (() -> Unit)? = null
     val runtime = WaddleRuntime(context).apply { prepare() }
-    val suggestions = CommandSuggester(context)
     val files = FileBrowserController(context, runtime.home)
     private val shellRoot = File(context.cacheDir, "terminal-sessions").apply { mkdirs() }
     private val home = runtime.home
@@ -57,8 +57,7 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
                 "Try: pwd, ls, uname -a, echo hello, top\n" +
                 "Long-press to select text. Use Ctrl + C to interrupt a command.\n\n" +
                 "This shell runs with Waddle's app permissions.\n" +
-                "Bundled commands: bash, git, rg, curl, codex.\n" +
-                "The Codex tab shares this home and login with terminal codex.\n" +
+                "Bundled commands: bash, git, rg, curl.\n" +
                 "Run local scripts using bash script.sh or sh script.sh.\n"
         )
     }
@@ -75,7 +74,7 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
             arrayOf("bash", "--noprofile", "--rcfile", rc.absolutePath, "-i"), env, 4000, this)
         val session = ShellSession(number, terminal, directory, nonce)
         sessions += session
-        // A private request file also works when Codex captures stdout or creates a new process session.
+        // A private request file also works when a child captures stdout or creates a new process session.
         session.fileObserver = object : android.os.FileObserver(directory.path, android.os.FileObserver.CLOSE_WRITE) {
             override fun onEvent(event: Int, path: String?) {
                 if (path == null || !path.matches(Regex("open-[0-9]+-[0-9]+"))) return
@@ -142,7 +141,7 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
         val cwd = session.terminal.cwd ?: error("暂时无法读取当前路径。")
         check(!cwd.contains('\n') && !cwd.contains('\r')) { "暂不支持路径名中包含换行符的目录。" }
         return TerminalContext(session.terminal.mHandle, session.label, cwd, session.promptEpoch,
-            session.terminal.emulator.screen.transcriptText.takeLast(12_000))
+            session.terminal.emulator.screen.transcriptText.takeLast(12_000), session.lastExitCode)
     }
 
     fun contextError(context: TerminalContext): String? {
@@ -176,7 +175,9 @@ class TerminalWorkspace(context: Context, private val onStateChanged: () -> Unit
         val event = value.removePrefix(prefix)
         when {
             event.startsWith("prompt;") -> {
-                val epoch = event.substringAfter(';').toLongOrNull() ?: return
+                val parts = event.split(';')
+                val epoch = parts.getOrNull(1)?.toLongOrNull() ?: return
+                shell.lastExitCode = parts.getOrNull(2)?.toIntOrNull()?.takeIf { epoch > 1 }
                 shell.promptEpoch = epoch
                 shell.promptReady = true
                 shell.cwd = session.cwd

@@ -21,14 +21,10 @@ import androidx.core.content.ContextCompat
 import dev.waddle.android.terminal.TerminalService
 import dev.waddle.android.terminal.TerminalWorkspace
 import dev.waddle.android.ui.WaddleScreen
-import dev.waddle.android.codex.CodexWorkspace
 
 class MainActivity : ComponentActivity() {
     var workspace by mutableStateOf<TerminalWorkspace?>(null)
         private set
-    var codexWorkspace by mutableStateOf<CodexWorkspace?>(null)
-        private set
-    val codex get() = codexWorkspace?.selected?.client
     private var bound = false
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
     private val connection = object : ServiceConnection {
@@ -36,10 +32,8 @@ class MainActivity : ComponentActivity() {
             val service = (binder as TerminalService.LocalBinder).service
             service.openInitialSession()
             workspace = service.workspace
-            codexWorkspace = service.codexWorkspace
-            codexWorkspace?.refreshPermissions()
         }
-        override fun onServiceDisconnected(name: ComponentName) { workspace = null; codexWorkspace = null }
+        override fun onServiceDisconnected(name: ComponentName) { workspace = null }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,12 +49,7 @@ class MainActivity : ComponentActivity() {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {
-            WaddleScreen(workspace, codexWorkspace,
-                onNewSession = { startTerminalService(); workspace?.create() },
-                onConnectCodex = {
-                    startTerminalService()
-                    codex?.connect()
-                })
+            WaddleScreen(workspace, onNewSession = { startTerminalService(); workspace?.create() })
         }
     }
 
@@ -70,14 +59,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        codexWorkspace?.refreshPermissions()
         workspace?.files?.refreshStorage()
     }
 
     override fun onDestroy() {
         if (bound) unbindService(connection)
         workspace = null
-        codexWorkspace = null
         super.onDestroy()
     }
 }

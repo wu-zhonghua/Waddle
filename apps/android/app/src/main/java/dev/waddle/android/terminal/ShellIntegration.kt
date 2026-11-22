@@ -25,18 +25,22 @@ internal object ShellIntegration {
         }
         export -f waddle-open
         __waddle_epoch=0
+        __waddle_capture_status() {
+            __waddle_status=§?
+            return "§__waddle_status"
+        }
         __waddle_prompt() {
-            local previous=§?
+            local previous=§__waddle_status
             ((__waddle_epoch+=1))
             if [[ -o emacs || -o vi ]]; then
-                builtin printf '\033]777;waddle;$nonce;prompt;%s\007' "§__waddle_epoch"
+                builtin printf '\033]777;waddle;$nonce;prompt;%s;%s\007' "§__waddle_epoch" "§previous"
             else
                 builtin printf '\033]777;waddle;$nonce;unavailable\007'
             fi
             return "§previous"
         }
         # Keep existing prompt hooks, including array-valued PROMPT_COMMAND.
-        PROMPT_COMMAND+=(__waddle_prompt)
+        PROMPT_COMMAND=(__waddle_capture_status "§{PROMPT_COMMAND[@]}" __waddle_prompt)
         PS0='\e]777;waddle;$nonce;running\a'"§{PS0-}"
         PS2='\[\e]777;waddle;$nonce;continuation\a\]'"§{PS2-> }"
         __waddle_command() {
@@ -51,7 +55,7 @@ internal object ShellIntegration {
                 builtin printf '\033]777;waddle;$nonce;rejected\007'
             fi
         }
-        for __waddle_map in emacs-standard vi-insertion vi-command; do
+        for __waddle_map in emacs-standard vi-insert vi-command; do
             builtin bind -m "§__waddle_map" -x '"\e[9876~":__waddle_command'
             builtin bind -m "§__waddle_map" '"\e[9877~":accept-line'
         done
@@ -59,4 +63,4 @@ internal object ShellIntegration {
     """.trimIndent().replace('§', '$') + "\n"
 }
 
-data class TerminalContext(val sessionId: String, val sessionLabel: String, val cwd: String, val epoch: Long, val transcript: String)
+data class TerminalContext(val sessionId: String, val sessionLabel: String, val cwd: String, val epoch: Long, val transcript: String, val exitCode: Int? = null)
