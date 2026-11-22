@@ -33,6 +33,7 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 | 已实现 | 实现完成，实现说明已写 | 实现者 |
 | 验收通过 | 「怎样算做好」都做到了 | 验收者 |
 | 验收不通过 | 有没做到的，已另提新需求 | 验收者 |
+| 已取消 | 方向改了，不再做；写明被哪份取代 | 提需求的人 |
 
 进入「已实现」后，需求部分不再改。
 
@@ -40,8 +41,9 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
-| [2026-11-22-03-repo-without-codex-packages](2026-11-22-03-repo-without-codex-packages.md) | 仓库里不放 Codex 安装包，GitHub 上的安卓检查全部通过 | 待实现 | [2026-11-22-01](2026-11-22-01-ai-terminal.md) |
-| [2026-11-22-02-extensions](2026-11-22-02-extensions.md) | 扩展：Codex、Claude Code 等工具按需下载安装（2 个阶段） | 待实现（阶段 1） | 无（在 2026-11-22-01 阶段 1 之后做） |
+| [2026-11-22-04-bundled-agents-and-accounts](2026-11-22-04-bundled-agents-and-accounts.md) | 安装包里带上 Codex、Claude Code、Antigravity，设置里统一登录账号；国内版能一键去掉（3 个阶段） | 待实现（阶段 1） | 2026-11-22-01；取代 02、03 |
+| [2026-11-22-03-repo-without-codex-packages](2026-11-22-03-repo-without-codex-packages.md) | 仓库里不放 Codex 安装包，GitHub 上的安卓检查全部通过 | 已取消（被 04 取代） | [2026-11-22-01](2026-11-22-01-ai-terminal.md) |
+| [2026-11-22-02-extensions](2026-11-22-02-extensions.md) | 扩展：Codex、Claude Code 等工具按需下载安装（2 个阶段） | 已取消（被 04 取代） | 无（在 2026-11-22-01 阶段 1 之后做） |
 | [2026-11-22-01-ai-terminal](2026-11-22-01-ai-terminal.md) | Waddle 改成 AI 终端：安装包不带 Codex，内置 AI 可选 DeepSeek 等国内模型（2 个阶段） | 验收不通过（阶段 1） | 无 |
 
-当前进度（2026-11-22）：产品方向改为 **AI 终端**，要在国内上架。Waddle 本体不带 Codex 等海外 AI 工具，终端里的 AI 用用户自己配的模型（DeepSeek、通义千问、Kimi、智谱或 OpenAI 兼容接口）；Codex、Claude Code 做成可选扩展。之前的需求文档（2026-11-19-01 到 2026-11-21-07）和验收截图已全部删除，需要时可以在 git 历史里找到。先做 01，01 阶段 1 验收后再做 02。01 阶段 1 功能已验收，但 Android CI 没过（仓库不放 Codex 包后构建校验失败、全新模拟器上被通知权限弹窗挡住），先做 03，复验通过后再进入 01 阶段 2。
+当前进度（2026-11-22）：方向定为 **AI 终端，能用的 AI 都带上**。国际版安装包里直接带 Codex、Claude Code、Antigravity，加上 01 做好的内置 AI（DeepSeek、通义千问、Kimi、智谱、OpenAI 兼容），设置里有统一的「账号」页；以后出国内版，同一份代码一键去掉海外工具。01 阶段 1（去掉 Codex、加内置 AI）已推到 main，验收不通过；02（扩展下载）、03（仓库不放 Codex 包）已取消，由 04 取代。先做 04 阶段 1，01 阶段 2 等 04 做完再说。之前的需求文档（2026-11-19-01 到 2026-11-21-07）已删除，需要时在 git 历史里找。
