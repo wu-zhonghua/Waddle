@@ -44,8 +44,10 @@ class MainActivity : ComponentActivity() {
         )
         startTerminalService()
         bound = bindService(Intent(this, TerminalService::class.java), connection, Context.BIND_AUTO_CREATE)
-        if (savedInstanceState == null && Build.VERSION.SDK_INT >= 33 &&
+        val permissionPrefs = getSharedPreferences("ui_permissions", MODE_PRIVATE)
+        if (savedInstanceState == null && !permissionPrefs.getBoolean("notificationAsked", false) && Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permissionPrefs.edit().putBoolean("notificationAsked", true).apply()
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {
@@ -60,6 +62,10 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         workspace?.files?.refreshStorage()
+        workspace?.agents?.let { agents ->
+            if (agents.account.connected) agents.account.refreshAccount()
+            agents.refreshAccounts()
+        }
     }
 
     override fun onDestroy() {

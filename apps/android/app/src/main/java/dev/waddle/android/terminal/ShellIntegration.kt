@@ -15,6 +15,35 @@ internal object ShellIntegration {
         }
     }
 
+    fun agentRc(directory: File): String = """
+        codex() (
+            local mode=ask
+            case "§{1-}" in
+                --waddle-chat) mode=chat; shift ;;
+                --waddle-terminal) mode=terminal; shift ;;
+                ?*) command codex "§@"; return ;;
+            esac
+            if [[ §mode == terminal ]]; then command codex "§@"; return; fi
+            local request=${quote(directory.path)}/agent-§BASHPID-§RANDOM
+            trap 'command rm -f "§request" "§request.reply"' EXIT
+            trap 'exit 130' INT TERM
+            builtin printf '%s\n%s\n' "§mode" "§PWD" > "§request"
+            local answer count=0
+            while [[ ! -s "§request.reply" ]]; do
+                ((count+=1))
+                if ((count > 3000)); then builtin printf '界面选择已超时，请重试。\n'; return 1; fi
+                command sleep 0.1
+            done
+            IFS= builtin read -r answer < "§request.reply"
+            case "§answer" in
+                terminal) command codex "§@" ;;
+                chat) builtin printf 'Codex 对话已打开 · 可在 Waddle 中返回对话。\n' ;;
+                *) return 1 ;;
+            esac
+        )
+        export -f codex
+    """.trimIndent().replace('§', '$') + "\n"
+
     fun rc(config: File, directory: File, nonce: String): String = """
         builtin source ${quote(config.path)}
         waddle-open() {

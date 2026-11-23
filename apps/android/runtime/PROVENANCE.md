@@ -1,5 +1,36 @@
 # Waddle embedded runtime
 
+## 2026-11-22: bundled agents stage 1 (0.6.0)
+
+International builds restore the original, hash-pinned Codex 0.170.0 and helper
+from the two original `.deb` archives now retained as source-controlled build
+inputs alongside the 37 terminal archives. No package bytes or locks changed.
+The helper-name rewrite, equal-length ELF edits and NDK-built supervisor below
+apply again. Existing upstream notices and source recipe attribution are retained.
+No vendored Termux terminal component source was modified.
+
+`--distribution international` (default) selects all packages; `domestic` selects
+terminal packages before verification/extraction/license copying. Each produces a
+separate `runtime/generated/<distribution>/{jniLibs,assets}` tree with a tagged
+manifest. Gradle uses `-PwaddleDistribution=domestic` to switch and rejects a
+mismatched ABI/distribution or agent binaries in a domestic payload. Domestic
+builds omit Codex, its helper and supervisor and all Codex-specific UI entry points.
+
+The restored runtime uses the old private `home/.codex` for shared CLI/app-server
+auth. International first launch creates that directory; domestic preparation
+never creates or deletes it. Only obsolete Waddle-owned executable symlinks are
+removed when changing distributions. User files and auth are retained.
+
+The shell integration adds an exported `codex` function for bare interactive
+launches, with private per-terminal request/reply files carrying cwd and interface
+choice. Flags retain normal CLI behavior; explicit `--waddle-chat` and
+`--waddle-terminal` override preferences. No external service or executable is
+downloaded at runtime. App-server conversations have independent supervisors;
+command suggestions use an ephemeral thread without execution environments/tools.
+
+The 0.5.0 section below records the previous implementation, not the current
+international distribution.
+
 ## 2026-11-22: AI terminal stage 1 (0.5.0)
 
 The current APK selects Bash, Git, ripgrep, curl, HTTPS transport, certificates,

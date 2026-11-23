@@ -31,7 +31,7 @@ private val Accent = Color(0xFFA7E8BD)
 private val Muted = Color(0xFF96A59B)
 
 @Composable
-fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAiSettings: () -> Unit) {
+fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAiSettings: () -> Unit, onConversation: (dev.waddle.android.codex.CodexSession) -> Unit = {}) {
     val context = LocalContext.current
     val input = remember { InputState() }
     var terminalView by remember { mutableStateOf<TerminalView?>(null) }
@@ -109,12 +109,15 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
                         }
                     }
                 }
+                workspace?.agents?.sessions?.filter { it.origin === selected }?.forEach { conversation ->
+                    TextButton(onClick = { onConversation(conversation) }, modifier = Modifier.fillMaxWidth()) { Text("${conversation.label} · 对话进行中 · 返回对话") }
+                }
                 (aiError ?: selected?.commandError)?.let { message ->
                     Text(message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp))
                 }
                 fun openAi(explain: Boolean) {
-                    if (workspace?.suggestions?.settings?.configured() != true) { needsAi = true; return }
-                    runCatching { workspace.captureContext() }.fold(onSuccess = { aiContext = it; diagnose = explain; aiError = null },
+                    if (workspace != null && workspace.agents == null && !workspace.suggestions.settings.configured()) { needsAi = true; return }
+                    runCatching { requireNotNull(workspace).captureContext() }.fold(onSuccess = { aiContext = it; diagnose = explain; aiError = null },
                         onFailure = { aiError = it.message })
                 }
                 if (selected?.promptReady == true && selected.lastExitCode?.let { it != 0 } == true) {
@@ -150,7 +153,7 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
             }
         }
         aiContext?.let { snapshot ->
-            if (workspace != null) CommandSheet(workspace, snapshot, diagnose = diagnose, onDismiss = { aiContext = null }, onRun = {
+            if (workspace != null) CommandSheet(workspace, snapshot, diagnose = diagnose, onAccounts = onAiSettings, onDismiss = { aiContext = null }, onRun = {
                 aiContext = null
                 terminalView?.requestFocus()
             })

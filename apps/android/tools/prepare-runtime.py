@@ -72,12 +72,13 @@ def main():
     parser.add_argument('--offline', action='store_true',
                         help='Compatibility flag: runtime preparation is always offline')
     parser.add_argument('--abi', choices=['arm64-v8a', 'x86_64'], default='arm64-v8a')
-    parser.add_argument('--output', type=Path, default=OUT)
+    parser.add_argument('--distribution', choices=['international', 'domestic'], default='international')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     lockfile = ROOT / 'runtime' / ('packages.lock.json' if args.abi == 'arm64-v8a' else 'packages-x86_64.lock.json')
     lock = json.loads(lockfile.read_text())
-    # Legacy lock/input archives are retained as provenance, not part of the app.
-    lock = terminal_packages(lock)
+    if args.distribution == "domestic": lock = terminal_packages(lock)
+    if args.output is None: args.output = OUT / args.distribution
     if not args.ndk:
         parser.error('Set ANDROID_NDK_HOME or --ndk to Android NDK 28.2.13676358')
     readelf = next(Path(args.ndk).glob('toolchains/llvm/prebuilt/*/bin/llvm-readelf'))
@@ -106,10 +107,12 @@ def main():
         'bash': ('bash', 'bin/bash'), 'git': ('git', 'bin/git'),
         'rg': ('ripgrep', 'bin/rg'), 'curl': ('curl', 'bin/curl'),
     }
+    if args.distribution == "international":
+        binaries.update({"codex": ("codex", "bin/codex"), "codex-code-mode-host": ("codex", "bin/codex-code-mode-host")})
     files = []
     command_map = {}
     for name, (package, path) in binaries.items():
-        filename = 'libwaddle_' + name + '.so'
+        filename = 'libwaddle_helper_.so' if name == 'codex-code-mode-host' else 'libwaddle_' + name + '.so'
         command_map[name] = filename
         files.append((roots[package] / path, filename))
     # Native Git HTTPS transport helper; scripted Git porcelain is not bundled.
@@ -133,8 +136,17 @@ def main():
         for old, new in rename.items(): data = data.replace(old + b'\0', new + b'\0')
         old_runpath = b'/data/data/com.termux/files/usr/lib\0'
         data = data.replace(old_runpath, b'$ORIGIN' + b'\0' * (len(old_runpath) - 7))
+        if name == 'libwaddle_codex.so':
+            old = b'codex-code-mode-host'; new = b'libwaddle_helper_.so'
+            assert len(old) == len(new) and old in data
+            data = data.replace(old, new)
         dest = native / name
         dest.write_bytes(data); dest.chmod(0o755)
+    if args.distribution == 'international':
+        clang = readelf.parent / ('aarch64-linux-android26-clang' if args.abi == 'arm64-v8a' else 'x86_64-linux-android26-clang')
+        subprocess.run([str(clang), '-O2', '-Wall', '-Wextra', '-Werror', '-fPIE', '-pie',
+                        '-Wl,-z,max-page-size=16384', str(ROOT / 'runtime/supervisor.c'),
+                        '-o', str(native / 'libwaddle_supervisor.so')], check=True)
     shutil.copyfile(roots['ca-certificates'] / 'etc/tls/cert.pem', assets / 'cert.pem')
     for pkg, path, target in [('git', 'share/git-core/templates', 'git-template'), ('ncurses', 'share/terminfo', 'terminfo')]:
         source = roots[pkg] / path
@@ -142,7 +154,7 @@ def main():
     extra_licenses = ROOT / 'runtime/licenses'
     if extra_licenses.exists(): shutil.copytree(extra_licenses, assets / 'licenses/upstream', dirs_exist_ok=True)
     (assets / 'packages.lock.json').write_text(json.dumps(lock, indent=2) + '\n')
-    manifest = {'version': 'terminal-0.5.0', 'abi': lock['abi'], 'commands': command_map,
+    manifest = {'version': '0.6.0-' + args.distribution, 'distribution': args.distribution, 'abi': lock['abi'], 'commands': command_map,
                 'files': sorted(str(p.relative_to(assets)) for p in assets.rglob('*') if p.is_file())}
     (assets / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(f'Prepared {len(files)} native executables/libraries for {lock["abi"]}')

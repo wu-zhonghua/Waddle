@@ -14,6 +14,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.waddle.android.codex.CodexFiles
 import dev.waddle.android.files.*
 import dev.waddle.android.terminal.TerminalWorkspace
 import org.json.JSONArray
@@ -149,6 +150,23 @@ class FileViewingIntegrationTest {
         }
     }
 
+    @Test fun toolImagesAndGeneratedImagesAreAttachedWithoutLeakingBase64IntoMessages() = fixture { root ->
+        val file = image(root)
+        val bytes = android.util.Base64.encodeToString(file.readBytes(), android.util.Base64.NO_WRAP)
+        val result = CodexFiles.read(JSONObject().put("type", "functionCallOutput").put("output", JSONArray().put(JSONObject().put("type", "image").put("data", bytes).put("mimeType", "image/png"))), root, root, File(root, "stored"))
+        assertNull(result.error); assertEquals(1, result.paths.size)
+        assertArrayEquals(file.readBytes(), File(result.paths.single()).readBytes())
+        val generated = CodexFiles.read(JSONObject().put("type", "imageGeneration").put("result", bytes).put("status", "completed"), root, root, File(root, "stored"))
+        assertEquals(result.paths, generated.paths)
+        val viewed = CodexFiles.read(JSONObject().put("type", "imageView").put("path", file.path), root, root, File(root, "stored"))
+        assertEquals(listOf(file.path), viewed.paths)
+        val changed = CodexFiles.read(JSONObject().put("type", "fileChange").put("changes", JSONArray().put(JSONObject().put("path", "中文/image.png"))), root, root, root)
+        assertEquals(File(root, "中文/image.png").path, changed.paths.single())
+        val command = CodexFiles.read(JSONObject().put("type", "commandExecution")
+            .put("command", "bash -lc 'printf image-bytes > generated.png && test -s generated.png'"), root, root, root)
+        assertTrue("A shell script must not become an image attachment", command.paths.isEmpty())
+    }
+
     @Test fun sharingGrantsOnlySelectedSnapshotAndSavingNeverOverwrites() = fixture { root ->
         val file = image(root, "save-${System.nanoTime()}.png"); val entry = access.local(file)
         val uri = viewing.shareUri(entry)
@@ -223,6 +241,49 @@ class FileViewingIntegrationTest {
                 assertFalse(visible("UNSAFE")); click("返回")
             }
             assertSame(original, main { workspace.selected!!.terminal })
+        }
+    }
+
+    @Test fun commandChoiceChatReturnRotationAndImageViewerPreserveConversation() = fixture { root ->
+        org.junit.Assume.assumeTrue(BuildConfig.BUNDLED_AGENTS)
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            val workspace = workspace(scenario)
+            val agents = workspace.agents!!
+            val preference = main { agents.preferred }
+            val previous = main { workspace.selected }
+            val shell = main { agents.preference("ask"); workspace.create(root) }
+            try {
+                await { main { shell.promptReady } }
+                main { shell.terminal.write("codex\r") }
+                await { visible("用哪种界面打开 Codex？") }
+                assertTrue(visible("对话界面（推荐）")); assertTrue(visible("终端界面")); assertTrue(visible("记住我的选择"))
+                click("记住我的选择"); click("打开")
+                assertEquals("chat", main { agents.preferred })
+                await { visible("回到终端") && main { agents.selected != null } }
+                val panel = main { agents.selected!! }
+                val image = image(root)
+                main { panel.client.messages += dev.waddle.android.codex.CodexMessage("viewer-message", "Codex", "生成好了：[图片](<${image.path}>)") }
+                await { visible("图片缩略图 ${image.name}") }
+                click("图片缩略图 ${image.name}")
+                await { visible("图片 ${image.name}，双指缩放、拖动") }
+                instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+                await { visible("图片缩略图 ${image.name}") }
+                click("回到终端")
+                click("${panel.label} · 对话进行中 · 返回对话")
+                await { visible("图片缩略图 ${image.name}") }
+                scenario.recreate()
+                await { visible("图片缩略图 ${image.name}") }
+                assertEquals("viewer-message", main { panel.client.messages.single().id })
+                image.delete(); click("图片缩略图 ${image.name}")
+                await { nodes().any { it.text?.toString()?.contains("不存在") == true } }
+                click("返回")
+                main { agents.close(panel) }
+            } finally {
+                main {
+                    agents.sessions.filter { it.origin === shell }.toList().forEach(agents::close)
+                    agents.preference(preference); workspace.close(shell); previous?.let(workspace::select)
+                }
+            }
         }
     }
 

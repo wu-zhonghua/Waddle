@@ -5,14 +5,16 @@ import android.system.Os
 import org.json.JSONObject
 import java.io.File
 
-/** App-owned environment for PTY shells and bundled terminal tools. */
+/** Shared, app-owned environment for PTY shells, CLI Codex and the Codex panel. */
 class WaddleRuntime(private val context: Context) {
     val home = File(context.filesDir, "home").apply { mkdirs() }
+    val config = File(home, ".codex").apply { if (dev.waddle.android.BuildConfig.BUNDLED_AGENTS) mkdirs() }
     val prefix = File(context.filesDir, "usr")
     val bin = File(prefix, "bin")
     private val data = File(prefix, "share/waddle")
     private val tmp = File(context.cacheDir, "shell").apply { mkdirs() }
     private val native = File(context.applicationInfo.nativeLibraryDir)
+    private var process: Process? = null
 
     companion object { private val installLock = Any() }
 
@@ -33,13 +35,11 @@ class WaddleRuntime(private val context: Context) {
             marker.writeText(manifestText)
         }
         bin.mkdirs()
-        // Upgrade only removes obsolete links installed by Waddle, never user files/home.
+        val commands = manifest.getJSONObject("commands")
         for ((name, target) in mapOf("codex" to "libwaddle_codex.so", "codex-code-mode-host" to "libwaddle_helper_.so")) {
             val link = File(bin, name)
-            val current = runCatching { Os.readlink(link.path) }.getOrNull()
-            if (current?.endsWith("/$target") == true) link.delete()
+            if (!commands.has(name) && runCatching { Os.readlink(link.path) }.getOrNull()?.endsWith("/$target") == true) link.delete()
         }
-        val commands = manifest.getJSONObject("commands")
         for (name in commands.keys()) {
             val source = File(native, commands.getString(name))
             check(source.canExecute()) { "内嵌运行时文件缺失：$name" }
@@ -66,7 +66,7 @@ class WaddleRuntime(private val context: Context) {
         "TERMINFO" to File(data, "terminfo").path,
         "TERM" to "xterm-256color", "COLORTERM" to "truecolor", "LANG" to "C.UTF-8",
         "ANDROID_ROOT" to "/system", "ANDROID_DATA" to "/data",
-    )
+    ) + if (dev.waddle.android.BuildConfig.BUNDLED_AGENTS) mapOf("CODEX_HOME" to config.path) else emptyMap()
 
     fun command(vararg args: String): ProcessBuilder {
         prepare()
@@ -75,4 +75,34 @@ class WaddleRuntime(private val context: Context) {
 
     fun executable(name: String) = File(bin, name).path
 
+    @Synchronized fun start(suggestionsOnly: Boolean = false, workingDirectory: File = home): Process {
+        check(dev.waddle.android.BuildConfig.BUNDLED_AGENTS) { "此版本不包含 Codex" }
+        stop()
+        val options = if (suggestionsOnly) listOf(
+            "features.shell_tool=false", "features.code_mode=false", "features.code_mode_only=false",
+            "features.apps=false", "features.plugins=false", "features.hooks=false",
+            "features.multi_agent=false", "features.multi_agent_v2=false", "agents.enabled=false",
+            "web_search=\"disabled\"", "tools.update_plan.enabled=false", "tools.experimental_request_user_input.enabled=false",
+            "project_doc_max_bytes=0",
+        ).flatMap { listOf("-c", it) } else emptyList()
+        val builder = command(*(listOf(File(native, "libwaddle_supervisor.so").path, executable("codex")) +
+            options + listOf("app-server", "--listen", "stdio://")).toTypedArray())
+        builder.directory(workingDirectory.canonicalFile.also { require(it.isDirectory) })
+        if (suggestionsOnly) builder.directory(File(context.cacheDir, "command-suggestions").apply { mkdirs() })
+        val started = builder.start()
+        process = started
+        return started
+    }
+
+    @Synchronized fun stop(): Thread? {
+        val running = process ?: return null
+        process = null
+        running.destroy()
+        return Thread {
+            if (!running.waitFor(9, java.util.concurrent.TimeUnit.SECONDS)) {
+                running.destroyForcibly()
+                running.waitFor()
+            }
+        }.apply { start() }
+    }
 }

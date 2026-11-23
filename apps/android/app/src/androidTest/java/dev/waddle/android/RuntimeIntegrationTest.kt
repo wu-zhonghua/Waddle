@@ -23,9 +23,12 @@ class RuntimeIntegrationTest {
             return output
         }
         assertEquals(android.os.Process.myUid().toString(), run("/system/bin/id", "-u").trim())
-        val absent = runtime.command(runtime.executable("bash"), "-c", "codex --version").redirectErrorStream(true).start()
-        assertTrue(absent.waitFor(10, TimeUnit.SECONDS)); assertEquals(127, absent.exitValue())
-        assertTrue(absent.inputStream.bufferedReader().readText().contains("command not found"))
+        if (BuildConfig.BUNDLED_AGENTS) assertTrue(run(runtime.executable("codex"), "--version").contains("0.170.0"))
+        else for (name in listOf("codex", "claude", "agy")) {
+            val absent = runtime.command(runtime.executable("bash"), "-c", "$name --version").redirectErrorStream(true).start()
+            assertTrue(absent.waitFor(10, TimeUnit.SECONDS)); assertEquals(127, absent.exitValue())
+            assertTrue(absent.inputStream.bufferedReader().readText().contains("command not found"))
+        }
         assertTrue(run(runtime.executable("bash"), "--version").contains("GNU bash"))
         assertTrue(run(runtime.executable("git"), "--version").contains("git version"))
         assertTrue(run(runtime.executable("rg"), "--version").contains("ripgrep"))

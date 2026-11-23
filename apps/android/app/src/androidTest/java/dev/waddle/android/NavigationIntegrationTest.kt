@@ -214,8 +214,7 @@ class NavigationIntegrationTest {
                 await("Import did not finish") { main { !workspace.files.importBusy && workspace.files.imported != null } }
                 imported = main { workspace.files.imported!!.file }
                 await("Copy not entered") { main { !workspace.files.loading && workspace.files.current?.local == true && workspace.files.current?.file?.canonicalFile == imported?.canonicalFile } }
-                assertTrue(visible("Waddle 文件 · 副本"))
-                assertFalse(visible("复制到 Waddle…"))
+                await("Imported copy UI not rendered") { visible("Waddle 文件 · 副本") && !visible("复制到 Waddle…") }
                 click("在当前文件夹打开终端")
                 await("Imported shell not ready") { main { workspace.selected !== original && workspace.selected?.promptReady == true } }
                 assertEquals(imported!!.canonicalPath, main { workspace.selected?.cwd })
@@ -276,15 +275,20 @@ class NavigationIntegrationTest {
         }
     }
 
-    @Test fun settingsAndHelpAreReachableAndCodexEntriesAreAbsent() {
+    @Test fun accountsAndHelpAreReachableWithoutCreationEntries() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             workspace(scenario)
             openDrawer()
             assertFalse(nodes().any { it.text?.contains("Codex") == true })
             click("设置与运行环境")
-            await("Settings missing") { visible("AI 模型") }
-            assertFalse(nodes().any { it.text?.contains("Codex") == true })
+            await("Settings missing") { visible("账号") }
+            if (!BuildConfig.BUNDLED_AGENTS) assertFalse(nodes().any { it.text?.contains("Codex") == true })
+            click("AI 模型 · 配置 Key 和模型")
+            await("Models missing") { visible("AI 模型") }
             click("完成")
+            await("Model dialog did not close") { visible("账号") && !visible("AI 模型") }
+            click("完成")
+            await("Accounts did not close") { !visible("账号") }
             openDrawer(); click("帮助")
             await("Help missing") { visible("使用 Waddle") }
             click("知道了")
@@ -297,7 +301,7 @@ class NavigationIntegrationTest {
     @Test fun unconfiguredAiOpensModelSettingsAndShellRemainsAlive() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val workspace = workspace(scenario)
-            org.junit.Assume.assumeFalse(workspace.suggestions.settings.configured())
+            org.junit.Assume.assumeFalse(BuildConfig.BUNDLED_AGENTS || workspace.suggestions.settings.configured())
             val session = main { workspace.selected!! }
             click("✦ 问 AI，写命令…")
             await("Setup guidance missing") { visible("先配置 AI 模型") }

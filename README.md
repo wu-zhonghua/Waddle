@@ -28,23 +28,24 @@ docs/           产品调研、MVP 计划与验证记录
 
 要求 Android 8+，默认打包 ARM64；x86_64 用于 CI 模拟器。本地终端使用 Waddle 私有目录、内置工具和 Android 系统命令，不依赖 Termux App；没有任意包管理器或 SSH。系统终止进程或重启设备后，Shell 不会恢复；保留在私有 home 中的文件仍然存在。
 
-## 安卓 AI 终端（0.5.0）
+## 安卓 AI 终端（0.6.0，阶段 1）
 
-安装包仅带 Bash、Git、ripgrep、curl 及其依赖，不再带 Codex、登录或对话入口。终端不配 AI 也能用；在「设置与运行环境」的「AI 模型」中选择 DeepSeek、通义千问、Kimi、智谱或自定义 OpenAI 兼容接口，填写自己的 Key 与模型并测试连接。Key 使用 Android Keystore 加密后仅保存在本机，可替换或删除，保存后不显示明文。
+国际版随 APK 带 Bash、Git、ripgrep、curl、Codex 0.170.0 及依赖。在任意终端目录敲 `codex`，首次选择「对话界面（推荐）」或原版「终端界面」，可记住选择。`codex --waddle-chat`、`codex --waddle-terminal` 临时切换；普通 CLI 参数仍传给原程序。对话可返回原终端，抽屉只列进行中的对话。对话页的「历史对话」可选择本机保存的 session，恢复消息并在原工作目录继续。
 
-终端可根据当前路径、最近输入输出生成可编辑命令；命令出错后可点「让 AI 看看」解释原因和修法。所有命令都需确认后才在原会话执行一次。只实现单次建议与诊断，尚未实现多步任务或扩展。覆盖安装保留 home 文件；旧版 Codex 用户数据不删除，但不可通过本体访问。
+「设置与运行环境 → 账号」汇总 Codex 和内置模型状态。Codex 支持 ChatGPT 设备登录、API Key 和退出；终端与对话共享原有私有 `.codex` 登录。内置 AI 保留 DeepSeek、通义千问、Kimi、智谱和自定义 OpenAI 兼容配置，Key 用 Android Keystore 加密保存。「问 AI，写命令」「让 AI 看看」可选内置模型或 Codex，生成的命令可编辑，确认后才在原终端执行一次。
 
-内置命令和动态库的来源、许可证与重打包步骤见[运行时记录](apps/android/runtime/PROVENANCE.md)，配置模型与使用方式见[安卓说明](apps/android/README.md)。
+同一份源码通过 `waddleDistribution` 选择国际版或国内版；国内版不打包海外工具，账号页也不显示它们。阶段 1 只带 Codex，Claude Code、Antigravity 留给后续阶段。两种版本覆盖安装均保留用户文件，国内版也不删除旧 Codex 登录。
 
 ```sh
 cd apps/android
-python3 tools/prepare-runtime.py --ndk "$ANDROID_HOME/ndk/28.2.13676358"
-./gradlew assembleDebug
-./gradlew testDebugUnitTest lintDebug
-./gradlew :app:connectedDebugAndroidTest
+python3 tools/prepare-runtime.py --distribution international --ndk "$ANDROID_HOME/ndk/28.2.13676358"
+./gradlew assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug
+# 国内版：与国际版分别生成运行时
+python3 tools/prepare-runtime.py --distribution domestic --ndk "$ANDROID_HOME/ndk/28.2.13676358"
+./gradlew assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug -PwaddleDistribution=domestic
 ```
 
-运行时的原始第三方包已作为固定构建输入保存在 `apps/android/third-party/runtime-packages`，准备运行时不联网，也不依赖本机旧缓存；首次下载 Gradle 和 Android 构建依赖仍需联网。环境要求和安装方式见 [安卓开发说明](apps/android/README.md)。
+原始第三方包作为固定构建输入保存在 `apps/android/third-party/runtime-packages`，包括两个 Codex 包；准备运行时离线校验，不依赖滚动下载地址。首次安装 Gradle/SDK 依赖仍需联网。详细环境、使用与测试见[安卓说明](apps/android/README.md)，来源和许可证见[运行时记录](apps/android/runtime/PROVENANCE.md)。
 
 ## 桌面端
 
@@ -61,7 +62,7 @@ task dev
 
 ## 后续方向
 
-当前实现范围是[AI 终端阶段 1](docs/dev/2026-11-22-01-ai-terminal.md)。后续按需求验收，再处理可选扩展与多步任务；手机和电脑的会话互联需要单独的服务与认证协议。
+当前实现范围是[内置工具与账号阶段 1](docs/dev/2026-11-22-04-bundled-agents-and-accounts.md)及[历史 session 入口补充](docs/dev/2026-11-22-05-codex-session-history.md)。后续按需求验收，再处理 Claude Code、Antigravity 和多步任务；手机和电脑的会话互联需要单独的服务与认证协议。
 
 - [技术调研](docs/research.md)
 - [安卓 MVP 计划](docs/mvp-plan.md)

@@ -217,7 +217,11 @@ class CommandSuggestionIntegrationTest {
                     putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
                         "mkdir -p child\ncd child\nprintf 'once\\n' >> count\nexport WADDLE_DRAWER_VALUE=kept")
                 }))
+                field.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_ON_SCREEN.id)
                 assertTrue(field.performAction(AccessibilityNodeInfo.ACTION_FOCUS))
+                val focusDeadline = SystemClock.uptimeMillis() + 5_000
+                while (SystemClock.uptimeMillis() < focusDeadline && editableNodes().lastOrNull()?.isFocused != true) SystemClock.sleep(50)
+                assertTrue("Command editor did not receive focus", editableNodes().last().isFocused)
                 instrumentation.waitForIdleSync()
                 if (useIme) assertTrue(field.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id))
                 else instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER)

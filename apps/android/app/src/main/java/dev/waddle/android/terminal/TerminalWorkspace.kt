@@ -31,6 +31,7 @@ class ShellSession(val number: Int, val terminal: TerminalSession, internal val 
 class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = CommandSuggester(context),
                         private val onStateChanged: () -> Unit = {}) :
     TerminalLog(), TerminalSessionClient {
+    val agents = if (dev.waddle.android.BuildConfig.BUNDLED_AGENTS) dev.waddle.android.codex.CodexWorkspace(context) else null
     val sessions = mutableStateListOf<ShellSession>()
     var selectedId by mutableStateOf<String?>(null)
         private set
@@ -68,7 +69,7 @@ class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = Co
         val number = nextNumber++
         val nonce = UUID.randomUUID().toString()
         val directory = File(shellRoot, nonce).apply { mkdirs() }
-        val rc = File(directory, "init.bash").apply { writeText(ShellIntegration.rc(shellConfig, directory, nonce)) }
+        val rc = File(directory, "init.bash").apply { writeText(ShellIntegration.rc(shellConfig, directory, nonce) + if (agents != null) ShellIntegration.agentRc(directory) else "") }
         val env = runtime.environment().map { "${it.key}=${it.value}" }.toTypedArray()
         val terminal = TerminalSession(runtime.executable("bash"), cwd.path,
             arrayOf("bash", "--noprofile", "--rcfile", rc.absolutePath, "-i"), env, 4000, this)
@@ -77,6 +78,16 @@ class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = Co
         // A private request file also works when a child captures stdout or creates a new process session.
         session.fileObserver = object : android.os.FileObserver(directory.path, android.os.FileObserver.CLOSE_WRITE) {
             override fun onEvent(event: Int, path: String?) {
+                if (path != null && path.matches(Regex("agent-[0-9]+-[0-9]+")) && agents != null) {
+                    val request = File(directory, path)
+                    val lines = runCatching { if (request.length() <= 16_384) request.readLines() else emptyList() }.getOrDefault(emptyList())
+                    if (lines.size == 2 && lines[1].startsWith('/') && lines[1].none { it < ' ' }) {
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            if (session in sessions && request.exists()) agents.request(dev.waddle.android.codex.CodexLaunch(session, File(lines[1]), request, lines[0]))
+                        }
+                    }
+                    return
+                }
                 if (path == null || !path.matches(Regex("open-[0-9]+-[0-9]+"))) return
                 val request = File(directory, path)
                 val target = runCatching { if (request.length() <= 16_384) request.readText() else "" }.getOrDefault("")
@@ -127,6 +138,7 @@ class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = Co
 
     fun closeAll() {
         suggestions.cancel()
+        agents?.closeAll()
         sessions.toList().forEach { it.fileObserver?.stopWatching(); it.terminal.finishIfRunning(); it.directory.deleteRecursively() }
         sessions.clear()
         selectedId = null

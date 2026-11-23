@@ -21,7 +21,7 @@ import dev.waddle.android.terminal.TerminalWorkspace
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, diagnose: Boolean = false, onDismiss: () -> Unit, onRun: () -> Unit) {
+fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, diagnose: Boolean = false, onDismiss: () -> Unit, onRun: () -> Unit, onAccounts: () -> Unit = {}) {
     val client = workspace.suggestions
     var snapshot by remember { mutableStateOf(initialContext) }
     var question by remember { mutableStateOf(if (diagnose) "解释刚才命令失败的原因（退出码 ${initialContext.exitCode}），给出修法；如有必要给出待确认的修复命令。" else "") }
@@ -30,13 +30,17 @@ fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, 
     var showContext by remember { mutableStateOf(false) }
     var submitted by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var questionFocused by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     val draftFocus = remember { FocusRequester() }
     DisposableEffect(client) { onDispose { client.cancel() } }
     // Requesting IME focus during the opening animation can move the sheet's anchors
     // while it is still hidden. Wait until the expanded sheet is actually on screen.
     LaunchedEffect(sheetState.currentValue) {
-        if (sheetState.currentValue == SheetValue.Expanded) focus.requestFocus()
+        if (sheetState.currentValue == SheetValue.Expanded && !questionFocused) {
+            questionFocused = true
+            if (client.command.isBlank()) focus.requestFocus()
+        }
     }
     LaunchedEffect(client.command) {
         draft = client.command
@@ -64,8 +68,14 @@ fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, 
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)
             .padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(if (diagnose) "让 AI 看看 · 解释报错" else "问 AI · 生成命令", style = MaterialTheme.typography.titleLarge)
+            if (workspace.agents != null) Row {
+                FilterChip(selected = !client.useCodex, onClick = { client.selectCodex(false) }, label = { Text("内置模型") })
+                Spacer(Modifier.width(8.dp))
+                FilterChip(selected = client.useCodex, onClick = { client.selectCodex(true) }, label = { Text("Codex") })
+            }
             Text("${snapshot.sessionLabel} · ${snapshot.cwd}", fontFamily = FontFamily.Monospace, fontSize = 12.sp)
             Text("发送当前路径和最近终端内容。生成后先预览，回车才运行。", fontSize = 12.sp)
+            TextButton(onClick = { onDismiss(); onAccounts() }) { Text("账号与模型设置") }
             TextButton(onClick = { showContext = !showContext }) { Text(if (showContext) "收起本次上下文" else "查看本次上下文") }
             if (showContext) {
                 OutlinedTextField(value = snapshot.transcript, onValueChange = {}, readOnly = true,

@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val distribution = providers.gradleProperty("waddleDistribution").getOrElse("international")
+require(distribution in setOf("international", "domestic"))
+val runtimeDir = "../runtime/generated/$distribution"
+
 android {
     namespace = "dev.waddle.android"
     compileSdk = 36
@@ -12,18 +16,19 @@ android {
         applicationId = "dev.waddle.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionCode = 6
+        versionName = "0.6.0-$distribution"
+        buildConfigField("boolean", "BUNDLED_AGENTS", (distribution == "international").toString())
+        testInstrumentationRunner = "dev.waddle.android.WaddleTestRunner"
         ndk { abiFilters += listOf(providers.gradleProperty("waddleAbi").getOrElse("arm64-v8a")) }
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    sourceSets["main"].jniLibs.srcDir("../runtime/generated/jniLibs")
-    sourceSets["main"].assets.srcDir("../runtime/generated/assets")
+    sourceSets["main"].jniLibs.srcDir("$runtimeDir/jniLibs")
+    sourceSets["main"].assets.srcDir("$runtimeDir/assets")
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
         jniLibs.useLegacyPackaging = true
@@ -49,14 +54,16 @@ dependencies {
 
 tasks.named("preBuild") {
     doFirst {
-        check(file("../runtime/generated/assets/runtime/manifest.json").isFile) {
+        check(file("$runtimeDir/assets/runtime/manifest.json").isFile) {
             "Prepare the embedded runtime first: python3 tools/prepare-runtime.py --ndk <Android NDK path>"
         }
-        check(!file("../runtime/generated").walkTopDown().any {
+        val manifest = file("$runtimeDir/assets/runtime/manifest.json").readText()
+        check(manifest.contains("\"distribution\": \"$distribution\"")) { "Runtime distribution mismatch" }
+        if (distribution == "domestic") check(!file(runtimeDir).walkTopDown().any {
             it.name in setOf("libwaddle_codex.so", "libwaddle_helper_.so", "libwaddle_supervisor.so")
-        }) { "Stale Codex payload: rerun tools/prepare-runtime.py before building the AI terminal" }
+        }) { "Domestic runtime contains agent binaries" }
         val abi = providers.gradleProperty("waddleAbi").getOrElse("arm64-v8a")
-        check(file("../runtime/generated/jniLibs/$abi/libwaddle_bash.so").isFile) {
+        check(file("$runtimeDir/jniLibs/$abi/libwaddle_bash.so").isFile) {
             "Embedded runtime ABI mismatch: prepare-runtime.py --abi $abi before building"
         }
     }

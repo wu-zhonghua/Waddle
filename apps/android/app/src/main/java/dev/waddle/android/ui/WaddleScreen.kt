@@ -2,6 +2,7 @@ package dev.waddle.android.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +33,9 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
     var page by rememberSaveable { mutableStateOf("terminal") }
     var lastWorkPage by rememberSaveable { mutableStateOf("terminal") }
     var settings by rememberSaveable { mutableStateOf(false) }
+    var aiSettings by remember { mutableStateOf(false) }
+    var rememberInterface by remember { mutableStateOf(false) }
+    var chosenInterface by remember { mutableStateOf("chat") }
     var help by rememberSaveable { mutableStateOf(false) }
     var closeTarget by remember { mutableStateOf<ShellSession?>(null) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
@@ -50,6 +54,9 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
         page = destination
         if (destination != "files") lastWorkPage = destination
         scope.launch { drawer.close() }
+    }
+    LaunchedEffect(workspace?.agents?.openRequest) {
+        workspace?.agents?.openRequest?.let { workspace.agents.selected = it; navigate("codex"); workspace.agents.openRequest = null }
     }
     MaterialTheme(colorScheme = darkColorScheme(
         primary = Color(0xFFA7E8BD), onPrimary = Color(0xFF101512),
@@ -88,6 +95,11 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
                                         .semantics { contentDescription = "关闭 ${session.label}" }, contentPadding = PaddingValues(0.dp)) { Text("×", fontSize = 22.sp) }
                                 }
                             }
+                            workspace?.agents?.sessions?.forEach { session ->
+                                NavigationDrawerItem(label = { Text("${session.label} · ${session.client.displayDirectory}") },
+                                    selected = page == "codex" && workspace.agents.selected === session,
+                                    onClick = { workspace.agents.selected = session; navigate("codex") })
+                            }
                             TextButton(onClick = { onNewSession(); navigate("terminal") },
                                 enabled = workspace != null && workspace.sessions.size < 8, modifier = Modifier.padding(horizontal = 12.dp)) { Text("＋ 新建终端") }
 
@@ -110,10 +122,11 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
                                 Icon(painterResource(R.drawable.ic_folder), "打开文件", tint = MaterialTheme.colorScheme.primary)
                             }
                             Column(Modifier.weight(1f)) {
-                                Text(when (page) { "files" -> "文件"; else -> workspace?.selected?.let { session -> session.label + (session.cwd?.let { " · " + java.io.File(it).name.ifEmpty { "/" } } ?: "") } ?: "终端" },
+                                Text(when (page) { "files" -> "文件"; "codex" -> workspace?.agents?.selected?.label ?: "Codex"; else -> workspace?.selected?.let { session -> session.label + (session.cwd?.let { " · " + java.io.File(it).name.ifEmpty { "/" } } ?: "") } ?: "终端" },
                                     style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(when (page) {
                                     "files" -> "选择位置，打开文件夹"
+                                    "codex" -> workspace?.agents?.selected?.client?.workingDirectory?.path.orEmpty()
                                     else -> workspace?.selected?.cwd ?: "正在连接工作区…"
                                 }, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
@@ -121,12 +134,24 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
                         HorizontalDivider()
                         Box(Modifier.weight(1f)) {
                             // Preserve file navigation while shells stay in the service.
-                            pages.SaveableStateProvider(page) {
+                            pages.SaveableStateProvider(if (page == "codex") "codex-${workspace?.agents?.selected?.id}" else page) {
                                 when (page) {
                                     "files" -> if (workspace != null) FileBrowserScreen(workspace,
                                         onTerminal = { navigate("terminal") }, navigationEnabled = !drawerVisible)
                                         else Text("正在连接工作区…", Modifier.padding(24.dp))
-                                    else -> TerminalScreen(workspace, onNewSession, onAiSettings = { settings = true })
+                                    "codex" -> workspace?.agents?.selected?.let { session ->
+                                        CodexScreen(session.client, onTerminal = {
+                                            if (session.origin in workspace.sessions) workspace.select(session.origin)
+                                            navigate("terminal")
+                                        }, onAccounts = { settings = true }, onClose = { workspace.agents.close(session); navigate("terminal") },
+                                            onOpenFile = { workspace.files.openPath(it) },
+                                            onHistory = { workspace.agents.restoreHistory(session, it) })
+                                    } ?: run {
+                                        Text("正在连接对话…", Modifier.padding(24.dp))
+                                        LaunchedEffect(workspace) { if (workspace != null) navigate("terminal") }
+                                    }
+                                    else -> TerminalScreen(workspace, onNewSession, onAiSettings = { if (workspace?.agents != null) settings = true else aiSettings = true },
+                                        onConversation = { workspace?.agents?.selected = it; navigate("codex") })
                                 }
                             }
                         }
@@ -165,9 +190,31 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
                 confirmButton = { TextButton(onClick = { workspace?.close(target); closeTarget = null }) { Text("关闭终端") } },
                 dismissButton = { TextButton(onClick = { closeTarget = null }) { Text("保留") } })
         }
-        if (settings && workspace != null) AiSettingsDialog(workspace.suggestions.settings) { settings = false }
+        if (settings && workspace != null) AccountsDialog(workspace) { settings = false }
+        if (aiSettings && workspace != null) AiSettingsDialog(workspace.suggestions.settings) { aiSettings = false }
+        workspace?.agents?.launches?.firstOrNull()?.let { launch ->
+            LaunchedEffect(launch) { rememberInterface = false; chosenInterface = "chat" }
+            AlertDialog(onDismissRequest = { workspace.agents.answer(launch, "cancel") }, title = { Text("用哪种界面打开 Codex？") }, text = {
+                Column {
+                    Text(launch.cwd.path)
+                    listOf("chat" to "对话界面（推荐）", "terminal" to "终端界面").forEach { (mode, label) ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(chosenInterface == mode, { chosenInterface = mode })
+                            TextButton(onClick = { chosenInterface = mode }) { Text(label) }
+                        }
+                    }
+                    Row(Modifier.toggleable(rememberInterface, onValueChange = { rememberInterface = it }), verticalAlignment = Alignment.CenterVertically) { Checkbox(rememberInterface, null); Text("记住我的选择") }
+                }
+            }, confirmButton = { TextButton(onClick = { workspace.agents.answer(launch, chosenInterface, rememberInterface) }) { Text("打开") } },
+                dismissButton = { TextButton(onClick = { workspace.agents.answer(launch, "cancel") }) { Text("取消") } })
+        }
+        workspace?.agents?.error?.let { message ->
+            AlertDialog(onDismissRequest = { workspace.agents.error = null }, title = { Text("无法打开对话") }, text = { Text(message) },
+                confirmButton = { TextButton(onClick = { workspace.agents.error = null }) { Text("知道了") } })
+        }
+        BackHandler(enabled = page == "codex" && !drawerVisible && workspace?.files?.selected == null) { navigate("terminal") }
         if (help) AlertDialog(onDismissRequest = { help = false }, title = { Text("使用 Waddle") }, text = {
-            Text("左侧文件夹按钮打开文件；菜单切换终端。在文件夹底部点“打开终端”，或用卡片“在此打开…”新建终端，原会话保留。\n\n可运行 pwd、ls、bash、git、rg、curl。用 waddle-open \"文件路径\" 打开图片或文件，返回保留原终端。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n在设置的“AI 模型”中配置服务商和 Key。底部“问 AI，写命令”使用当前路径和最近输入输出；命令可编辑，确认后只在原会话执行一次。命令出错后点“让 AI 看看”解释报错。\n\n不配置 AI 也能使用终端。系统结束应用或手机重启后 Shell 不会恢复，本机文件仍保留。\n\n终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
+            Text("左侧文件夹按钮打开文件；菜单切换终端。在文件夹底部点“打开终端”，或用卡片“在此打开…”新建终端，原会话保留。\n\n可运行 pwd、ls、bash、git、rg、curl。用 waddle-open \"文件路径\" 打开图片或文件，返回保留原终端。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n在设置的“账号”中配置服务商和 Key。底部“问 AI，写命令”使用当前路径和最近输入输出；命令可编辑，确认后只在原会话执行一次。命令出错后点“让 AI 看看”解释报错。\n\n不配置 AI 也能使用终端。系统结束应用或手机重启后 Shell 不会恢复，本机文件仍保留。\n\n终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
         }, confirmButton = { TextButton(onClick = { help = false }) { Text("知道了") } })
     }
 }

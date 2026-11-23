@@ -1,4 +1,4 @@
-> 0.5.0 / AI 终端阶段 1：这些原始锁与归档保留为来源记录。构建脚本只选择终端包，排除 Codex；Codex 归档不会进入 APK，也不在运行时解包或安装。
+> 0.6.0 / bundled agents stage 1: international builds select all 39 pinned inputs (20 per ABI); domestic builds select only terminal inputs (19 per ABI). Both Codex archives must accompany the source changes when the reviewer commits. They are ordinary Git inputs below 100 MiB each, not Git LFS or release downloads.
 
 # Pinned upstream runtime dependencies
 
