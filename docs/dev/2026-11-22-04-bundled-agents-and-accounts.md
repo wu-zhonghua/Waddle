@@ -1,6 +1,6 @@
 # 安装包里带上 Codex、Claude Code、Antigravity，在终端里敲命令打开，设置里统一登录账号；国内版能一键去掉（3 个阶段）
 
-- 状态：验收通过（阶段 1）
+- 状态：验收不通过（阶段 1）
 - 日期：2026-11-22
 - 上一份：[2026-11-22-01-ai-terminal](2026-11-22-01-ai-terminal.md)（阶段 1 验收不通过）；取代 2026-11-22-02、2026-11-22-03
 - 涉及：安卓
@@ -246,5 +246,17 @@ Fold7 主用户 0 保留 `0.6.0-international` 主应用；测试应用 `dev.wad
 - 工作区里同时有 2026-11-22-05（Codex 历史对话）的实现，和 04 的代码在同一批文件里，所以一起提交。05 没有在这次验收；它的历史对话用例在模拟器上通过，但真实续聊被跳过。
 - 小问题（不影响结论）：模拟器上用 `adb input` 敲命令时，终端偶尔把同一行回显两遍。这和 Waddle 无关。
 
-- CI：提交推送后补充。
-- 结论：**验收通过（阶段 1）**。模拟器上能看的都做到了。需要真实 ChatGPT 账号和 Fold7 的几项，沿用实现者在 Fold7 上的通过记录。DeepSeek 等真实 Key 没有验证。最终以 GitHub CI 为准。
+- CI（提交 `5859731d`）：
+  - **Desktop checks 通过**。
+  - **Android 没过**（[运行记录](https://github.com/wu-zhonghua/Waddle/actions/runs/45098496449)）：
+    - `build (international)` 和 `build (domestic)` 都通过。这是在 GitHub 上从干净 checkout 离线构建的，两个 Codex 包已经在仓库里。
+    - `device-tests (domestic, allow)` 失败了 2 个用例：
+      - `NavigationIntegrationTest.fileFirstNavigationPreservesShellsAndCloseConfirmation`：抽屉没有关上（「Drawer did not close」）。
+      - `NavigationIntegrationTest.folderCardAndCurrentFolderOpenNewShellsHereWithoutInterruptingOriginal`：用「在当前文件夹打开终端」打开的新终端，目录是上一级 `open-here-…`，不是子文件夹 `中文 ' folder`。
+    - 另外三组设备测试（domestic/deny、international/allow、international/deny）都因为这一组失败被自动取消，没有跑完。
+  - 这两个用例在本地 arm64 模拟器上四轮都通过，可能和 GitHub 上 x86_64 模拟器的速度有关。但第二个也可能是真的进错了目录，要由实现者查清楚。
+- 结论：**验收不通过（阶段 1）**。
+  - 功能在模拟器上都做到了：真实 ChatGPT 账号和 Fold7 的几项沿用实现者在 Fold7 上的记录，DeepSeek 等真实 Key 没有验证。
+  - 按流程，CI 没过算没做到：GitHub 上 Android 设备测试失败，国际版的设备测试没有在 GitHub 上跑完。
+  - 没做到的部分另提需求 [2026-11-23-01-android-ci-green](2026-11-23-01-android-ci-green.md)。
+  - 代码已在验收通过的判断下随 `5859731d` 提交（当时 CI 还没出结果）。按流程不回滚、不强推，修复在新需求里做。
