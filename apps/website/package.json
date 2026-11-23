@@ -1,0 +1,13 @@
+{
+  "name": "waddle-website",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:domestic": "node scripts/build.mjs --distribution domestic",
+    "preview": "node scripts/preview.mjs",
+    "preview:domestic": "node scripts/preview.mjs --distribution domestic",
+    "test": "node --test tests/build.test.mjs"
+  }
+}

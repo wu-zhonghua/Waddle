@@ -1,0 +1,37 @@
+{
+  "terminal.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-phone-terminal.png",
+    "width": 720,
+    "height": 1520
+  },
+  "terminal-domestic.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-domestic-phone-terminal.png",
+    "width": 720,
+    "height": 1520
+  },
+  "command.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-phone-command-sheet.png",
+    "width": 720,
+    "height": 1520
+  },
+  "command-domestic.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-domestic-phone-command-sheet.png",
+    "width": 720,
+    "height": 1520
+  },
+  "accounts.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-phone-accounts.png",
+    "width": 720,
+    "height": 1520
+  },
+  "settings-domestic.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-domestic-phone-settings.png",
+    "width": 720,
+    "height": 1520
+  },
+  "unfolded-terminal.png": {
+    "source": "docs/dev/screenshots/2026-11-23-02-after-unfolded-terminal.png",
+    "width": 1968,
+    "height": 2184
+  }
+}

@@ -1,0 +1,48 @@
+/* Single source of website design values.
+ * Maps to docs/dev/android-design-system.md (2026-11-23).
+ * rem units preserve browser font scaling; 1rem = 16px at default settings.
+ */
+:root {
+  color-scheme: dark;
+  /* 颜色: 工作区 / 表面 / 分隔线 / 正文 / 次要信息 / 强调 / 错误 */
+  --workspace: #101216;
+  --surface: #181B21;
+  --divider: #30343D;
+  --text: #E6E8ED;
+  --muted: #9DA3AF;
+  --accent: #8BAAFF;
+  --error: #F1A5A5;
+
+  /* 排版与间距: 系统无衬线 + 命令、输出、路径等宽; 20/16/14/12sp. */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --type-title: 1.25rem;
+  --type-toolbar: 1rem;
+  --type-body: .875rem;
+  --type-meta: .75rem;
+  --leading: 1.6;
+  --leading-heading: 1.4;
+  --weight-regular: 400;
+  --weight-strong: 600;
+
+  /* 排版与间距: 4dp unit; 8dp inline / 16dp content / 24dp grouping. */
+  --space-unit: .25rem;
+  --space-inline: calc(var(--space-unit) * 2);
+  --space-content: calc(var(--space-unit) * 4);
+  --space-group: calc(var(--space-unit) * 6);
+  --space-section: calc(var(--space-group) * 3);
+  --target: calc(var(--space-unit) * 12);
+  --radius-control: calc(var(--space-unit) * 2);
+  --radius-panel: calc(var(--space-unit) * 3);
+  --line: 1px;
+  --focus-line: 2px;
+  /* 图标: 24dp / 1.8dp linear stroke. */
+  --icon-size: 1.5rem;
+  --icon-stroke: 1.8;
+
+  /* Website layout only, all multiples of the same 4dp unit. */
+  --page-width: calc(var(--space-unit) * 272);
+  --phone-width: calc(var(--space-unit) * 72);
+  --fold-width: calc(var(--space-unit) * 152);
+  --copy-width: calc(var(--space-unit) * 112);
+}

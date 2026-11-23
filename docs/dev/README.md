@@ -41,7 +41,7 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 
 | 文档 | 标题 | 状态 | 上一份 |
 |---|---|---|---|
-| [2026-11-23-03-website-framework](2026-11-23-03-website-framework.md) | Waddle 官网首页框架：默认英文、可切中文，样子跟 App 设计规范走 | 待实现 | 无（在 2026-11-23-02 之后做） |
+| [2026-11-23-03-website-framework](2026-11-23-03-website-framework.md) | Waddle 官网首页框架：默认英文、可切中文，样子跟 App 设计规范走 | 验收通过 | 无（在 2026-11-23-02 之后做） |
 | [2026-11-23-02-product-ui-redesign](2026-11-23-02-product-ui-redesign.md) | 安卓界面整体重做：看起来像一个专业的终端产品，不像 AI 拼出来的（2 个阶段） | 待实现 | 无（在 2026-11-23-01 之后、04 阶段 2 之前做） |
 | [2026-11-23-01-android-ci-green](2026-11-23-01-android-ci-green.md) | GitHub 上的安卓设备测试四种组合全部通过 | 待实现 | [2026-11-22-04](2026-11-22-04-bundled-agents-and-accounts.md)（阶段 1） |
 | [2026-11-22-05-codex-session-history](2026-11-22-05-codex-session-history.md) | Codex 对话页选择历史 session，恢复消息并在原目录继续聊 | 已实现 | 2026-11-22-04（阶段 1 补充） |
