@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { build, distributionFromArgs, root } from '../scripts/build.mjs';
 
@@ -53,7 +54,7 @@ test('domestic artifacts exclude overseas services and international screenshots
   // domestic Accounts screenshot itself contains an overseas protocol name,
   // so only its Settings entry is allowed here.
   assert.deepEqual((await readdir(join(domestic, 'assets'))).sort(), [
-    'command-domestic.png', 'settings-domestic.png', 'terminal-domestic.png', 'unfolded-terminal.png',
+    'command-domestic.png', 'desktop-ai.png', 'desktop-workspace.png', 'settings-domestic.png', 'terminal-domestic.png', 'unfolded-terminal.png',
   ]);
   for (const name of ['index.html', 'zh.html']) {
     const html = await readFile(join(international, name), 'utf8');
@@ -66,7 +67,12 @@ test('screenshots are exact copies with accurate provenance and dimensions', asy
   const manifest = JSON.parse(await readFile(join(root, 'assets/screenshots.json'), 'utf8'));
   for (const [name, data] of Object.entries(manifest)) {
     const copy = await readFile(join(root, 'assets/screenshots', name));
-    assert.deepEqual(copy, await readFile(join(root, '../..', data.source)));
+    if (data.sha256) {
+      assert.equal(createHash('sha256').update(copy).digest('hex'), data.sha256);
+      assert.ok(data.capture && data.source && data.review);
+    } else {
+      assert.deepEqual(copy, await readFile(join(root, '../..', data.source)));
+    }
     assert.equal(copy.readUInt32BE(16), data.width);
     assert.equal(copy.readUInt32BE(20), data.height);
   }
@@ -85,4 +91,24 @@ test('invalid distribution flags fail instead of silently selecting internationa
   assert.equal(distributionFromArgs(['--distribution', 'domestic']), 'domestic');
   assert.throws(() => distributionFromArgs(['--distribution', 'domestci']));
   assert.throws(() => distributionFromArgs(['--domestic']));
+});
+
+
+test('both editions introduce all four platforms and show both real clients in the hero', async () => {
+  for (const dir of [international, domestic]) {
+    for (const file of ['index.html', 'zh.html']) {
+      const html = await readFile(join(dir, file), 'utf8');
+      const hero = html.match(/<section class="hero"[\s\S]*?<\/section>/)[0];
+      for (const platform of ['macOS', 'Windows', 'Linux', file === 'index.html' ? 'Android' : '安卓']) {
+        assert.ok(hero.includes(platform), `Hero missing ${platform}`);
+      }
+      const images = [...hero.matchAll(/<img src="([^"]+)"/g)].map(match => match[1]);
+      assert.equal(images.length, 2);
+      assert.ok(images.some(src => src.endsWith('desktop-workspace.png')));
+      assert.ok(images.some(src => /terminal(?:-domestic)?\.png$/.test(src)));
+      assert.match(html, /aria-labelledby="desktop-features"/);
+      assert.match(html, /aria-labelledby="phone-features"/);
+      assert.doesNotMatch(html, /Free Beta AI credits|docs\.waveterm|docs\.waddle|iOS/i);
+    }
+  }
 });

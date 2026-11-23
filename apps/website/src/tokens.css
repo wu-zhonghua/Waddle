@@ -42,6 +42,7 @@
 
   /* Website layout only, all multiples of the same 4dp unit. */
   --page-width: calc(var(--space-unit) * 272);
+  --hero-media-width: calc(var(--space-unit) * 216);
   --phone-width: calc(var(--space-unit) * 72);
   --fold-width: calc(var(--space-unit) * 152);
   --copy-width: calc(var(--space-unit) * 112);

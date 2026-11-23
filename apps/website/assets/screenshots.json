@@ -33,5 +33,21 @@
     "source": "docs/dev/screenshots/2026-11-23-02-after-unfolded-terminal.png",
     "width": 1968,
     "height": 2184
+  },
+  "desktop-workspace.png": {
+    "source": "apps/desktop @ a951238ddb1f94513ae43203f19f7429eb851563; Waddle 0.14.16, Electron 41.1.0, macOS 26.3.1 arm64",
+    "capture": "2026-11-23; actual Electron renderer via loopback CDP Page.captureScreenshot; original PNG, no crop, redraw or retouch. Temporary configuration and generated /tmp/waddle-website-04/demo files.",
+    "review": "International and domestic: visually checked; no real accounts, keys, private files, real server addresses or overseas AI service names. AI screenshot uses a clearly labelled deterministic local protocol fixture, not model inference.",
+    "width": 2560,
+    "height": 1520,
+    "sha256": "69bb8a839fb20b3a67332458c7a0865973d0a3375c56b67199317d9485eee191"
+  },
+  "desktop-ai.png": {
+    "source": "apps/desktop @ a951238ddb1f94513ae43203f19f7429eb851563; Waddle 0.14.16, Electron 41.1.0, macOS 26.3.1 arm64",
+    "capture": "2026-11-23; actual Electron renderer via loopback CDP Page.captureScreenshot; original PNG, no crop, redraw or retouch. Temporary configuration and generated /tmp/waddle-website-04/demo files.",
+    "review": "International and domestic: visually checked; no real accounts, keys, private files, real server addresses or overseas AI service names. AI screenshot uses a clearly labelled deterministic local protocol fixture, not model inference.",
+    "width": 2560,
+    "height": 1520,
+    "sha256": "f8b325eb8dbe427778da6e1b0b9bcdbb07123a8212ac54f240cb16deff75dcdc"
   }
 }

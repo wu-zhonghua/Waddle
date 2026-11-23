@@ -58,48 +58,72 @@ export function render({ language, distribution, screenshots }) {
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
         <h1 id="hero-title">${t('hero')}</h1>
+        <p class="platforms">${t('platforms')}</p>
         <p>${t('intro')}</p>
         <a class="primary" href="#downloads">${t('downloadAction')}</a>
       </div>
-      ${shot(assets.hero, 'heroAlt', 'heroCaption', { hero: true })}
+      <div class="hero-screens">
+        ${shot(assets.desktop, 'desktopAlt', 'heroDesktopCaption', { hero: true, wide: true })}
+        ${shot(assets.hero, 'heroAlt', 'heroPhoneCaption', { hero: true })}
+      </div>
+      <p class="hero-caption">${t('heroScreensCaption')}</p>
     </section>
     <section aria-labelledby="features-title">
       <h2 class="section-title" id="features-title">${t('features')}</h2>
-      <article class="feature reverse">
-        <div class="feature-copy">
-          <h3>${t('terminalTitle')}</h3>
-          <p>${t('terminalBody')}</p>
-          <ul>
-            <li>${icon('terminal')}<span>${t('terminalLocal')}</span></li>
-            <li>${icon('folder')}<span>${t('terminalFiles')}</span></li>
-            <li>${icon('keys')}<span>${t('terminalKeys')}</span></li>
-          </ul>
-        </div>
-        ${terminal('~/demo $ ls\nREADME.md  notes.txt  src\n\n~/demo $ cat notes.txt\nWaddle workspace\n\n~/demo $', 'terminalCaption')}
-      </article>
-      <article class="feature">
-        <div class="feature-copy">
-          <h3>${t('aiTitle')}</h3><p>${t('aiBody')}</p>
-          <p>${t('aiProviders')}${domestic ? '' : `<br>${t('aiProvidersInternational')}`}</p>
-        </div>
-        ${shot(assets.ai, domestic ? 'aiAltDomestic' : 'aiAlt', 'aiCaption')}
-      </article>
-      ${domestic ? '' : `<article class="feature reverse">
-        <div class="feature-copy">
-          <h3>${t('bundledTitle')}</h3><p>${t('bundledBody').replace(/\bcodex\b/g, '<code>codex</code>')}</p><p>${t('bundledFuture')}</p>
-        </div>
-        ${terminal('~/demo $ codex', 'bundledCaption')}
-      </article>`}
-      <article class="feature reverse">
-        <div class="feature-copy">
-          <h3>${t('accountsTitle')}</h3><p>${t(domestic ? 'accountsBodyDomestic' : 'accountsBody')}</p>
-        </div>
-        ${shot(assets.accounts, domestic ? 'accountsAltDomestic' : 'accountsAlt', domestic ? 'accountsCaptionDomestic' : 'accountsCaption')}
-      </article>
-      <article class="feature foldable">
-        <div class="feature-copy"><h3>${t('foldTitle')}</h3><p>${t('foldBody')}</p></div>
-        ${shot(assets.fold, 'foldAlt', 'foldCaption', { wide: true })}
-      </article>
+      <nav class="platform-nav" aria-label="${t('explorePlatforms')}"><a href="#desktop-features">${t('desktopFeatures')}</a><a href="#phone-features">${t('phoneFeatures')}</a></nav>
+      <section aria-labelledby="desktop-features">
+        <header class="platform-heading"><h3 id="desktop-features">${t('desktopFeatures')}</h3><p>${t('desktopPlatforms')}</p></header>
+        <article class="feature desktop-lead">
+          <div class="feature-copy"><h4>${t('desktopAiTitle')}</h4><p>${t(domestic ? 'desktopAiDomestic' : 'desktopAiBody')}</p></div>
+          ${shot(assets.desktopAi, 'desktopAiAlt', 'desktopAiCaption', { wide: true })}
+        </article>
+        <article class="feature reverse">
+          <div class="feature-copy"><h4>${t('sshTitle')}</h4><p>${t('sshBody')}</p></div>
+          ${terminal('demo $ wsh ssh demo-host', 'sshCaption')}
+        </article>
+        <article class="feature">
+          <div class="feature-copy"><h4>${t('filesTitle')}</h4><p>${t('filesBody')}</p><h4>${t('layoutTitle')}</h4><p>${t('layoutBody')}</p></div>
+          ${shot(assets.desktop, 'desktopAlt', 'desktopCaption', { wide: true })}
+        </article>
+      </section>
+      <section aria-labelledby="phone-features">
+        <header class="platform-heading"><h3 id="phone-features">${t('phoneFeatures')}</h3><p>${t('phonePlatform')}</p></header>
+        <article class="feature reverse">
+          <div class="feature-copy">
+            <h4>${t('terminalTitle')}</h4>
+            <p>${t('terminalBody')}</p>
+            <ul>
+              <li>${icon('terminal')}<span>${t('terminalLocal')}</span></li>
+              <li>${icon('folder')}<span>${t('terminalFiles')}</span></li>
+              <li>${icon('keys')}<span>${t('terminalKeys')}</span></li>
+            </ul>
+          </div>
+          ${terminal('~/demo $ ls\nREADME.md  notes.txt  src\n\n~/demo $ cat notes.txt\nWaddle workspace\n\n~/demo $', 'terminalCaption')}
+        </article>
+        <article class="feature">
+          <div class="feature-copy">
+            <h4>${t('aiTitle')}</h4><p>${t('aiBody')}</p>
+            <p>${t('aiProviders')}${domestic ? '' : `<br>${t('aiProvidersInternational')}`}</p>
+          </div>
+          ${shot(assets.ai, domestic ? 'aiAltDomestic' : 'aiAlt', 'aiCaption')}
+        </article>
+        ${domestic ? '' : `<article class="feature reverse">
+          <div class="feature-copy">
+            <h4>${t('bundledTitle')}</h4><p>${t('bundledBody').replace(/\bcodex\b/g, '<code>codex</code>')}</p><p>${t('bundledFuture')}</p>
+          </div>
+          ${terminal('~/demo $ codex', 'bundledCaption')}
+        </article>`}
+        <article class="feature reverse">
+          <div class="feature-copy">
+            <h4>${t('accountsTitle')}</h4><p>${t(domestic ? 'accountsBodyDomestic' : 'accountsBody')}</p>
+          </div>
+          ${shot(assets.accounts, domestic ? 'accountsAltDomestic' : 'accountsAlt', domestic ? 'accountsCaptionDomestic' : 'accountsCaption')}
+        </article>
+        <article class="feature foldable">
+          <div class="feature-copy"><h4>${t('foldTitle')}</h4><p>${t('foldBody')}</p></div>
+          ${shot(assets.fold, 'foldAlt', 'foldCaption', { wide: true })}
+        </article>
+      </section>
     </section>
     <section id="downloads" class="downloads" aria-labelledby="downloads-title">
       <h2 id="downloads-title">${t('downloads')}</h2><p>${t('downloadNotice')}</p>
