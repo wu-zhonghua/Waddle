@@ -46,7 +46,7 @@ Covering an existing 0.4.0/0.5.0 installation preserves `files/home`, imports, s
 
 - The drawer lists files and up to eight independent terminal sessions. Sessions live in a foreground service and survive Activity recreation and brief backgrounding; process death/reboot ends running shells.
 - The prompt and title show the current directory. Long-press copies selected text; two fingers resize text. Ctrl affects the next key, `^C` interrupts, Paste previews clipboard contents, Keys opens the keyboard. Unsolicited OSC 52 clipboard writes are disabled.
-- Files offers **手机存储**, **Waddle 文件**, and **其他来源**. Browsing does not change a shell's cwd. **打开终端** and a folder's **在此打开…** create a new shell in that folder; **更多 → 切换当前终端到此目录** explicitly changes the existing idle shell.
+- Files offers **手机存储**, **Waddle 文件**, and **其他来源**. Browsing does not change a shell's cwd. **打开终端** and a folder's **目录操作** create a new shell in that folder; **文件选项（⋮）→ 切换当前终端到此目录** explicitly changes the existing idle shell.
 - Android 11+ phone storage uses user-granted all-files access to edit original files. Other apps' private data and Android/data remain restricted. Document-only/cloud sources require an explicit **复制到 Waddle…** operation, then open the local copy; changes do not sync back. Android 8–10 retain private files and document-provider access.
 - Image pinch/pan, PDF pages, audio/video playback, Markdown/HTML/text preview, opening in another app, sharing, and saving to phone remain available. The document reader disables JavaScript and external resources. `waddle-open 'path/to/file.png'` opens a file from the current shell, including child Bash processes.
 - Imports are bounded to 512 MiB, 5,000 entries and 32 levels with atomic publication and cancellation. Text previews are bounded to 64 KiB; large images/PDF pages are downsampled. Shares grant read access to a snapshot of the selected file only.
@@ -55,7 +55,7 @@ Bash, Git, `rg`, `curl`, Android system commands and `bash script.sh` work local
 
 ## AI model settings
 
-Open **☰ → 设置与运行环境 → 账号 → AI 模型 · 配置 Key 和模型**. Select **DeepSeek**, **通义千问**, **Kimi**, **智谱**, or **自定义（OpenAI 兼容）**. Select a suggested model or type an exact model ID, enter a Key belonging to that service and endpoint, then **测试连接** and **保存**. Tests use the current form; a successful test does not automatically save changes. Model availability depends on the service and account.
+Open **导航 → 设置与运行环境 → 账号 → AI 模型 · 配置 Key 和模型**. Select **DeepSeek**, **通义千问**, **Kimi**, **智谱**, or **自定义（OpenAI 兼容）**. Select a suggested model or type an exact model ID, enter a Key belonging to that service and endpoint, then **测试连接** and **保存**. Tests use the current form; a successful test does not automatically save changes. Model availability depends on the service and account.
 
 Endpoints accept an HTTPS Base URL or the complete `/chat/completions` URL. Custom gateways must support non-streaming Chat Completions, system/user messages and text responses. Redirects, URLs containing user info/query credentials, and cleartext HTTP are rejected. Preset endpoints can also be edited for a service's regional/workspace address. Changing an endpoint requires entering the Key again so a saved Key is never silently sent to a different server.
 
@@ -65,7 +65,7 @@ Keys are encrypted using a non-exportable Android Keystore AES-GCM key and priva
 
 ## Generate commands and explain failures (stage 1)
 
-1. At a Bash prompt, tap **✦ 问 AI，写命令…**. In the international build choose **内置模型** or **Codex**; both command generation and error diagnosis use this choice. **账号与模型设置** opens account setup. In the domestic build, unconfigured AI offers **去设置** directly.
+1. At a Bash prompt, tap **问 AI，写命令**. In the international build choose **内置模型** or **Codex**; both command generation and error diagnosis use this choice. **账号与模型设置** opens account setup. In the domestic build, unconfigured AI offers **去设置** directly.
 2. Describe the task. **查看本次上下文** shows the recent transcript sent with the current cwd and last exit code (up to 12,000 characters). This data goes directly to the selected service. Check it before sending if the terminal contains sensitive output.
 3. Tap **生成命令**, inspect the explanation and edit the command. **运行命令 ↵**, hardware Enter or the keyboard's Go action confirms execution. Shift+Enter inserts a newline. Long/multiline Bash is supported up to 64 KiB.
 4. After a command returns nonzero, **退出码 … · 让 AI 看看** appears. Open it and choose **分析报错** to obtain a cause and fix from the same context. A repair command is an editable draft and requires the same confirmation; an explanation may have no command.
@@ -102,3 +102,9 @@ Actual results and remaining acceptance steps are recorded in [stage 1 implement
 ## Source and license
 
 Waddle Android is GPL-3.0-only; the desktop keeps its original license. Preserve [terminal provenance](third-party/termux/PROVENANCE.md), [runtime provenance](runtime/PROVENANCE.md), upstream source records, locks and notices. A public binary release requires the corresponding sources mandated by bundled licenses. This work does not publish a release.
+
+## Android design and responsive layout
+
+All app surfaces share `WaddleTheme` and the [Android design system](../../docs/dev/android-design-system.md). Files starts as a list with a grid toggle; accounts, provider configuration and help are full-page surfaces. Icon actions retain Chinese accessibility labels. Home paths display as `~`, with full paths available from the file menu. At 840dp width the same workspace gets permanent navigation; terminal processes, chat messages and saved drafts stay alive across layout changes.
+
+Visual acceptance captures are opt-in on a disposable emulator: build/install both debug APKs, then run `adb -s EMULATOR shell am instrument -w -e class dev.waddle.android.UiScreenshotTest -e waddleScreenshots after -e waddleSize phone dev.waddle.android.test/dev.waddle.android.WaddleTestRunner`. PNGs are written to the app's external `files/screenshots` directory. The harness seeds a demo folder and illustrative chat messages, resets demo sessions and needs no login. Do not run this visual harness on a data-bearing installation. `ProductUiIntegrationTest` covers list/grid state, provider access, and live fold-size changes; it restores the emulator's original size and density.

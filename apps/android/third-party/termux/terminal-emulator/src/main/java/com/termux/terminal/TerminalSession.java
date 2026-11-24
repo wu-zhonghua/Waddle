@@ -318,16 +318,10 @@ public final class TerminalSession extends TerminalOutput {
             return null;
         }
         try {
-            final String cwdSymlink = String.format("/proc/%s/cwd/", mShellPid);
-            String outputPath = new File(cwdSymlink).getCanonicalPath();
-            String outputPathWithTrailingSlash = outputPath;
-            if (!outputPath.endsWith("/")) {
-                outputPathWithTrailingSlash += '/';
-            }
-            if (!cwdSymlink.equals(outputPathWithTrailingSlash)) {
-                return outputPath;
-            }
-        } catch (IOException | SecurityException e) {
+            // /proc/<pid>/cwd is mutable. File.getCanonicalPath may return a cached
+            // target after cd; read the kernel symlink on every request instead.
+            return android.system.Os.readlink("/proc/" + mShellPid + "/cwd");
+        } catch (android.system.ErrnoException | SecurityException e) {
             Logger.logStackTraceWithMessage(mClient, LOG_TAG, "Error getting current directory", e);
         }
         return null;

@@ -203,7 +203,7 @@ class CommandSuggestionIntegrationTest {
                 if (diagnose) {
                     shell(session, "ls missing-waddle-fixture")
                     tapText("退出码 ${main { session.lastExitCode }} · 让 AI 看看")
-                } else tapText("✦ 问 AI，写命令…")
+                } else tapText("问 AI，写命令")
                 val question = awaitFields(1).single()
                 assertTrue(question.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, Bundle().apply {
                     putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "生成 pwd 命令，显示当前路径。")

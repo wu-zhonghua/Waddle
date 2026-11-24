@@ -48,6 +48,7 @@ class CodexController(
     private var resumeAfterStop = false
     private var resumeAsStopped = false
     private val handler = Handler(Looper.getMainLooper())
+    var draft by mutableStateOf("")
     val messages = mutableStateListOf<CodexMessage>()
     val approvals = mutableStateListOf<CodexApproval>()
     val history = mutableStateListOf<CodexHistoryEntry>()
@@ -349,12 +350,28 @@ class CodexController(
             "agentMessage" -> { role = "Codex"; text = item.optString("text") }
             "userMessage" -> { role = "你"; val content = item.optJSONArray("content") ?: JSONArray()
                 text = (0 until content.length()).joinToString("\n") { content.optJSONObject(it)?.optString("text", "") ?: "" } }
-            "commandExecution" -> { role = "命令"; text = item.optString("command") + "\n" + item.optString("status") + "\n" + item.optString("aggregatedOutput", "") }
+            "commandExecution" -> {
+                role = "命令"
+                val state = when(item.optString("status")) { "completed" -> "已完成"; "failed" -> "执行失败"; "declined" -> "已拒绝"; else -> "执行中" }
+                text = item.optString("command") + "\n\n" + state + "\n" + item.optString("aggregatedOutput", "")
+            }
             "imageView" -> { role = "图片"; text = item.optString("path") }
             "imageGeneration" -> { role = "生成图片"; text = "图片生成 · " + item.optString("status") }
             "functionCallOutput" -> { role = "工具输出"; text = item.optString("name", "工具") + "\n" + outputText(item.opt("output")) }
             "mcpToolCall" -> { role = "工具输出"; text = item.optString("tool") + " · " + item.optString("status") + "\n" + outputText(item.optJSONObject("result")?.opt("content")) }
-            "fileChange" -> { role = "文件修改"; text = item.optString("status") + "\n" + (item.optJSONArray("changes")?.toString() ?: "") }
+            "fileChange" -> {
+                role = "文件修改"
+                val changes = item.optJSONArray("changes") ?: JSONArray()
+                val state = when(item.optString("status")) { "completed" -> "修改完成"; "failed", "declined" -> "修改未完成"; else -> "文件改动" }
+                text = state + "\n" + (0 until changes.length()).joinToString("\n\n") { index ->
+                    val change = changes.optJSONObject(index)
+                    val kind = change?.optJSONObject("kind")
+                    val operation = when(kind?.optString("type")) { "add" -> "新增"; "delete" -> "删除"; "update" -> "修改"; else -> "文件" }
+                    val moved = kind?.optString("move_path", kind.optString("movePath")).orEmpty().takeUnless { it == "null" }.orEmpty()
+                    val heading = operation + " · " + change?.optString("path").orEmpty() + if(moved.isNotBlank()) " → $moved" else ""
+                    listOf(heading, change?.optString("diff").orEmpty()).filter { it.isNotBlank() }.joinToString("\n")
+                }
+            }
             else -> return
         }
         if (text.isBlank()) return

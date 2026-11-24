@@ -1,6 +1,7 @@
 package dev.waddle.android.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -12,18 +13,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.waddle.android.R
-import java.io.File
 import dev.waddle.android.terminal.ShellSession
 import dev.waddle.android.terminal.TerminalWorkspace
 import kotlinx.coroutines.launch
@@ -33,6 +28,7 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
     var page by rememberSaveable { mutableStateOf("terminal") }
     var lastWorkPage by rememberSaveable { mutableStateOf("terminal") }
     var settings by rememberSaveable { mutableStateOf(false) }
+    var accounts by rememberSaveable { mutableStateOf(false) }
     var aiSettings by remember { mutableStateOf(false) }
     var rememberInterface by remember { mutableStateOf(false) }
     var chosenInterface by remember { mutableStateOf("chat") }
@@ -42,12 +38,7 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
     val drawerVisible = drawer.isOpen || drawer.targetValue == DrawerValue.Open
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(drawerVisible) {
-        if (drawerVisible) {
-            keyboard?.hide()
-            focus.clearFocus(force = true)
-        }
-    }
+    LaunchedEffect(drawerVisible) { if (drawerVisible) { keyboard?.hide(); focus.clearFocus(force = true) } }
     val scope = rememberCoroutineScope()
     val pages = rememberSaveableStateHolder()
     fun navigate(destination: String) {
@@ -58,126 +49,93 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
     LaunchedEffect(workspace?.agents?.openRequest) {
         workspace?.agents?.openRequest?.let { workspace.agents.selected = it; navigate("codex"); workspace.agents.openRequest = null }
     }
-    MaterialTheme(colorScheme = darkColorScheme(
-        primary = Color(0xFFA7E8BD), onPrimary = Color(0xFF101512),
-        background = Color(0xFF101512), surface = Color(0xFF19211C),
-        secondaryContainer = Color(0xFF253B2D), onSecondaryContainer = Color(0xFFA7E8BD),
-        onBackground = Color(0xFFE4ECE6), onSurface = Color(0xFFE4ECE6),
-    )) {
+    WaddleTheme {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            ModalNavigationDrawer(
-                drawerState = drawer,
-                gesturesEnabled = drawerVisible,
-                drawerContent = {
-                    ModalDrawerSheet(Modifier.widthIn(max = 320.dp).fillMaxHeight(), drawerContainerColor = MaterialTheme.colorScheme.surface) {
-                        Text("Waddle", Modifier.padding(20.dp), style = MaterialTheme.typography.titleLarge)
-                        NavigationDrawerItem(
-                            label = { Text("文件") }, selected = page == "files",
-                            icon = { Icon(painterResource(R.drawable.ic_folder), null) },
-                            onClick = { navigate("files") }, modifier = Modifier.padding(horizontal = 12.dp),
-                        )
-                        HorizontalDivider(Modifier.padding(vertical = 12.dp))
-                        Text("会话", Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.labelLarge)
-                        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                            workspace?.sessions?.forEach { session ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    NavigationDrawerItem(
-                                        label = { Column {
-                                            Text(session.label)
-                                            Text(if (session.running) "终端 · 运行中" else "终端 · 已退出", fontSize = 11.sp)
-                                            Text(session.cwd ?: "正在读取路径…", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 11.sp)
-                                        } },
-                                        selected = page == "terminal" && workspace.selected === session,
-                                        onClick = { workspace.select(session); navigate("terminal") },
-                                        modifier = Modifier.weight(1f).padding(start = 12.dp),
-                                    )
-                                    TextButton(onClick = { closeTarget = session }, modifier = Modifier.size(48.dp)
-                                        .semantics { contentDescription = "关闭 ${session.label}" }, contentPadding = PaddingValues(0.dp)) { Text("×", fontSize = 22.sp) }
-                                }
-                            }
-                            workspace?.agents?.sessions?.forEach { session ->
-                                NavigationDrawerItem(label = { Text("${session.label} · ${session.client.displayDirectory}") },
-                                    selected = page == "codex" && workspace.agents.selected === session,
-                                    onClick = { workspace.agents.selected = session; navigate("codex") })
-                            }
-                            TextButton(onClick = { onNewSession(); navigate("terminal") },
-                                enabled = workspace != null && workspace.sessions.size < 8, modifier = Modifier.padding(horizontal = 12.dp)) { Text("＋ 新建终端") }
-
-                        }
-                        HorizontalDivider()
-                        TextButton(onClick = { scope.launch { drawer.close() }; settings = true }, enabled = workspace != null,
-                            modifier = Modifier.fillMaxWidth()) { Text("设置与运行环境") }
-                        TextButton(onClick = { scope.launch { drawer.close() }; help = true }, modifier = Modifier.fillMaxWidth()) { Text("帮助") }
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val expanded = maxWidth >= 840.dp
+                LaunchedEffect(expanded) { if (expanded) drawer.snapTo(DrawerValue.Closed) }
+                val navigation: @Composable ColumnScope.() -> Unit = {
+                    Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment=Alignment.CenterVertically) {
+                        Text("Waddle", style=MaterialTheme.typography.titleLarge)
                     }
-                },
-            ) {
-                Box(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().statusBarsPadding()) {
-                        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { scope.launch { drawer.open() } }) {
-                                Icon(painterResource(R.drawable.ic_menu), "打开导航抽屉")
-                            }
-                            // Files is the first fixed destination, available even while a session is active.
-                            IconButton(onClick = { navigate("files") }) {
-                                Icon(painterResource(R.drawable.ic_folder), "打开文件", tint = MaterialTheme.colorScheme.primary)
-                            }
-                            Column(Modifier.weight(1f)) {
-                                Text(when (page) { "files" -> "文件"; "codex" -> workspace?.agents?.selected?.label ?: "Codex"; else -> workspace?.selected?.let { session -> session.label + (session.cwd?.let { " · " + java.io.File(it).name.ifEmpty { "/" } } ?: "") } ?: "终端" },
-                                    style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(when (page) {
-                                    "files" -> "选择位置，打开文件夹"
-                                    "codex" -> workspace?.agents?.selected?.client?.workingDirectory?.path.orEmpty()
-                                    else -> workspace?.selected?.cwd ?: "正在连接工作区…"
-                                }, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                    NavigationRow("folder", "文件", "", page == "files", { navigate("files") })
+                    HorizontalDivider(Modifier.padding(vertical=12.dp, horizontal=16.dp))
+                    Text("会话", Modifier.padding(horizontal=20.dp, vertical=8.dp), style=MaterialTheme.typography.labelSmall, color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                        workspace?.sessions?.forEach { session ->
+                            NavigationRow("terminal", session.label,
+                                shortPath(session.cwd, workspace.runtime.home) + " · " + if (session.running) "运行中" else "已退出",
+                                page == "terminal" && workspace.selected === session,
+                                { workspace.select(session); navigate("terminal") }, { closeTarget = session })
                         }
-                        HorizontalDivider()
-                        Box(Modifier.weight(1f)) {
-                            // Preserve file navigation while shells stay in the service.
-                            pages.SaveableStateProvider(if (page == "codex") "codex-${workspace?.agents?.selected?.id}" else page) {
-                                when (page) {
-                                    "files" -> if (workspace != null) FileBrowserScreen(workspace,
-                                        onTerminal = { navigate("terminal") }, navigationEnabled = !drawerVisible)
-                                        else Text("正在连接工作区…", Modifier.padding(24.dp))
-                                    "codex" -> workspace?.agents?.selected?.let { session ->
-                                        CodexScreen(session.client, onTerminal = {
-                                            if (session.origin in workspace.sessions) workspace.select(session.origin)
-                                            navigate("terminal")
-                                        }, onAccounts = { settings = true }, onClose = { workspace.agents.close(session); navigate("terminal") },
-                                            onOpenFile = { workspace.files.openPath(it) },
-                                            onHistory = { workspace.agents.restoreHistory(session, it) })
-                                    } ?: run {
-                                        Text("正在连接对话…", Modifier.padding(24.dp))
-                                        LaunchedEffect(workspace) { if (workspace != null) navigate("terminal") }
-                                    }
-                                    else -> TerminalScreen(workspace, onNewSession, onAiSettings = { if (workspace?.agents != null) settings = true else aiSettings = true },
-                                        onConversation = { workspace?.agents?.selected = it; navigate("codex") })
-                                }
-                            }
+                        workspace?.agents?.sessions?.forEach { session ->
+                            NavigationRow("chat", session.label,
+                                session.client.displayDirectory + " · " + when { session.client.approvals.isNotEmpty() -> "等待确认"; session.client.busy -> "进行中"; else -> "对话" },
+                                page == "codex" && workspace.agents.selected === session,
+                                { workspace.agents.selected = session; navigate("codex") })
+                        }
+                        QuietButton(onClick = { onNewSession(); navigate("terminal") }, enabled=workspace != null && workspace.sessions.size < 8,
+                            modifier=Modifier.padding(horizontal=12.dp).fillMaxWidth()) {
+                            WaddleIcon("plus"); Spacer(Modifier.width(12.dp)); Text("新建终端")
                         }
                     }
-                    if (!drawerVisible) Box(Modifier.align(Alignment.CenterStart).fillMaxHeight().width(16.dp)
-                        .pointerInput(drawer) {
-                            var distance = 0f
-                            detectHorizontalDragGestures(
-                                onDragStart = { distance = 0f },
-                                onHorizontalDrag = { change, amount ->
-                                    change.consume()
-                                    distance += amount
-                                    if (distance > 48.dp.toPx()) {
-                                        distance = Float.NEGATIVE_INFINITY
-                                        scope.launch { drawer.open() }
-                                    }
-                                },
-                            )
-                        })
+                    HorizontalDivider(Modifier.padding(horizontal=16.dp))
+                    NavigationRow("settings", "设置与运行环境", "", false, { scope.launch { drawer.close() }; settings = true })
+                    NavigationRow("help", "帮助", "", false, { scope.launch { drawer.close() }; help = true })
                 }
+                val body: @Composable () -> Unit = {
+                    Box(Modifier.fillMaxSize()) {
+                        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                            Row(Modifier.fillMaxWidth().heightIn(min=56.dp).padding(end=8.dp), verticalAlignment=Alignment.CenterVertically) {
+                                if (!expanded) ToolIcon("menu", "打开导航抽屉") { scope.launch { drawer.open() } }
+                                ToolIcon("folder", "打开文件") { navigate("files") }
+                                Column(Modifier.weight(1f)) {
+                                    Text(when(page) { "files" -> "文件"; "codex" -> workspace?.agents?.selected?.label ?: "Codex"; else -> workspace?.selected?.label ?: "终端" },
+                                        style=MaterialTheme.typography.titleMedium, maxLines=1, overflow=TextOverflow.Ellipsis)
+                                    val path = when(page) { "files" -> ""; "codex" -> workspace?.agents?.selected?.client?.displayDirectory.orEmpty(); else -> workspace?.let { shortPath(it.selected?.cwd, it.runtime.home) }.orEmpty() }
+                                    if (path.isNotEmpty()) Text(path, style=MaterialTheme.typography.bodySmall, color=MaterialTheme.colorScheme.onSurfaceVariant, maxLines=1, overflow=TextOverflow.Ellipsis)
+                                }
+                                if (page == "terminal") ToolIcon("plus", "新建终端", workspace != null && workspace.sessions.size < 8) { onNewSession(); navigate("terminal") }
+                            }
+                            HorizontalDivider()
+                            Box(Modifier.weight(1f)) {
+                                pages.SaveableStateProvider(if (page == "codex") "codex-${workspace?.agents?.selected?.id}" else page) {
+                                    when(page) {
+                                        "files" -> if (workspace != null) FileBrowserScreen(workspace, onTerminal={ navigate("terminal") }, navigationEnabled=!drawerVisible || expanded)
+                                        "codex" -> workspace?.agents?.selected?.let { session ->
+                                            CodexScreen(session.client, onTerminal={
+                                                if(session.origin in workspace.sessions) workspace.select(session.origin)
+                                                navigate("terminal")
+                                            }, onAccounts={ accounts=true }, onClose={ workspace.agents.close(session); navigate("terminal") },
+                                                onOpenFile={ workspace.files.openPath(it) }, onHistory={ workspace.agents.restoreHistory(session,it) })
+                                        } ?: run { LaunchedEffect(workspace) { if(workspace != null) navigate("terminal") } }
+                                        else -> TerminalScreen(workspace,onNewSession,onAiSettings={ if(workspace?.agents != null) accounts=true else aiSettings=true },
+                                            onConversation={ workspace?.agents?.selected=it; navigate("codex") })
+                                    }
+                                }
+                            }
+                        }
+                        if (!expanded && !drawerVisible) Box(Modifier.align(Alignment.CenterStart).fillMaxHeight().width(16.dp).pointerInput(drawer) {
+                            var distance=0f
+                            detectHorizontalDragGestures(onDragStart={ distance=0f }, onHorizontalDrag={ change, amount ->
+                                change.consume(); distance+=amount
+                                if(distance > 48.dp.toPx()) { distance=Float.NEGATIVE_INFINITY; scope.launch { drawer.open() } }
+                            })
+                        })
+                    }
+                }
+                if (expanded) Row(Modifier.fillMaxSize()) {
+                    Surface(Modifier.width(256.dp).fillMaxHeight(), color=MaterialTheme.colorScheme.surface) {
+                        Column(Modifier.safeDrawingPadding(), content=navigation)
+                    }
+                    VerticalDivider()
+                    Box(Modifier.weight(1f)) { body() }
+                } else ModalNavigationDrawer(drawerState=drawer, gesturesEnabled=drawerVisible, drawerContent={
+                    ModalDrawerSheet(Modifier.width(304.dp).fillMaxHeight(), drawerContainerColor=MaterialTheme.colorScheme.surface, content=navigation)
+                }, content=body)
+                BackHandler(enabled=!drawerVisible && page=="files" && workspace?.files?.selected==null && workspace?.files?.showingLocations==true) { navigate(lastWorkPage) }
+                BackHandler(enabled=drawerVisible && !expanded) { scope.launch { drawer.close() } }
             }
-            // Register after child handlers so Back closes the drawer before moving the file browser up.
-            BackHandler(enabled = !drawerVisible && page == "files" && workspace?.files?.selected == null && workspace?.files?.showingLocations == true) {
-                navigate(lastWorkPage)
-            }
-            BackHandler(enabled = drawerVisible) { scope.launch { drawer.close() } }
         }
         workspace?.files?.selected?.let { entry ->
             key(entry.uri) {
@@ -187,34 +145,50 @@ fun WaddleScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit) {
         closeTarget?.let { target ->
             AlertDialog(onDismissRequest = { closeTarget = null }, title = { Text("关闭 ${target.label}？") },
                 text = { Text(if (target.running) "该终端仍在运行。关闭会停止其中的命令并移除输出。" else "移除这个已退出的终端及输出。") },
-                confirmButton = { TextButton(onClick = { workspace?.close(target); closeTarget = null }) { Text("关闭终端") } },
-                dismissButton = { TextButton(onClick = { closeTarget = null }) { Text("保留") } })
+                confirmButton = { PrimaryButton(onClick = { workspace?.close(target); closeTarget = null }) { Text("关闭终端") } },
+                dismissButton = { QuietButton(onClick = { closeTarget = null }) { Text("保留") } })
         }
-        if (settings && workspace != null) AccountsDialog(workspace) { settings = false }
+        if (settings && workspace != null) SettingsPage(workspace, onAccounts={ accounts=true }, onModels={ aiSettings=true }) { settings=false }
+        if (accounts && workspace != null) AccountsDialog(workspace) { accounts=false }
         if (aiSettings && workspace != null) AiSettingsDialog(workspace.suggestions.settings) { aiSettings = false }
         workspace?.agents?.launches?.firstOrNull()?.let { launch ->
             LaunchedEffect(launch) { rememberInterface = false; chosenInterface = "chat" }
             AlertDialog(onDismissRequest = { workspace.agents.answer(launch, "cancel") }, title = { Text("用哪种界面打开 Codex？") }, text = {
                 Column {
-                    Text(launch.cwd.path)
+                    Text(shortPath(launch.cwd.path, workspace.runtime.home))
                     listOf("chat" to "对话界面（推荐）", "terminal" to "终端界面").forEach { (mode, label) ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(chosenInterface == mode, { chosenInterface = mode })
-                            TextButton(onClick = { chosenInterface = mode }) { Text(label) }
+                            QuietButton(onClick = { chosenInterface = mode }) { Text(label) }
                         }
                     }
                     Row(Modifier.toggleable(rememberInterface, onValueChange = { rememberInterface = it }), verticalAlignment = Alignment.CenterVertically) { Checkbox(rememberInterface, null); Text("记住我的选择") }
                 }
-            }, confirmButton = { TextButton(onClick = { workspace.agents.answer(launch, chosenInterface, rememberInterface) }) { Text("打开") } },
-                dismissButton = { TextButton(onClick = { workspace.agents.answer(launch, "cancel") }) { Text("取消") } })
+            }, confirmButton = { PrimaryButton(onClick = { workspace.agents.answer(launch, chosenInterface, rememberInterface) }) { Text("打开") } },
+                dismissButton = { QuietButton(onClick = { workspace.agents.answer(launch, "cancel") }) { Text("取消") } })
         }
         workspace?.agents?.error?.let { message ->
             AlertDialog(onDismissRequest = { workspace.agents.error = null }, title = { Text("无法打开对话") }, text = { Text(message) },
-                confirmButton = { TextButton(onClick = { workspace.agents.error = null }) { Text("知道了") } })
+                confirmButton = { PrimaryButton(onClick = { workspace.agents.error = null }) { Text("知道了") } })
         }
         BackHandler(enabled = page == "codex" && !drawerVisible && workspace?.files?.selected == null) { navigate("terminal") }
-        if (help) AlertDialog(onDismissRequest = { help = false }, title = { Text("使用 Waddle") }, text = {
-            Text("左侧文件夹按钮打开文件；菜单切换终端。在文件夹底部点“打开终端”，或用卡片“在此打开…”新建终端，原会话保留。\n\n可运行 pwd、ls、bash、git、rg、curl。用 waddle-open \"文件路径\" 打开图片或文件，返回保留原终端。长按复制，双指缩放；Ctrl 作用于下一个按键，^C 中断命令，Paste 预览粘贴，Keys 打开键盘。\n\n在设置的“账号”中配置服务商和 Key。底部“问 AI，写命令”使用当前路径和最近输入输出；命令可编辑，确认后只在原会话执行一次。命令出错后点“让 AI 看看”解释报错。\n\n不配置 AI 也能使用终端。系统结束应用或手机重启后 Shell 不会恢复，本机文件仍保留。\n\n终端组件：Termux（GPLv3；上游 Apache-2.0 部分）。")
-        }, confirmButton = { TextButton(onClick = { help = false }) { Text("知道了") } })
+        if (help) HelpPage { help=false }
+    }
+}
+
+@Composable
+private fun NavigationRow(icon: String, title: String, detail: String, selected: Boolean, onClick: () -> Unit, onClose: (() -> Unit)? = null) {
+    Surface(color=if(selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        shape=MaterialTheme.shapes.small, modifier=Modifier.padding(horizontal=8.dp, vertical=2.dp)) {
+        Row(Modifier.fillMaxWidth().heightIn(min=52.dp), verticalAlignment=Alignment.CenterVertically) {
+            Row(Modifier.weight(1f).clickable(onClick=onClick).padding(horizontal=12.dp, vertical=10.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                WaddleIcon(icon, tint=if(selected) AccentColor else MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(Modifier.weight(1f)) {
+                    Text(title, color=if(selected) AccentColor else MaterialTheme.colorScheme.onSurface, maxLines=1, overflow=TextOverflow.Ellipsis)
+                    if(detail.isNotBlank()) Text(detail, style=MaterialTheme.typography.bodySmall, color=MaterialTheme.colorScheme.onSurfaceVariant, maxLines=1, overflow=TextOverflow.Ellipsis)
+                }
+            }
+            if(onClose != null) ToolIcon("close", "关闭 $title", onClick=onClose)
+        }
     }
 }

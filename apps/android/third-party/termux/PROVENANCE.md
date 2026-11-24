@@ -29,3 +29,6 @@ are recorded in [runtime provenance](../../runtime/PROVENANCE.md). This does not
 add a dependency on the Termux application or change the vendored terminal source.
 
 Keep this document updated when modifying upstream source.
+
+- Read the live `/proc/<pid>/cwd` symlink with `Os.readlink`; Java canonical-path
+  caching must not report an old shell directory after `cd`.

@@ -25,10 +25,10 @@ import com.termux.view.TerminalView
 import dev.waddle.android.terminal.TerminalContext
 import dev.waddle.android.terminal.TerminalWorkspace
 
-private val Canvas = Color(0xFF101512)
-private val Panel = Color(0xFF19211C)
-private val Accent = Color(0xFFA7E8BD)
-private val Muted = Color(0xFF96A59B)
+private val Canvas = WorkspaceColor
+private val Panel = SurfaceColor
+private val Accent = AccentColor
+private val Muted = MutedColor
 
 @Composable
 fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAiSettings: () -> Unit, onConversation: (dev.waddle.android.codex.CodexSession) -> Unit = {}) {
@@ -55,10 +55,7 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
         onDispose { if (workspace?.requestPaste === callback) workspace.requestPaste = null }
     }
 
-    MaterialTheme(colorScheme = darkColorScheme(
-        primary = Accent, onPrimary = Canvas, background = Canvas, surface = Panel,
-        onBackground = Color(0xFFE4ECE6), onSurface = Color(0xFFE4ECE6),
-    )) {
+    WaddleTheme {
         Surface(Modifier.fillMaxSize(), color = Canvas) {
             Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
                 if (selected != null) {
@@ -70,7 +67,7 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
                                 setTerminalViewClient(TerminalInput(this, input))
                                 setTextSize((input.fontSize * resources.displayMetrics.scaledDensity).toInt())
                                 setTypeface(Typeface.MONOSPACE)
-                                setBackgroundColor(android.graphics.Color.rgb(16, 21, 18))
+                                setBackgroundColor(android.graphics.Color.rgb(16, 18, 22))
                                 isFocusableInTouchMode = true
                                 contentDescription = "Terminal input and output"
                                 terminalView = this
@@ -95,22 +92,18 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
                         },
                         onRelease = { terminalView = null },
                     )
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(selected.status, color = if (selected.running) Accent else Muted, fontSize = 9.sp,
-                            letterSpacing = 1.sp, modifier = Modifier.weight(1f))
-                        Text("Bash · Waddle", color = Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                    }
+                    if (!selected.running) Text("终端已退出 · ${selected.terminal.exitStatus}", color=Muted, fontSize=12.sp, modifier=Modifier.padding(12.dp))
                 } else {
                     Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                            Text(">_", color = Accent, fontSize = 42.sp, fontFamily = FontFamily.Monospace)
-                            Text(if (workspace == null) "Connecting to your shell…" else "Room for a fresh start.", color = Muted)
-                            if (workspace != null) Button(onClick = onNewSession) { Text("Open a terminal") }
+                            WaddleIcon("terminal", modifier=Modifier.size(48.dp))
+                            Text(if (workspace == null) "正在连接终端…" else "没有打开的终端", color = Muted)
+                            if (workspace != null) PrimaryButton(onClick = onNewSession) { Text("新建终端") }
                         }
                     }
                 }
                 workspace?.agents?.sessions?.filter { it.origin === selected }?.forEach { conversation ->
-                    TextButton(onClick = { onConversation(conversation) }, modifier = Modifier.fillMaxWidth()) { Text("${conversation.label} · 对话进行中 · 返回对话") }
+                    QuietButton(onClick = { onConversation(conversation) }, modifier = Modifier.fillMaxWidth()) { WaddleIcon("chat"); Spacer(Modifier.width(8.dp)); Text("${conversation.label} · 对话进行中 · 返回对话", fontSize=12.sp) }
                 }
                 (aiError ?: selected?.commandError)?.let { message ->
                     Text(message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp))
@@ -121,13 +114,13 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
                         onFailure = { aiError = it.message })
                 }
                 if (selected?.promptReady == true && selected.lastExitCode?.let { it != 0 } == true) {
-                    TextButton(onClick = { openAi(true) }, modifier = Modifier.fillMaxWidth()) {
+                    QuietButton(onClick = { openAi(true) }, modifier = Modifier.fillMaxWidth()) {
                         Text("退出码 ${selected.lastExitCode} · 让 AI 看看")
                     }
                 }
-                OutlinedButton(onClick = { openAi(false) }, enabled = selected?.running == true,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) { Text("✦ 问 AI，写命令…") }
-                HorizontalDivider(color = Color(0xFF2B352E))
+                QuietButton(onClick = { openAi(false) }, enabled = selected?.running == true,
+                    modifier = Modifier.padding(horizontal = 8.dp)) { WaddleIcon("chat"); Spacer(Modifier.width(8.dp)); Text("问 AI，写命令", fontSize=12.sp) }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Row(Modifier.fillMaxWidth().background(Panel).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
                     KeyButton("Ctrl", selected = input.control, enabled = selected?.running == true) { input.control = !input.control }
                     listOf("Esc" to KeyEvent.KEYCODE_ESCAPE, "Tab" to KeyEvent.KEYCODE_TAB,
@@ -160,29 +153,29 @@ fun TerminalScreen(workspace: TerminalWorkspace?, onNewSession: () -> Unit, onAi
         }
         if (needsAi) AlertDialog(onDismissRequest = { needsAi = false }, title = { Text("先配置 AI 模型") },
             text = { Text("终端可继续使用。要生成命令或解释报错，请先在设置里选择模型并填写 API Key。") },
-            confirmButton = { TextButton(onClick = { needsAi = false; onAiSettings() }) { Text("去设置") } },
-            dismissButton = { TextButton(onClick = { needsAi = false }) { Text("取消") } })
+            confirmButton = { PrimaryButton(onClick = { needsAi = false; onAiSettings() }) { Text("去设置") } },
+            dismissButton = { QuietButton(onClick = { needsAi = false }) { Text("取消") } })
         pasteText?.let { text ->
-            AlertDialog(onDismissRequest = { pasteText = null }, title = { Text("Paste into ${selected?.label ?: "terminal"}?") },
+            AlertDialog(onDismissRequest = { pasteText = null }, title = { Text("粘贴到 ${selected?.label ?: "终端"}？") },
                 text = { Column {
-                    Text("Line breaks can execute commands.", color = Muted, fontSize = 12.sp)
+                    Text("换行可能执行命令。", color = Muted, fontSize = 12.sp)
                     Spacer(Modifier.height(12.dp))
                     Text(text.take(1000), fontFamily = FontFamily.Monospace, maxLines = 10)
                 } },
-                confirmButton = { TextButton(onClick = {
+                confirmButton = { PrimaryButton(onClick = {
                     if (selected?.running == true) selected.terminal.emulator?.paste(text)
                     pasteText = null
-                }) { Text("Paste") } },
-                dismissButton = { TextButton(onClick = { pasteText = null }) { Text("Cancel") } })
+                }) { Text("粘贴") } },
+                dismissButton = { QuietButton(onClick = { pasteText = null }) { Text("取消") } })
         }
     }
 }
 
 @Composable
 private fun KeyButton(label: String, selected: Boolean = false, enabled: Boolean = true, action: () -> Unit) {
-    TextButton(onClick = action, enabled = enabled, modifier = Modifier.height(48.dp).widthIn(min = 48.dp),
+    QuietButton(onClick = action, enabled = enabled, modifier = Modifier.height(48.dp).widthIn(min = 48.dp),
         contentPadding = PaddingValues(horizontal = 10.dp), shape = RoundedCornerShape(8.dp),
-        colors = ButtonDefaults.textButtonColors(contentColor = if (selected) Canvas else Accent,
+        colors = ButtonDefaults.textButtonColors(contentColor = if (selected) Canvas else MaterialTheme.colorScheme.onSurface,
             containerColor = if (selected) Accent else Color.Transparent)) {
         Text(label, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
     }

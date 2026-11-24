@@ -77,6 +77,28 @@ Fold7 主用户 0 已覆盖安装更新后的 `0.6.0-international`。在终端�
 
 ## 验收记录（验收者填写）
 
-- 
-- CI：
-- 结论：
+验收日期 2026-11-24，验收者 Claude。
+
+05 的实现已经随 04 阶段 1 的提交 `5859731d` 进了 main。之后 23-02 把它的界面改成了新设计（历史对话变成对话页顶部的时钟图标）。这次验收对照的是 23-02 之后的工作区。
+
+- **Fold7 上打开历史列表，看到标题、时间、目录，能加载较早记录（实现者在 Fold7 上做到；验收者在模拟器上部分看到）**：
+  - 模拟器国际版没登录 Codex，点顶部「历史对话」能打开列表，显示「还没有历史对话」、刷新和关闭（[截图](screenshots/2026-11-22-05-accept-history-empty.png)）。
+  - 设备测试 `historyPagesIncludeOtherDirectoriesAndErrorsDoNotInterruptTurns` 覆盖了分页、加载更早记录、不按目录过滤、查询出错不打断正在进行的任务。验收者重跑了国际版两组，都通过。
+  - 有真实记录的列表（标题、时间、长目录）只有实现者在 Fold7 展开屏上看过。验收者这次没有看到。
+- **从别的目录选旧 session，看到旧消息，用真机登录继续一次真实对话，同一个 session、目录不变（沿用实现者在 Fold7 上的记录）**：
+  - 真实用例 `liveHistoryPickerRestoresMessagesCwdAndContinuesSameSession` 需要真机登录，模拟器上按设计跳过。
+  - 实现说明记录它在 Fold7 用户 0 上通过：在 A 目录建对话，从 B 目录恢复，继续对话后读到 A 里的 `marker.txt`。
+  - 验收者没有 Codex 账号，Fold7 又锁屏，**没能独立复核，需要用户在手机上试一次**。
+- **两段对话间切换、重复选择已打开的 session，消息和草稿还在，没有重复（做到，测试）**：
+  - `independentConversationsUseOwnCwdAndPreservePendingApproval` 通过。
+  - 23-02 的 `foldResizeKeepsPtyMessagesAndUnsentDraft` 也检查了草稿保留，四组都通过。
+  - 实机上验收者看到：结束对话后再敲 `codex` 会开一个新对话；抽屉里只列进行中的对话。
+- **原目录缺失时有提示，其他对话、文件、登录不受影响（做到，测试）**：`missingHistoryDirectoryNeverFallsBackAndRetryRestoresOriginalCwd` 通过。它覆盖了原目录缺失时不换到别的目录，补回目录后重试成功。
+- **安卓构建和回归测试通过；Fold7 只覆盖安装到用户 0（做到）**：
+  - 两种发行版构建、lint、单测、四组设备测试的结果见 23-01 记录。
+  - Fold7 只读检查：用户 0 是 `0.6.0-international`，用户 95 没装 Waddle。
+  - 实现说明记录了安装前后 3,002 个 home 文件哈希一致、测试应用已卸载。验收者没有复核哈希。
+- 国内版没有 Codex 入口：国内版设备测试断言导航和账号页不出现 Codex，两组都通过。
+
+- CI：待推送后补。
+- 结论：能在模拟器和测试里看的都做到了。真实登录下恢复并继续对话这一条沿用实现者在 Fold7 上的记录，需要用户在手机上确认。是否通过要看 GitHub 上 Android 和 Desktop checks 的结果。

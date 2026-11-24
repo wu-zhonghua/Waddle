@@ -54,7 +54,7 @@ class WaddleRuntime(private val context: Context) {
     }
 
     fun environment(): Map<String, String> = mapOf(
-        "HOME" to home.path, "TMPDIR" to tmp.path,
+        "HOME" to home.canonicalPath, "TMPDIR" to tmp.path,
         "PATH" to "${bin.path}:/system/bin", "SHELL" to File(bin, "bash").path,
         "LD_LIBRARY_PATH" to native.path, "PREFIX" to prefix.path,
         "SSL_CERT_FILE" to File(data, "cert.pem").path,

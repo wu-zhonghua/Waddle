@@ -74,11 +74,11 @@ fun FileViewer(entry: FileEntry, onClose: () -> Unit, onImport: (() -> Unit)? = 
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize().safeDrawingPadding()) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onClose) { Text("返回") }
+                    ToolIcon("back", "返回", onClick=onClose)
                     Text(entry.name, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     var menu by remember { mutableStateOf(false) }
                     Box {
-                        TextButton(onClick = { menu = true }, enabled = !busy) { Text("文件操作") }
+                        ToolIcon("more", "文件操作", !busy) { menu=true }
                         DropdownMenu(menu, { menu = false }) {
                             DropdownMenuItem(text = { Text("用其他应用打开") }, onClick = { menu = false; action {
                                 val uri = withContext(Dispatchers.IO) { service.shareUri(entry) }
@@ -101,8 +101,8 @@ fun FileViewer(entry: FileEntry, onClose: () -> Unit, onImport: (() -> Unit)? = 
                 notice?.let { Text(it, Modifier.fillMaxWidth().padding(12.dp)) }
                 val kind = entry.viewKind()
                 if (kind == ViewKind.MARKDOWN || kind == ViewKind.HTML) Row {
-                    TextButton(onClick = { formatted = true }, enabled = !formatted) { Text("排版") }
-                    TextButton(onClick = { formatted = false }, enabled = formatted) { Text("原文") }
+                    QuietButton(onClick = { formatted = true }, enabled = !formatted) { Text("排版") }
+                    QuietButton(onClick = { formatted = false }, enabled = formatted) { Text("原文") }
                 }
                 Box(Modifier.weight(1f).fillMaxWidth()) {
                     if (loadError != null) Text(loadError!!, Modifier.padding(24.dp))
@@ -110,7 +110,7 @@ fun FileViewer(entry: FileEntry, onClose: () -> Unit, onImport: (() -> Unit)? = 
                         when (kind) {
                             ViewKind.IMAGE -> FileImage(entry, Modifier.fillMaxSize())
                             ViewKind.PDF -> PdfPages(entry)
-                            ViewKind.MEDIA -> MediaFile(entry)
+                            ViewKind.MEDIA -> if (entry.mime.startsWith("audio/")) AudioFile(entry) else MediaFile(entry)
                             ViewKind.TEXT, ViewKind.HTML, ViewKind.MARKDOWN -> TextFile(entry, formatted && kind != ViewKind.TEXT)
                             ViewKind.OTHER -> Text("Waddle 暂不支持预览此格式。请在“文件操作”中选择用其他应用打开、分享或保存到手机。", Modifier.padding(24.dp))
                         }
@@ -211,9 +211,9 @@ private fun PdfPages(entry: FileEntry) {
     }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = { page-- }, enabled = page > 0 && picture != null) { Text("上一页") }
+            QuietButton(onClick = { page-- }, enabled = page > 0 && picture != null) { Text("上一页") }
             Text(if (count == 0) "PDF" else "${page + 1} / $count")
-            TextButton(onClick = { page++ }, enabled = page + 1 < count && picture != null) { Text("下一页") }
+            QuietButton(onClick = { page++ }, enabled = page + 1 < count && picture != null) { Text("下一页") }
         }
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             when {
@@ -245,6 +245,7 @@ private fun TextFile(entry: FileEntry, formatted: Boolean) {
             if (formatted) {
                 val html = remember(value.text, entry.viewKind()) { if (entry.viewKind() == ViewKind.MARKDOWN) MarkdownPreview.html(value.text) else value.text }
                 AndroidView(factory = { WebView(it).apply {
+                    setBackgroundColor(android.graphics.Color.rgb(16,18,22))
                     settings.javaScriptEnabled = false; settings.allowFileAccess = false; settings.allowContentAccess = false
                     settings.blockNetworkLoads = true; settings.setSupportZoom(true); settings.builtInZoomControls = true; settings.displayZoomControls = false
                     webViewClient = object : WebViewClient() {
@@ -254,6 +255,78 @@ private fun TextFile(entry: FileEntry, formatted: Boolean) {
                 } }, update = { if (it.tag != html) { it.tag = html; it.loadDataWithBaseURL("https://waddle.invalid/", html, "text/html", "UTF-8", null) } },
                     onRelease = { it.stopLoading(); it.destroy() }, modifier = Modifier.fillMaxSize())
             } else SelectionContainer { Text(value.text.ifEmpty { "（空文件）" }, Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), fontFamily = FontFamily.Monospace) }
+        }
+    }
+}
+
+/** Audio must not wait for VideoView's SurfaceHolder when switching viewer windows. */
+@Composable
+private fun AudioFile(entry: FileEntry) {
+    val context = LocalContext.current
+    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var player by remember(entry.uri) { mutableStateOf<android.media.MediaPlayer?>(null) }
+    var ready by remember(entry.uri) { mutableStateOf(false) }
+    var playing by remember(entry.uri) { mutableStateOf(false) }
+    var duration by remember(entry.uri) { mutableIntStateOf(0) }
+    var position by rememberSaveable(entry.uri.toString()) { mutableIntStateOf(0) }
+    var error by remember(entry.uri) { mutableStateOf<String?>(null) }
+    var checked by remember(entry.uri) { mutableStateOf(false) }
+    LaunchedEffect(entry.uri) {
+        try { withContext(Dispatchers.IO) { FileViewing(context).checked(entry) }; checked = true }
+        catch (e: CancellationException) { throw e }
+        catch (e: Exception) { error = fileError(e) }
+    }
+    val audioManager = remember(context) { context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager }
+    val focusRequest = remember(entry.uri) {
+        android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC).build())
+            .setOnAudioFocusChangeListener { change ->
+                if (change < 0 && ready) { player?.pause(); playing = false }
+            }.build()
+    }
+    DisposableEffect(entry.uri, checked, owner) {
+        val audio = if (checked) android.media.MediaPlayer() else null
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE && ready) { audio?.pause(); playing = false }
+        }
+        if (audio != null) {
+            player = audio
+            audio.setOnPreparedListener {
+                duration = it.duration.coerceAtLeast(0); ready = true
+                it.seekTo(position.toLong(), android.media.MediaPlayer.SEEK_CLOSEST)
+            }
+            audio.setOnCompletionListener { playing = false }
+            audio.setOnErrorListener { _, _, _ ->
+                error = "无法播放，文件可能损坏或手机不支持此音频编码。可用其他应用打开。"; ready = false; true
+            }
+            runCatching { audio.setDataSource(context, entry.uri); audio.prepareAsync() }
+                .onFailure { error = fileError(it) }
+            owner.lifecycle.addObserver(observer)
+        }
+        onDispose {
+            owner.lifecycle.removeObserver(observer)
+            ready = false; player = null
+            audio?.release()
+            audioManager.abandonAudioFocusRequest(focusRequest)
+        }
+    }
+    LaunchedEffect(player, ready) {
+        while (ready) { player?.let { position = it.currentPosition; playing = it.isPlaying }; delay(250) }
+    }
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            when { error != null -> Text(error!!, Modifier.padding(24.dp)); !ready -> CircularProgressIndicator(); else -> WaddleIcon("file") }
+        }
+        if (ready && error == null) {
+            Text("${position / 1000} / ${duration / 1000} 秒", Modifier.padding(horizontal = 16.dp))
+            Slider(value = position.toFloat().coerceIn(0f, duration.coerceAtLeast(1).toFloat()),
+                onValueChange = { position = it.toInt(); player?.seekTo(position.toLong(), android.media.MediaPlayer.SEEK_CLOSEST) },
+                valueRange = 0f..duration.coerceAtLeast(1).toFloat(), modifier = Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "播放进度" })
+            QuietButton(onClick = {
+                if (playing) { player?.pause(); playing = false; audioManager.abandonAudioFocusRequest(focusRequest) }
+                else if (audioManager.requestAudioFocus(focusRequest) == android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { player?.start(); playing = true }
+            }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(if (playing) "暂停" else "播放") }
         }
     }
 }
@@ -297,7 +370,7 @@ private fun MediaFile(entry: FileEntry) {
         if (ready && error == null) {
             Text("${position / 1000} / ${duration / 1000} 秒", Modifier.padding(horizontal = 16.dp))
             Slider(value = position.toFloat().coerceIn(0f, duration.coerceAtLeast(1).toFloat()), onValueChange = { position = it.toInt(); media?.seekTo(position.toLong(), android.media.MediaPlayer.SEEK_CLOSEST) }, valueRange = 0f..duration.coerceAtLeast(1).toFloat(), modifier = Modifier.padding(horizontal = 16.dp).semantics { contentDescription = "播放进度" })
-            TextButton(onClick = { if (playing) video.pause() else video.start(); playing = !playing }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(if (playing) "暂停" else "播放") }
+            QuietButton(onClick = { if (playing) video.pause() else video.start(); playing = !playing }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text(if (playing) "暂停" else "播放") }
         }
     }
 }

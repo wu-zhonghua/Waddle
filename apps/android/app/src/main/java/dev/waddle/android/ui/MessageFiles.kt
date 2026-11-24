@@ -21,15 +21,24 @@ import java.io.File
 
 @Composable
 internal fun MessageFiles(message: CodexMessage, cwd: File, home: File, onOpen: (File) -> Unit) {
-    val references = remember(message.text, cwd) { FileReferences.find(message.text, cwd, home) }
-    val color = MaterialTheme.colorScheme.primary
+    val display = shortPathsInText(message.text, home)
+    val references = remember(display, cwd) { FileReferences.find(display, cwd, home) }
+    val color = MaterialTheme.colorScheme.onSurface
     val text = buildAnnotatedString {
-        append(message.text)
+        append(display)
+        if(message.role == "文件修改") {
+            var offset=0
+            display.lines().forEach { line ->
+                val lineColor = when { line.startsWith("+") -> AccentColor; line.startsWith("-") -> MaterialTheme.colorScheme.error; else -> color }
+                addStyle(SpanStyle(color=lineColor, background=when { line.startsWith("+") -> AccentColor.copy(alpha=.08f); line.startsWith("-") -> MaterialTheme.colorScheme.error.copy(alpha=.08f); else -> androidx.compose.ui.graphics.Color.Transparent }), offset, offset+line.length)
+                offset += line.length+1
+            }
+        }
         references.forEach { ref ->
             addLink(LinkAnnotation.Clickable(ref.file.path, TextLinkStyles(SpanStyle(color = color, textDecoration = TextDecoration.Underline))) { onOpen(ref.file) }, ref.start, ref.end)
         }
     }
-    SelectionContainer { Text(text, fontSize = 14.sp, fontFamily = if (message.role == "命令") FontFamily.Monospace else FontFamily.Default) }
+    SelectionContainer { Text(text, fontSize = 14.sp, fontFamily = if (message.role in listOf("命令", "文件修改", "工具输出")) FontFamily.Monospace else FontFamily.Default) }
     val files = (message.files.map(::File) + references.map { it.file }).distinctBy { it.path }.take(24)
     files.forEach { file ->
         val entry = remember(file.path) { FileEntry(Uri.fromFile(file), file.name, false, null,
@@ -37,7 +46,7 @@ internal fun MessageFiles(message: CodexMessage, cwd: File, home: File, onOpen: 
         if (entry.viewKind() == ViewKind.IMAGE) Column(Modifier.fillMaxWidth().clickable { onOpen(file) }.padding(top = 8.dp)) {
             key(file.path, message.revision) { FileImage(entry, Modifier.fillMaxWidth().height(180.dp), thumbnail = true) }
             Text(file.name, fontSize = 12.sp)
-        } else if (file.path in message.files) TextButton(onClick = { onOpen(file) }) { Text(file.name) }
+        } else if (file.path in message.files) QuietButton(onClick = { onOpen(file) }) { Text(file.name) }
     }
     message.fileError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp) }
 }

@@ -73,23 +73,25 @@ fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, 
                 Spacer(Modifier.width(8.dp))
                 FilterChip(selected = client.useCodex, onClick = { client.selectCodex(true) }, label = { Text("Codex") })
             }
-            Text("${snapshot.sessionLabel} · ${snapshot.cwd}", fontFamily = FontFamily.Monospace, fontSize = 12.sp)
-            Text("发送当前路径和最近终端内容。生成后先预览，回车才运行。", fontSize = 12.sp)
-            TextButton(onClick = { onDismiss(); onAccounts() }) { Text("账号与模型设置") }
-            TextButton(onClick = { showContext = !showContext }) { Text(if (showContext) "收起本次上下文" else "查看本次上下文") }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.SpaceBetween) {
+                QuietButton(onClick={ onDismiss(); onAccounts() }) { WaddleIcon("settings"); Spacer(Modifier.width(8.dp)); Text(if(client.useCodex) "账号与模型设置" else client.settings.selected.label) }
+                QuietButton(onClick={ showContext=!showContext }) { Text(if(showContext) "收起本次上下文" else "查看本次上下文") }
+            }
             if (showContext) {
+                Text(shortPath(snapshot.cwd, workspace.runtime.home), fontFamily=FontFamily.Monospace, fontSize=12.sp)
                 OutlinedTextField(value = snapshot.transcript, onValueChange = {}, readOnly = true,
                     label = { Text("最近终端内容（最多 12,000 字符）") }, maxLines = 6,
                     modifier = Modifier.fillMaxWidth(), textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp))
             }
             OutlinedTextField(value = question, onValueChange = { question = it }, enabled = !client.busy,
-                label = { Text("想去哪里，或想做什么？") }, placeholder = { Text("比如：进入刚才列出的项目，再找出最大的文件") },
+                label = { Text("想去哪里，或想做什么？") }, placeholder = { Text("描述任务") },
                 modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("ai-question"), minLines = 2, maxLines = 4,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { generate() }))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { generate() }, enabled = question.isNotBlank() && !client.busy) { Text(if (client.busy) "正在生成…" else if (diagnose) "分析报错" else "生成命令") }
-                if (client.busy) TextButton(onClick = { client.cancel() }) { Text("停止生成") }
-                TextButton(onClick = onDismiss) { Text("取消") }
+                if(client.command.isBlank()) PrimaryButton(onClick={ generate() }, enabled=question.isNotBlank() && !client.busy) { Text(if(client.busy) "正在生成…" else if(diagnose) "分析报错" else "生成命令") }
+                else QuietButton(onClick={ generate() }, enabled=question.isNotBlank() && !client.busy) { Text("重新生成") }
+                if (client.busy) QuietButton(onClick = { client.cancel() }) { Text("停止生成") }
+                QuietButton(onClick = onDismiss) { Text("取消") }
             }
             if (client.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             (error ?: client.error)?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp) }
@@ -105,8 +107,8 @@ fun CommandSheet(workspace: TerminalWorkspace, initialContext: TerminalContext, 
                         } else false
                     }, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go, autoCorrectEnabled = false), keyboardActions = KeyboardActions(onGo = { run() }))
                 if (stale != null) Text(stale, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
-                Text("回车运行 · Shift+回车换行 · 在原 Bash 中执行，并替换尚未提交的输入", fontSize = 11.sp)
-                Button(onClick = { run() }, enabled = stale == null && draft.isNotBlank() && !submitted && !client.busy,
+                Text("Enter 运行 · Shift+Enter 换行", fontSize = 11.sp)
+                PrimaryButton(onClick = { run() }, enabled = stale == null && draft.isNotBlank() && !submitted && !client.busy,
                     modifier = Modifier.fillMaxWidth().testTag("ai-run")) { Text("运行命令 ↵") }
             }
         }

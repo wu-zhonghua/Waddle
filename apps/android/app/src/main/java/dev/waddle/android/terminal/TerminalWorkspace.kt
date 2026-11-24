@@ -23,9 +23,8 @@ class ShellSession(val number: Int, val terminal: TerminalSession, internal val 
     var cwd by mutableStateOf<String?>(null); internal set
     var commandError by mutableStateOf<String?>(null); internal set
     var revision by mutableIntStateOf(0)
-    val label get() = "Shell $number"
+    val label get() = "${cwd?.let { File(it).name.takeUnless { name -> name == "home" }.orEmpty() }?.ifEmpty { "终端" } ?: "终端"} · $number"
     val running get(): Boolean { revision; return terminal.isRunning }
-    val status get(): String = if (running) "RUNNING" else "EXITED · ${terminal.exitStatus}"
 }
 
 class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = CommandSuggester(context),
@@ -48,9 +47,9 @@ class TerminalWorkspace(context: Context, val suggestions: CommandSuggester = Co
 
     init {
         TerminalColors.COLOR_SCHEME.updateWith(Properties().apply {
-            setProperty("background", "#101512")
-            setProperty("foreground", "#e4ece6")
-            setProperty("cursor", "#a7e8bd")
+            setProperty("background", "#101216")
+            setProperty("foreground", "#e6e8ed")
+            setProperty("cursor", "#8baaff")
         })
         val welcome = File(home, "WELCOME.txt")
         if (!welcome.exists()) welcome.writeText(

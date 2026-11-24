@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.rgb(16, 21, 18)),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.rgb(16, 18, 22)),
         )
         startTerminalService()
         bound = bindService(Intent(this, TerminalService::class.java), connection, Context.BIND_AUTO_CREATE)

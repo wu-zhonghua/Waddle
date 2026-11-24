@@ -9,7 +9,7 @@ object MarkdownPreview {
         .replace(Regex("\\*([^*]+)\\*"), "<em>$1</em>")
         .replace(Regex("!?\\[([^]]*)]\\([^)]+\\)"), "<u>$1</u>")
     fun html(text: String): String = buildString {
-        append("<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font:17px sans-serif;line-height:1.6;padding:16px;color:#202820;overflow-wrap:anywhere}pre,code{background:#eef2ee;white-space:pre-wrap}blockquote{border-left:4px solid #aac8aa;padding-left:12px}table{border-collapse:collapse}td{border:1px solid #bbb;padding:6px}</style></head><body>")
+        append("<html><head><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font:17px sans-serif;line-height:1.6;padding:16px;color:#e6e8ed;background:#101216;overflow-wrap:anywhere}pre,code{background:#181b21;white-space:pre-wrap}blockquote{border-left:4px solid #565d6b;padding-left:12px}table{border-collapse:collapse}td{border:1px solid #30343d;padding:6px}</style></head><body>")
         var code = false; var table = false
         text.lines().forEach { line ->
             if (line.trimStart().startsWith("```")) {

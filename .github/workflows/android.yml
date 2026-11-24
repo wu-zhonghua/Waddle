@@ -17,6 +17,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         distribution: [international, domestic]
     steps:
@@ -45,6 +46,7 @@ jobs:
   device-tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         distribution: [international, domestic]
         notification: [allow, deny]
@@ -90,4 +92,6 @@ jobs:
         if: always()
         with:
           name: android-device-test-results-${{ matrix.distribution }}-${{ matrix.notification }}
-          path: apps/android/app/build/reports/androidTests/
+          path: |
+            apps/android/app/build/reports/androidTests/
+            apps/android/app/build/outputs/androidTest-results/connected/**/*.xml

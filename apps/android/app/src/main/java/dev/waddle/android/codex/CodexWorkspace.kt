@@ -7,7 +7,7 @@ import java.io.File
 import java.util.UUID
 
 class CodexSession(val id: String, val number: Int, val origin: ShellSession, val client: CodexController) {
-    val label get() = "Codex $number"
+    val label get() = "${client.workingDirectory.name.takeUnless { it == "home" } ?: "工作区"} · Codex ($number)"
 }
 class CodexLaunch(val origin: ShellSession, val cwd: File, val request: File, val mode: String)
 

@@ -53,7 +53,7 @@ class NavigationIntegrationTest {
             }
             clicked
         }
-        instrumentation.waitForIdleSync()
+        settleUi()
     }
     private fun workspace(scenario: ActivityScenario<MainActivity>): TerminalWorkspace {
         var value: TerminalWorkspace? = null
@@ -78,7 +78,13 @@ class NavigationIntegrationTest {
         touch(MotionEvent.ACTION_UP, display.widthPixels * 0.7f)
         await("Left edge did not open drawer") { visible("会话") }
     }
+    private fun settleUi() {
+        instrumentation.waitForIdleSync()
+        // Accessibility nodes can precede Compose's applied BackHandler and callbacks.
+        instrumentation.uiAutomation.waitForIdle(300, 5_000)
+    }
     private fun closeDrawer() {
+        settleUi()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         await("Drawer did not close") { !visible("会话") }
     }
@@ -252,13 +258,15 @@ class NavigationIntegrationTest {
                 assertTrue(texts.indexOf("文件") < texts.indexOf("会话"))
                 closeDrawer()
                 assertEquals(fixture.canonicalFile, main { workspace.files.current?.file })
-                click("更多"); click("切换当前终端到此目录")
+                click("文件选项"); click("切换当前终端到此目录")
                 await("Explicit cd did not finish") { main { session.promptReady && session.cwd == fixture.canonicalPath } }
                 assertEquals(handle, main { workspace.selected!!.terminal.mHandle })
-                openDrawer(); click("＋ 新建终端")
+                openDrawer(); click("新建终端")
                 await("Second shell missing") { main { workspace.selected !== session } }
                 val second = main { workspace.selected!! }
+                await("Creating shell did not close drawer") { !visible("会话") }
                 openDrawer(); click(session.label)
+                await("Selecting shell did not close drawer") { !visible("会话") }
                 assertSame(session, main { workspace.selected })
                 assertTrue(main { session.terminal.emulator.screen.transcriptText.contains("__NAV_KEEP__") })
                 openDrawer(); click("关闭 ${second.label}"); click("保留")
@@ -277,22 +285,27 @@ class NavigationIntegrationTest {
 
     @Test fun accountsAndHelpAreReachableWithoutCreationEntries() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            workspace(scenario)
+            val workspace = workspace(scenario)
             openDrawer()
             assertFalse(nodes().any { it.text?.contains("Codex") == true })
             click("设置与运行环境")
             await("Settings missing") { visible("账号") }
+            click("打开账号页")
             if (!BuildConfig.BUNDLED_AGENTS) assertFalse(nodes().any { it.text?.contains("Codex") == true })
             click("AI 模型 · 配置 Key 和模型")
             await("Models missing") { visible("AI 模型") }
             click("完成")
             await("Model dialog did not close") { visible("账号") && !visible("AI 模型") }
             click("完成")
-            await("Accounts did not close") { !visible("账号") }
+            await("Accounts did not close") { visible("打开账号页") }
+            click("完成")
+            await("Settings did not close") { !visible("打开账号页") }
             openDrawer(); click("帮助")
             await("Help missing") { visible("使用 Waddle") }
             click("知道了")
-            click("打开文件"); click("Waddle 文件")
+            click("打开文件")
+            if (main { !workspace.files.showingLocations }) click("位置")
+            click("Waddle 文件")
             await("Folder missing") { visible("在当前文件夹打开终端") }
             assertFalse(nodes().any { it.text?.contains("Codex") == true })
         }
@@ -303,7 +316,7 @@ class NavigationIntegrationTest {
             val workspace = workspace(scenario)
             org.junit.Assume.assumeFalse(BuildConfig.BUNDLED_AGENTS || workspace.suggestions.settings.configured())
             val session = main { workspace.selected!! }
-            click("✦ 问 AI，写命令…")
+            click("问 AI，写命令")
             await("Setup guidance missing") { visible("先配置 AI 模型") }
             click("去设置")
             await("Model settings missing") { visible("AI 模型") }

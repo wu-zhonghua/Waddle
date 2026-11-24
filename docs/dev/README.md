@@ -43,8 +43,8 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 |---|---|---|---|
 | [2026-11-23-04-website-all-platforms](2026-11-23-04-website-all-platforms.md) | 官网改成全平台：macOS、Windows、Linux 和安卓手机都能用的 AI 终端 | 验收通过 | 无（扩展 2026-11-23-03） |
 | [2026-11-23-03-website-framework](2026-11-23-03-website-framework.md) | Waddle 官网首页框架：默认英文、可切中文，样子跟 App 设计规范走 | 验收通过 | 无（在 2026-11-23-02 之后做） |
-| [2026-11-23-02-product-ui-redesign](2026-11-23-02-product-ui-redesign.md) | 安卓界面整体重做：看起来像一个专业的终端产品，不像 AI 拼出来的（2 个阶段） | 待实现 | 无（在 2026-11-23-01 之后、04 阶段 2 之前做） |
-| [2026-11-23-01-android-ci-green](2026-11-23-01-android-ci-green.md) | GitHub 上的安卓设备测试四种组合全部通过 | 待实现 | [2026-11-22-04](2026-11-22-04-bundled-agents-and-accounts.md)（阶段 1） |
+| [2026-11-23-02-product-ui-redesign](2026-11-23-02-product-ui-redesign.md) | 安卓界面整体重做：看起来像一个专业的终端产品，不像 AI 拼出来的（2 个阶段） | 已实现（阶段 1、2） | 无（在 2026-11-23-01 之后、04 阶段 2 之前做） |
+| [2026-11-23-01-android-ci-green](2026-11-23-01-android-ci-green.md) | GitHub 上的安卓设备测试四种组合全部通过 | 已实现 | [2026-11-22-04](2026-11-22-04-bundled-agents-and-accounts.md)（阶段 1） |
 | [2026-11-22-05-codex-session-history](2026-11-22-05-codex-session-history.md) | Codex 对话页选择历史 session，恢复消息并在原目录继续聊 | 已实现 | 2026-11-22-04（阶段 1 补充） |
 | [2026-11-22-04-bundled-agents-and-accounts](2026-11-22-04-bundled-agents-and-accounts.md) | 安装包里带上 Codex、Claude Code、Antigravity，在终端里敲命令打开，设置里统一登录账号；国内版能一键去掉（3 个阶段） | 验收不通过（阶段 1） | 2026-11-22-01；取代 02、03 |
 | [2026-11-22-03-repo-without-codex-packages](2026-11-22-03-repo-without-codex-packages.md) | 仓库里不放 Codex 安装包，GitHub 上的安卓检查全部通过 | 已取消（被 04 取代） | [2026-11-22-01](2026-11-22-01-ai-terminal.md) |
@@ -52,3 +52,7 @@ Claude 侧用 `/dev` skill（[.claude/skills/dev/SKILL.md](../../.claude/skills/
 | [2026-11-22-01-ai-terminal](2026-11-22-01-ai-terminal.md) | Waddle 改成 AI 终端：安装包不带 Codex，内置 AI 可选 DeepSeek 等国内模型（2 个阶段） | 验收不通过（阶段 1） | 无 |
 
 当前进度（2026-11-23）：方向定为 **AI 终端，能用的 AI 都带上**。国际版安装包里直接带 Codex、Claude Code、Antigravity，加上 01 做好的内置 AI（DeepSeek、通义千问、Kimi、智谱、OpenAI 兼容），设置里有统一的「账号」页；以后出国内版，同一份代码一键去掉海外工具。01 阶段 1（去掉 Codex、加内置 AI）已推到 main，验收不通过；02（扩展下载）、03（仓库不放 Codex 包）已取消，由 04 取代。04 阶段 1 验收不通过（2026-11-23）：功能在模拟器上都做到了，真机和真实账号的项沿用实现者在 Fold7 上的记录，代码已推到 main（5859731d）；GitHub 上 Desktop checks 和安卓两种构建通过，安卓设备测试失败（国内版允许组 2 个导航用例，其余三组被取消），另提 2026-11-23-01 让设备测试稳定通过；2026-11-23-02 安卓界面整体重做（同事反馈"太 AI 了"）排在 23-01 之后；04 阶段 2（Claude Code）在界面重做之后做，直接用新的设计规范。05 补充的 Codex 历史 session 入口已实现并在 Fold7 验证，待验收。阶段 2、3 未实施，01 阶段 2 等 04 做完再说。之前的需求文档（2026-11-19-01 到 2026-11-21-07）已删除，需要时在 git 历史里找。
+
+本轮实现补充（2026-11-23）：23-01 已实现产品 cwd / 导航修复与不取消其余组合的 CI 矩阵；23-02 阶段 1、2 已一次完成，设计规范与改前/改后截图已归档。本地 API 35 ARM64 四组合各 61 测试、0 失败，两种发行版的 ARM64 / x86_64 构建、lint 与宿主单测通过；桌面既有检查通过，未改桌面源码。仅使用 Youzai_API_35，以 wm size/density 模拟 Fold7 展开/合上；未使用真机或真实账号/Key。未提交、推送或切换分支，GitHub 连续两次全绿仍待提交后验收；04 阶段 2、3 未实施。
+
+验收（2026-11-24）：23-01、23-02（阶段 1、2）、05 本地验收完成。模拟器四组设备测试各 61 项全部通过；国际版允许组第一轮在机器高负载下通知权限用例失败 1 次，重跑两次都通过。构建、lint、终端单测 145/145、桌面 200/200 都通过。界面重做在模拟器上逐项看过，功能都在，小问题列在 23-02 验收记录里，另提打磨需求。Fold7 锁屏，没有看真机；05 的真实登录恢复沿用实现者的 Fold7 记录。状态等 GitHub CI 结果后再改。

@@ -32,7 +32,7 @@ class CodexHistoryIntegrationTest {
         return walk(instrumentation.uiAutomation.rootInActiveWindow)
     }
     private fun click(text: String) = await("Cannot click fixture UI") {
-        var node = nodes().firstOrNull { it.text?.toString() == text }
+        var node = nodes().firstOrNull { it.text?.toString() == text || it.contentDescription?.toString() == text }
         var clicked = false
         while (node != null && !clicked) {
             if (node.isClickable && node.isEnabled) clicked = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
@@ -76,7 +76,7 @@ class CodexHistoryIntegrationTest {
                 assertTrue(main { old.client.messages.any { it.role == "Codex" && it.text.contains("HISTORY_READY") } })
                 main { agents.close(old) }
                 val source = launch(b)
-                await("Chat UI missing") { nodes().any { it.text?.toString() == "历史对话" } }
+                await("Chat UI missing") { nodes().any { it.text?.toString() == "历史对话" || it.contentDescription?.toString() == "历史对话" } }
                 draft("UNSENT_SOURCE_DRAFT")
                 click("历史对话")
                 await("History list missing", 45) { main { !source.client.historyLoading } }

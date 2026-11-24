@@ -82,6 +82,7 @@ class FileViewingIntegrationTest {
 
     @Test fun referencesResolveChineseSpacesQuotesRelativePathsAndRejectRemoteUrls() {
         val cwd = File("/work/project"); val home = File("/home/user")
+        assertEquals("~/notes.md /home/user-backup/notes.md", dev.waddle.android.ui.shortPathsInText("/home/user/notes.md /home/user-backup/notes.md", home))
         val text = "[图片](</work/中文 ' image.png>) `~/文 件.txt` [目录](/work/a%20b) ./plot.webp file:///work/a+b.jpg https://example.org/no.png"
         val paths = FileReferences.find(text, cwd, home).map { it.file.path }
         assertTrue(paths.toString(), paths.contains("/work/中文 ' image.png"))
@@ -236,9 +237,14 @@ class FileViewingIntegrationTest {
             for ((name, content) in listOf("readme.md" to "# 标题\n\n**加粗**\n\n|列|值|\n|--|--|\n|a|b|", "page.html" to "<h1>标题</h1><script>document.body.innerHTML='UNSAFE'</script>")) {
                 val file = File(root, name).apply { writeText(content) }
                 main { workspace.files.select(access.local(file)) }
-                await { visible("原文") }; click("原文"); await { visible(content) }; click("排版")
+                // The previous dialog may still expose identically named buttons for
+                // one frame. Wait for this file's own view before toggling its mode.
+                await("new viewer $name") { visible(name) && visible("原文") }
+                instrumentation.waitForIdleSync()
+                click("原文"); await("raw $name") { visible(content) }; click("排版")
                 await { nodes().any { it.className?.toString() == "android.webkit.WebView" } }
                 assertFalse(visible("UNSAFE")); click("返回")
+                await("dismiss $name") { main { workspace.files.selected == null } && !visible(name) }
             }
             assertSame(original, main { workspace.selected!!.terminal })
         }
@@ -290,7 +296,7 @@ class FileViewingIntegrationTest {
     @Test fun audioAndVideoCanPlayPauseAndSeek() = fixture { root ->
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             val workspace = workspace(scenario)
-            for (name in listOf("sample.mp4", "sample.wav")) {
+            for (name in listOf("sample.mp4", "sample.wav", "sample.mp4", "sample.wav")) {
                 val file = File(root, name)
                 instrumentation.context.assets.open("viewer/$name").use { input -> file.outputStream().use { input.copyTo(it) } }
                 main { workspace.files.select(access.local(file)) }
@@ -301,7 +307,7 @@ class FileViewingIntegrationTest {
                 val slider = nodes().first { it.actionList.any { action -> action.id == AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_PROGRESS.id } }
                 assertTrue(slider.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_PROGRESS.id, android.os.Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 2000f) }))
                 await { nodes().any { it.text?.toString()?.startsWith("2 / 8") == true } }
-                click("返回"); await { main { workspace.files.selected == null } }
+                click("返回"); await { main { workspace.files.selected == null } && !visible(name) }
             }
         }
     }
