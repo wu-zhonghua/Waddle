@@ -1,6 +1,6 @@
 # Codex 对话页选择历史 session，恢复消息并在原目录继续聊
 
-- 状态：已实现
+- 状态：验收通过
 - 日期：2026-11-22
 - 上一份：[2026-11-22-04-bundled-agents-and-accounts](2026-11-22-04-bundled-agents-and-accounts.md)（阶段 1 补充）
 - 涉及：安卓
@@ -100,5 +100,5 @@ Fold7 主用户 0 已覆盖安装更新后的 `0.6.0-international`。在终端�
   - 实现说明记录了安装前后 3,002 个 home 文件哈希一致、测试应用已卸载。验收者没有复核哈希。
 - 国内版没有 Codex 入口：国内版设备测试断言导航和账号页不出现 Codex，两组都通过。
 
-- CI：待推送后补。
-- 结论：能在模拟器和测试里看的都做到了。真实登录下恢复并继续对话这一条沿用实现者在 Fold7 上的记录，需要用户在手机上确认。是否通过要看 GitHub 上 Android 和 Desktop checks 的结果。
+- CI（`d86eb49a`）：[Desktop checks #38](https://github.com/wu-zhonghua/Waddle/actions/runs/45418027281) 通过。[Android #19](https://github.com/wu-zhonghua/Waddle/actions/runs/45418027132) 两种构建通过；四组设备测试里，和历史对话相关的用例（`historyPagesIncludeOtherDirectoriesAndErrorsDoNotInterruptTurns`、`missingHistoryDirectoryNeverFallsBackAndRetryRestoresOriginalCwd`、`independentConversationsUseOwnCwdAndPreservePendingApproval`）都通过。国际版两组失败的是 23-02 账号页和看图片的用例，和本需求无关，由 [2026-11-24-01](2026-11-24-01-android-ci-green-international.md) 处理。
+- 结论：**验收通过**。真实登录下恢复旧 session、继续同一个对话这一条，沿用实现者在 Fold7 上的记录；验收者没有账号，Fold7 又锁屏，没能复核，**请用户在手机上从「历史对话」恢复一次旧对话确认**。

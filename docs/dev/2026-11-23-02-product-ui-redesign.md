@@ -1,6 +1,6 @@
 # 安卓界面整体重做：看起来像一个专业的终端产品，不像 AI 拼出来的（2 个阶段）
 
-- 状态：已实现（阶段 1、2）
+- 状态：验收不通过（阶段 1、2）
 - 日期：2026-11-23
 - 上一份：无（在 [2026-11-23-01-android-ci-green](2026-11-23-01-android-ci-green.md) 之后做，在 [2026-11-22-04](2026-11-22-04-bundled-agents-and-accounts.md) 阶段 2 之前做）
 - 涉及：安卓
@@ -264,5 +264,10 @@
 - 无障碍名称：账号页返回按钮读作「返回账号」，设置页读作「返回设置与运行环境」。读起来像是「返回到账号」，但实际是返回上一页。
 - 用实体键盘时，从设置页返回终端后，焦点停在导航按钮上，直接打字不会进终端，回车会打开抽屉，要先点一下终端。软键盘用户不受影响。
 
-- CI：待推送后补。
-- 结论：阶段 1、2 在模拟器上全部做到，Fold7 真机待用户看。是否通过要看 GitHub 上 Android 和 Desktop checks 的结果。
+- CI（`d86eb49a`）：[Desktop checks #38](https://github.com/wu-zhonghua/Waddle/actions/runs/45418027281) **通过**。[Android #19](https://github.com/wu-zhonghua/Waddle/actions/runs/45418027132) **失败**：
+  - 通过的：两种构建；国内版允许、拒绝两组设备测试。四组都跑完了，没有被取消。
+  - **国际版允许、拒绝两组失败**：两组都有 `ProductUiIntegrationTest.accountsAreFullPageAndEachProviderHasConfiguration` 和 `NavigationIntegrationTest.accountsAndHelpAreReachableWithoutCreationEntries` 失败。原因是在账号页找不到「AI 模型 · 配置 Key 和模型」：GitHub 模拟器屏幕较小，国际版多了「编程工具 · Codex」一组，这一项被挤出屏幕，测试又不会往下滑。
+  - 验收者把本地模拟器调成 360×640dp 复现：这一项在屏幕外，往上滑一下就能看到、能点。用户能用，问题在测试。
+  - 国际版允许组还有 `FileViewingIntegrationTest.commandChoiceChatReturnRotationAndImageViewerPreserveConversation` 超时，超时时图片其实已经打开了。
+  - 本机和浏览器都没有登录 GitHub，没法重跑。账号页的失败每次都会出现，重跑也不会变绿。
+- 结论：**验收不通过（阶段 1、2）**。界面方面阶段 1、2 在模拟器上都做到了，功能也都在。没做到的是「GitHub 上 Android checks 通过」：国际版两组设备测试失败，原因是新的账号页在小屏上需要滚动，测试没有跟着改，见上面 CI。另提 [2026-11-24-01](2026-11-24-01-android-ci-green-international.md)，只修这一项；界面小问题另提打磨需求。Fold7 真机展开 / 合上待用户看。代码已在 main（`d86eb49a`）。

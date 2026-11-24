@@ -1,6 +1,6 @@
 # GitHub 上的安卓设备测试四种组合全部通过
 
-- 状态：已实现
+- 状态：验收不通过
 - 日期：2026-11-23
 - 上一份：[2026-11-22-04-bundled-agents-and-accounts](2026-11-22-04-bundled-agents-and-accounts.md)（阶段 1 验收不通过）
 - 涉及：安卓
@@ -130,5 +130,10 @@ CI 的 x86_64 路径仍用相同脚本加 `--abi x86_64`，Gradle 加 `-PwaddleA
    - `PROVENANCE.md` 的「Local integration changes」里加了一条，说明改了什么、为什么。上游出处、固定提交、GPL-3.0 / Apache-2.0 许可说明都保留。
    - 小问题，不影响验收：`import java.io.File` 已经没有用到了，下次碰这个文件时可以顺手删掉。
 
-- CI：待推送后补。
-- 结论：本地项全部做到（通知用例在高负载下失败一次，重跑两次都通过，已记录）。是否通过要看 GitHub 上连续两次全绿。
+- CI（`d86eb49a`）：[Desktop checks #38](https://github.com/wu-zhonghua/Waddle/actions/runs/45418027281) **通过**。[Android #19](https://github.com/wu-zhonghua/Waddle/actions/runs/45418027132) **失败**：
+  - 通过的：两种构建；国内版允许、拒绝两组设备测试。四组都跑完了，没有被取消。
+  - **国际版允许、拒绝两组失败**：两组都有 `ProductUiIntegrationTest.accountsAreFullPageAndEachProviderHasConfiguration` 和 `NavigationIntegrationTest.accountsAndHelpAreReachableWithoutCreationEntries` 失败。原因是在账号页找不到「AI 模型 · 配置 Key 和模型」：GitHub 模拟器屏幕较小，国际版多了「编程工具 · Codex」一组，这一项被挤出屏幕，测试又不会往下滑。
+  - 验收者把本地模拟器调成 360×640dp 复现：这一项在屏幕外，往上滑一下就能看到、能点。用户能用，问题在测试。
+  - 国际版允许组还有 `FileViewingIntegrationTest.commandChoiceChatReturnRotationAndImageViewerPreserveConversation` 超时，超时时图片其实已经打开了。
+  - 本机和浏览器都没有登录 GitHub，没法重跑。账号页的失败每次都会出现，重跑也不会变绿。
+- 结论：**验收不通过**。本地各项都做到了：中文 / 空格 / 引号文件夹打开终端进对目录，四组设备测试、构建、单测、桌面都通过。但 GitHub 上国际版两组设备测试失败，「四组全部通过、连续两次一样」没做到。代码已在 main（`d86eb49a`），没做到的部分另提 [2026-11-24-01](2026-11-24-01-android-ci-green-international.md)。
